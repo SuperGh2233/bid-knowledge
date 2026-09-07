@@ -1,0 +1,15 @@
+# Elasticsearch 需 8.x，Python 3.11+。R1 骨架仅上述核心依赖；扫描/解析在 R2/R3 明确承载后固定精确版本。
+elasticsearch==8.19.3
+pydantic>=2.0
+fastapi
+uvicorn
+python-dotenv
+pymupdf
+python-docx
+openpyxl
+
+# LLM/Embedding（OpenAI-compatible 网关）
+openai>=1.0
+
+# OCR：Qwen（本地优先）/ MinerU 兜底
+httpx

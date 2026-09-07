@@ -1,0 +1,15 @@
+# bid-ai-clean
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# 数据/密钥（绝不进 Git）
+*.db
+.env
+*.log
+
+# 系统
+Thumbs.db
+.DS_Store
