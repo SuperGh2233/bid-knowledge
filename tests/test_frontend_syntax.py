@@ -163,6 +163,18 @@ if (!noDocHtml.includes('data-copy')) {
   console.log('FAIL 无 document_id 时应保留「复制路径」'); process.exit(1);
 }
 
+// —— 三类材料 / 材料事实 / 方案章节的卡片也要有打开三件套 ——
+// 2026-09-14：这些结果原先只有「复制文件位置（给IT定位用）」，而它们的行里**有 document_id**，
+// 用户同样"找到了文件却打不开"。复用同一个 fileActions 即可（缺 document_id 时自动降级）。
+const factHtml = R.renderFactRows([{fact_type:'qualification', fact_value:'2025', document_id:'d',
+  evidence_text:'ISO', project_folder:'P', relative_path:'P/a.docx', source_path:'s',
+  file_name:'a.docx', role_scope:'our'}]);
+if (!factHtml.includes('data-open="file"') || !factHtml.includes('data-open="folder"')
+    || !factHtml.includes('data-copy')) {
+  console.log('FAIL 材料事实卡片缺「打开文件/打开所在文件夹/复制路径」'); process.exit(1);
+}
+if (factHtml.includes('给IT定位用')) { console.log('FAIL 旧文案「给IT定位用」仍有残留'); process.exit(1); }
+
 // —— 草稿渲染（renderMarkdown）冒烟：用**真实形状**的草稿文本跑一遍 ——
 // 2026-09-14 整理草稿渲染后补。旧渲染把出处行/正文/引用清单渲染成三四套样式且出处重复，
 // 新渲染必须能处理：1) 证据行带 [E1][E2] 上标；2) 出处行降为小注；3) 引用来源收进折叠块；

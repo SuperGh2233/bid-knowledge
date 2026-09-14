@@ -408,6 +408,7 @@ function renderFactAnswer(data, target) {
     ${cards || "<div class='result-card'>已入库的文件里没有这一类。</div>"}
     ${rel}`;
   bindCopyButtons(target);
+  bindOpenButtons(target);
   bindBatchBar(target, facts, "材料存在性.csv", FACT_CSV);
 }
 
@@ -427,6 +428,7 @@ function renderSchemeAnswer(data, target) {
     ${batchBar(sections, SCHEME_CSV, "个章节")}
     ${cards || "<div class='result-card'>已入库的文件里没有写过这个小节。</div>"}`;
   bindCopyButtons(target);
+  bindOpenButtons(target);
   bindBatchBar(target, sections, `方案章节-${data.query}.csv`, SCHEME_CSV);
 }
 
@@ -635,7 +637,7 @@ const metaBlock = (r) => `<dl class="metadata">
   <dt>项目</dt><dd>${esc(r.project_folder || "（未登记）")}</dd>
   <dt>文件</dt><dd>${esc(r.file_name)}</dd>
   ${r.content_format ? `<dt>格式</dt><dd>${esc(formatLabel(r.content_format))}</dd>` : ""}
-  <dt>取原文</dt><dd><button class="copy" data-copy="${esc(r.source_path)}">复制文件位置（给IT定位用）</button></dd>
+  <dt>打开原文</dt><dd>${fileActions(r)}</dd>
 </dl>`;
 
 function renderProjectRows(rows) {
@@ -769,6 +771,7 @@ async function loadModule(name) {
       ${batchBar(rows, MODULE_CSV[name], "条记录")}
       ${cards || "<div class='result-card'>这一类暂无可展示的记录。</div>"}`;
     bindCopyButtons(target);
+    bindOpenButtons(target);
     bindBatchBar(target, rows, `三类材料定位-${name}.csv`, MODULE_CSV[name]);
   } catch (error) { target.innerHTML = `<div class="error">${esc(error.message)}</div>`; }
 }
