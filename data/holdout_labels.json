@@ -1,0 +1,1187 @@
+[
+ {
+  "labeler": "R1",
+  "labels": [
+   {
+    "id": "T001",
+    "role": "content_section",
+    "reason": "分析章节标题，正文有图说明"
+   },
+   {
+    "id": "T002",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T003",
+    "role": "content_section",
+    "reason": "章节标题，含质谱性能指标"
+   },
+   {
+    "id": "T004",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T005",
+    "role": "content_section",
+    "reason": "资格承诺函正文，含承诺内容"
+   },
+   {
+    "id": "T006",
+    "role": "content_section",
+    "reason": "人员配置章节标题"
+   },
+   {
+    "id": "T007",
+    "role": "content_section",
+    "reason": "分析章节标题，含图说明"
+   },
+   {
+    "id": "T008",
+    "role": "content_section",
+    "reason": "职责条款正文，含实质内容"
+   },
+   {
+    "id": "T009",
+    "role": "toc_entry",
+    "reason": "评标索引表，评审项对页码"
+   },
+   {
+    "id": "T010",
+    "role": "content_section",
+    "reason": "章节标题，样品接收程序"
+   },
+   {
+    "id": "T011",
+    "role": "content_section",
+    "reason": "分析章节标题，含方法说明"
+   },
+   {
+    "id": "T012",
+    "role": "content_section",
+    "reason": "章节标题，质谱条件参数"
+   },
+   {
+    "id": "T013",
+    "role": "content_section",
+    "reason": "技术参数响应条目，含要求"
+   },
+   {
+    "id": "T014",
+    "role": "content_section",
+    "reason": "章节标题，样本收集方法"
+   },
+   {
+    "id": "T015",
+    "role": "content_section",
+    "reason": "章节标题，样品保密程序"
+   },
+   {
+    "id": "T016",
+    "role": "content_section",
+    "reason": "职责条款正文，含实质内容"
+   },
+   {
+    "id": "T017",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T018",
+    "role": "content_section",
+    "reason": "分析章节标题，含方法说明"
+   },
+   {
+    "id": "T019",
+    "role": "content_section",
+    "reason": "承诺函条款正文，含落款"
+   },
+   {
+    "id": "T020",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T021",
+    "role": "unknown",
+    "reason": "合同业绩条目，非方案内容"
+   },
+   {
+    "id": "T022",
+    "role": "content_section",
+    "reason": "条款正文，样品处置要求"
+   },
+   {
+    "id": "T023",
+    "role": "content_section",
+    "reason": "章节标题，含试剂信息表"
+   },
+   {
+    "id": "T024",
+    "role": "content_section",
+    "reason": "职责条款正文，含实质内容"
+   },
+   {
+    "id": "T025",
+    "role": "content_section",
+    "reason": "分析章节标题，含图说明"
+   },
+   {
+    "id": "T026",
+    "role": "content_section",
+    "reason": "章节标题，统计分析方法"
+   },
+   {
+    "id": "T027",
+    "role": "content_section",
+    "reason": "章节标题，运输保存方案"
+   },
+   {
+    "id": "T028",
+    "role": "content_section",
+    "reason": "分析章节标题，含图说明"
+   },
+   {
+    "id": "T029",
+    "role": "content_section",
+    "reason": "条款正文，核酸管理要求"
+   },
+   {
+    "id": "T030",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T031",
+    "role": "content_section",
+    "reason": "分析章节标题，含图说明"
+   },
+   {
+    "id": "T032",
+    "role": "content_section",
+    "reason": "章节标题，实验方法步骤"
+   },
+   {
+    "id": "T033",
+    "role": "content_section",
+    "reason": "章节标题，含仪器信息表"
+   },
+   {
+    "id": "T034",
+    "role": "content_section",
+    "reason": "分析章节标题，含方法说明"
+   },
+   {
+    "id": "T035",
+    "role": "content_section",
+    "reason": "章节标题，售后服务承诺"
+   },
+   {
+    "id": "T036",
+    "role": "unknown",
+    "reason": "人员凭证行，非方案内容"
+   },
+   {
+    "id": "T037",
+    "role": "content_section",
+    "reason": "章节标题，含测定结果数据"
+   },
+   {
+    "id": "T038",
+    "role": "content_section",
+    "reason": "分析小节标题，GSEA聚类图"
+   },
+   {
+    "id": "T039",
+    "role": "content_section",
+    "reason": "承诺函条款正文"
+   },
+   {
+    "id": "T040",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T041",
+    "role": "content_section",
+    "reason": "承诺函条款正文"
+   },
+   {
+    "id": "T042",
+    "role": "content_section",
+    "reason": "章节标题，样品流转程序"
+   },
+   {
+    "id": "T043",
+    "role": "content_section",
+    "reason": "章节标题，样本收集方法"
+   },
+   {
+    "id": "T044",
+    "role": "unknown",
+    "reason": "署名文章业绩表，非方案内容"
+   },
+   {
+    "id": "T045",
+    "role": "content_section",
+    "reason": "承诺函条款正文"
+   },
+   {
+    "id": "T046",
+    "role": "content_section",
+    "reason": "条款正文，样品保管要求"
+   },
+   {
+    "id": "T047",
+    "role": "content_section",
+    "reason": "章节标题，异议处置措施"
+   },
+   {
+    "id": "T048",
+    "role": "content_section",
+    "reason": "条款正文，样品贮存要求"
+   },
+   {
+    "id": "T049",
+    "role": "unknown",
+    "reason": "资质证书条目，非方案内容"
+   },
+   {
+    "id": "T050",
+    "role": "unknown",
+    "reason": "署名文章业绩表，非方案内容"
+   },
+   {
+    "id": "T051",
+    "role": "content_section",
+    "reason": "条款正文，样品交接要求"
+   },
+   {
+    "id": "T052",
+    "role": "unknown",
+    "reason": "资质证书条目，非方案内容"
+   },
+   {
+    "id": "T053",
+    "role": "content_section",
+    "reason": "章节标题，质量控制方案"
+   },
+   {
+    "id": "T054",
+    "role": "unknown",
+    "reason": "业绩证明表，非方案内容"
+   },
+   {
+    "id": "T055",
+    "role": "content_section",
+    "reason": "条款正文，危险样品保管"
+   },
+   {
+    "id": "T056",
+    "role": "content_section",
+    "reason": "承诺函条款正文"
+   },
+   {
+    "id": "T057",
+    "role": "content_section",
+    "reason": "章节标题，色谱性能指标"
+   },
+   {
+    "id": "T058",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T059",
+    "role": "content_section",
+    "reason": "章节标题，土壤采样方法"
+   },
+   {
+    "id": "T060",
+    "role": "content_section",
+    "reason": "条款正文，样品保管职责"
+   },
+   {
+    "id": "T061",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T062",
+    "role": "content_section",
+    "reason": "章节标题，材料信息"
+   },
+   {
+    "id": "T063",
+    "role": "content_section",
+    "reason": "分析章节标题，含图说明"
+   },
+   {
+    "id": "T064",
+    "role": "content_section",
+    "reason": "章节标题，数据解析方法"
+   },
+   {
+    "id": "T065",
+    "role": "content_section",
+    "reason": "设备配置表，含技术参数"
+   },
+   {
+    "id": "T066",
+    "role": "content_section",
+    "reason": "章节标题，测定方法原理"
+   },
+   {
+    "id": "T067",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T068",
+    "role": "unknown",
+    "reason": "资质证书条目，非方案内容"
+   },
+   {
+    "id": "T069",
+    "role": "content_section",
+    "reason": "技术参数指标章节，含方法"
+   },
+   {
+    "id": "T070",
+    "role": "content_section",
+    "reason": "章节标题，样品制备程序"
+   },
+   {
+    "id": "T071",
+    "role": "content_section",
+    "reason": "章节标题，项目背景目标"
+   },
+   {
+    "id": "T072",
+    "role": "content_section",
+    "reason": "编号条款正文，含实质要求"
+   },
+   {
+    "id": "T073",
+    "role": "content_section",
+    "reason": "章节标题，加急服务方案"
+   },
+   {
+    "id": "T074",
+    "role": "content_section",
+    "reason": "职责条款正文，含实质内容"
+   },
+   {
+    "id": "T075",
+    "role": "content_section",
+    "reason": "条款正文，留样处置要求"
+   },
+   {
+    "id": "T076",
+    "role": "content_section",
+    "reason": "职责条款正文，含实质内容"
+   },
+   {
+    "id": "T077",
+    "role": "content_section",
+    "reason": "分析章节标题，含方法说明"
+   },
+   {
+    "id": "T078",
+    "role": "content_section",
+    "reason": "章节标题，公司实力介绍"
+   }
+  ]
+ },
+ {
+  "labeler": "R2",
+  "labels": [
+   {
+    "id": "T001",
+    "role": "content_section",
+    "reason": "分析模块章节，讲解桑基图用途"
+   },
+   {
+    "id": "T002",
+    "role": "content_section",
+    "reason": "样品管理程序条款，含实质内容"
+   },
+   {
+    "id": "T003",
+    "role": "content_section",
+    "reason": "质谱性能指标说明章节"
+   },
+   {
+    "id": "T004",
+    "role": "content_section",
+    "reason": "样品偏离处理程序条款"
+   },
+   {
+    "id": "T005",
+    "role": "content_section",
+    "reason": "资格承诺函正文，有实质承诺"
+   },
+   {
+    "id": "T006",
+    "role": "content_section",
+    "reason": "项目小组人员配置章节标题"
+   },
+   {
+    "id": "T007",
+    "role": "content_section",
+    "reason": "相关性分析章节标题"
+   },
+   {
+    "id": "T008",
+    "role": "content_section",
+    "reason": "样品中心职责条款"
+   },
+   {
+    "id": "T009",
+    "role": "toc_entry",
+    "reason": "评审项对应页码的索引清单"
+   },
+   {
+    "id": "T010",
+    "role": "content_section",
+    "reason": "样品接收与标识章节"
+   },
+   {
+    "id": "T011",
+    "role": "content_section",
+    "reason": "层次聚类分析章节"
+   },
+   {
+    "id": "T012",
+    "role": "content_section",
+    "reason": "质谱条件技术章节"
+   },
+   {
+    "id": "T013",
+    "role": "content_section",
+    "reason": "技术参数响应表行，属方案内容"
+   },
+   {
+    "id": "T014",
+    "role": "content_section",
+    "reason": "实验方法章节标题"
+   },
+   {
+    "id": "T015",
+    "role": "content_section",
+    "reason": "样品保密章节标题"
+   },
+   {
+    "id": "T016",
+    "role": "content_section",
+    "reason": "样品管理员职责条款"
+   },
+   {
+    "id": "T017",
+    "role": "content_section",
+    "reason": "样品处置程序条款"
+   },
+   {
+    "id": "T018",
+    "role": "content_section",
+    "reason": "亚细胞定位分析章节"
+   },
+   {
+    "id": "T019",
+    "role": "content_section",
+    "reason": "承诺文书条款正文"
+   },
+   {
+    "id": "T020",
+    "role": "content_section",
+    "reason": "样品储存检测程序条款"
+   },
+   {
+    "id": "T021",
+    "role": "unknown",
+    "reason": "合同业绩条目，非方案内容"
+   },
+   {
+    "id": "T022",
+    "role": "content_section",
+    "reason": "样品处置返还程序条款"
+   },
+   {
+    "id": "T023",
+    "role": "content_section",
+    "reason": "试剂材料章节标题"
+   },
+   {
+    "id": "T024",
+    "role": "content_section",
+    "reason": "样品管理职责条款"
+   },
+   {
+    "id": "T025",
+    "role": "content_section",
+    "reason": "相关性和弦图分析章节"
+   },
+   {
+    "id": "T026",
+    "role": "content_section",
+    "reason": "多元统计分析章节"
+   },
+   {
+    "id": "T027",
+    "role": "content_section",
+    "reason": "样本运输保存方案章节"
+   },
+   {
+    "id": "T028",
+    "role": "content_section",
+    "reason": "分类差异火山图分析章节"
+   },
+   {
+    "id": "T029",
+    "role": "content_section",
+    "reason": "样品流转管理条款"
+   },
+   {
+    "id": "T030",
+    "role": "content_section",
+    "reason": "分包样品管理条款"
+   },
+   {
+    "id": "T031",
+    "role": "content_section",
+    "reason": "KEGG富集分析章节标题"
+   },
+   {
+    "id": "T032",
+    "role": "content_section",
+    "reason": "SDS-PAGE实验步骤章节"
+   },
+   {
+    "id": "T033",
+    "role": "content_section",
+    "reason": "仪器设备章节标题"
+   },
+   {
+    "id": "T034",
+    "role": "content_section",
+    "reason": "相关性分析章节标题"
+   },
+   {
+    "id": "T035",
+    "role": "content_section",
+    "reason": "售后服务方案章节"
+   },
+   {
+    "id": "T036",
+    "role": "unknown",
+    "reason": "人员凭证行，岗位加人名"
+   },
+   {
+    "id": "T037",
+    "role": "content_section",
+    "reason": "蛋白浓度测定结果章节"
+   },
+   {
+    "id": "T038",
+    "role": "content_section",
+    "reason": "GSEA聚类分析章节语句"
+   },
+   {
+    "id": "T039",
+    "role": "content_section",
+    "reason": "响应文书条款正文"
+   },
+   {
+    "id": "T040",
+    "role": "content_section",
+    "reason": "受检过程保密程序条款"
+   },
+   {
+    "id": "T041",
+    "role": "content_section",
+    "reason": "响应文书条款正文"
+   },
+   {
+    "id": "T042",
+    "role": "content_section",
+    "reason": "样品流转章节标题"
+   },
+   {
+    "id": "T043",
+    "role": "content_section",
+    "reason": "悬浮细胞取样步骤"
+   },
+   {
+    "id": "T044",
+    "role": "unknown",
+    "reason": "署名文章业绩表"
+   },
+   {
+    "id": "T045",
+    "role": "content_section",
+    "reason": "响应文书条款正文"
+   },
+   {
+    "id": "T046",
+    "role": "content_section",
+    "reason": "在检样品保管条款"
+   },
+   {
+    "id": "T047",
+    "role": "content_section",
+    "reason": "异议处置措施章节"
+   },
+   {
+    "id": "T048",
+    "role": "content_section",
+    "reason": "样品贮存保管条款"
+   },
+   {
+    "id": "T049",
+    "role": "unknown",
+    "reason": "资质证书条目，非章节"
+   },
+   {
+    "id": "T050",
+    "role": "unknown",
+    "reason": "履约能力文章列表，业绩表"
+   },
+   {
+    "id": "T051",
+    "role": "content_section",
+    "reason": "样品交接程序条款"
+   },
+   {
+    "id": "T052",
+    "role": "unknown",
+    "reason": "资质证书条目，非章节"
+   },
+   {
+    "id": "T053",
+    "role": "content_section",
+    "reason": "质量控制章节标题"
+   },
+   {
+    "id": "T054",
+    "role": "unknown",
+    "reason": "合作单位业绩证明表"
+   },
+   {
+    "id": "T055",
+    "role": "content_section",
+    "reason": "危险样品保管条款"
+   },
+   {
+    "id": "T056",
+    "role": "content_section",
+    "reason": "响应文书条款正文"
+   },
+   {
+    "id": "T057",
+    "role": "content_section",
+    "reason": "色谱性能说明章节"
+   },
+   {
+    "id": "T058",
+    "role": "content_section",
+    "reason": "样品检测状态程序条款"
+   },
+   {
+    "id": "T059",
+    "role": "content_section",
+    "reason": "土壤样本采集步骤"
+   },
+   {
+    "id": "T060",
+    "role": "content_section",
+    "reason": "样品保管职责条款"
+   },
+   {
+    "id": "T061",
+    "role": "content_section",
+    "reason": "贵重样品储存条款"
+   },
+   {
+    "id": "T062",
+    "role": "content_section",
+    "reason": "实验材料章节标题"
+   },
+   {
+    "id": "T063",
+    "role": "content_section",
+    "reason": "个性化分析绘图章节"
+   },
+   {
+    "id": "T064",
+    "role": "content_section",
+    "reason": "数据解析章节标题"
+   },
+   {
+    "id": "T065",
+    "role": "content_section",
+    "reason": "仪器设备情况章节，平台参数"
+   },
+   {
+    "id": "T066",
+    "role": "content_section",
+    "reason": "蛋白浓度测定方法章节"
+   },
+   {
+    "id": "T067",
+    "role": "content_section",
+    "reason": "样品储存程序条款"
+   },
+   {
+    "id": "T068",
+    "role": "unknown",
+    "reason": "资质证书条目，非章节"
+   },
+   {
+    "id": "T069",
+    "role": "content_section",
+    "reason": "微生物多样性技术参数章节"
+   },
+   {
+    "id": "T070",
+    "role": "content_section",
+    "reason": "样品的制备章节标题"
+   },
+   {
+    "id": "T071",
+    "role": "content_section",
+    "reason": "项目背景章节标题"
+   },
+   {
+    "id": "T072",
+    "role": "content_section",
+    "reason": "危险样品存放条款"
+   },
+   {
+    "id": "T073",
+    "role": "content_section",
+    "reason": "加急服务方案章节"
+   },
+   {
+    "id": "T074",
+    "role": "content_section",
+    "reason": "技术负责人职责条款"
+   },
+   {
+    "id": "T075",
+    "role": "content_section",
+    "reason": "留样期与处置条款"
+   },
+   {
+    "id": "T076",
+    "role": "content_section",
+    "reason": "检测人员职责条款"
+   },
+   {
+    "id": "T077",
+    "role": "content_section",
+    "reason": "STEM趋势分析章节"
+   },
+   {
+    "id": "T078",
+    "role": "content_section",
+    "reason": "投标人实力介绍章节"
+   }
+  ]
+ },
+ {
+  "labeler": "R3",
+  "labels": [
+   {
+    "id": "T001",
+    "role": "content_section",
+    "reason": "桑基图分析说明，属方案内容"
+   },
+   {
+    "id": "T002",
+    "role": "content_section",
+    "reason": "样品管理程序条款，有实质内容"
+   },
+   {
+    "id": "T003",
+    "role": "content_section",
+    "reason": "质谱性能指标，技术方案内容"
+   },
+   {
+    "id": "T004",
+    "role": "content_section",
+    "reason": "样品偏离处理条款，含实质内容"
+   },
+   {
+    "id": "T005",
+    "role": "content_section",
+    "reason": "资格承诺函正文，格式文书"
+   },
+   {
+    "id": "T006",
+    "role": "content_section",
+    "reason": "项目人员配置章节标题"
+   },
+   {
+    "id": "T007",
+    "role": "content_section",
+    "reason": "相关性分析章节，含说明"
+   },
+   {
+    "id": "T008",
+    "role": "content_section",
+    "reason": "样品中心职责条款正文"
+   },
+   {
+    "id": "T009",
+    "role": "toc_entry",
+    "reason": "评审项对应页码的索引表"
+   },
+   {
+    "id": "T010",
+    "role": "content_section",
+    "reason": "样品接收与标识章节标题"
+   },
+   {
+    "id": "T011",
+    "role": "content_section",
+    "reason": "层次聚类分析章节标题"
+   },
+   {
+    "id": "T012",
+    "role": "content_section",
+    "reason": "质谱条件方法章节"
+   },
+   {
+    "id": "T013",
+    "role": "content_section",
+    "reason": "测序平台要求及响应参数"
+   },
+   {
+    "id": "T014",
+    "role": "content_section",
+    "reason": "实验方法章节标题"
+   },
+   {
+    "id": "T015",
+    "role": "content_section",
+    "reason": "样品保密章节标题"
+   },
+   {
+    "id": "T016",
+    "role": "content_section",
+    "reason": "样品管理员职责条款"
+   },
+   {
+    "id": "T017",
+    "role": "content_section",
+    "reason": "样品处置条款正文"
+   },
+   {
+    "id": "T018",
+    "role": "content_section",
+    "reason": "亚细胞定位分析章节"
+   },
+   {
+    "id": "T019",
+    "role": "content_section",
+    "reason": "承诺函条款正文"
+   },
+   {
+    "id": "T020",
+    "role": "content_section",
+    "reason": "样品储存期限条款"
+   },
+   {
+    "id": "T021",
+    "role": "unknown",
+    "reason": "合同附件标签，无方案信息"
+   },
+   {
+    "id": "T022",
+    "role": "content_section",
+    "reason": "样品返还处置条款正文"
+   },
+   {
+    "id": "T023",
+    "role": "content_section",
+    "reason": "试剂清单章节标题"
+   },
+   {
+    "id": "T024",
+    "role": "content_section",
+    "reason": "样品管理职责条款正文"
+   },
+   {
+    "id": "T025",
+    "role": "content_section",
+    "reason": "和弦图分析章节说明"
+   },
+   {
+    "id": "T026",
+    "role": "content_section",
+    "reason": "多元统计分析章节"
+   },
+   {
+    "id": "T027",
+    "role": "content_section",
+    "reason": "样本运输保存方案章节"
+   },
+   {
+    "id": "T028",
+    "role": "content_section",
+    "reason": "分类火山图分析章节"
+   },
+   {
+    "id": "T029",
+    "role": "content_section",
+    "reason": "样品管理条款正文"
+   },
+   {
+    "id": "T030",
+    "role": "content_section",
+    "reason": "分包样品管理条款"
+   },
+   {
+    "id": "T031",
+    "role": "content_section",
+    "reason": "KEGG富集分析章节"
+   },
+   {
+    "id": "T032",
+    "role": "content_section",
+    "reason": "SDS-PAGE实验方法章节"
+   },
+   {
+    "id": "T033",
+    "role": "content_section",
+    "reason": "仪器清单章节标题"
+   },
+   {
+    "id": "T034",
+    "role": "content_section",
+    "reason": "相关性分析章节"
+   },
+   {
+    "id": "T035",
+    "role": "content_section",
+    "reason": "售后服务方案章节"
+   },
+   {
+    "id": "T036",
+    "role": "unknown",
+    "reason": "人员凭证行（职务+姓名）"
+   },
+   {
+    "id": "T037",
+    "role": "content_section",
+    "reason": "蛋白浓度测定结果章节"
+   },
+   {
+    "id": "T038",
+    "role": "content_section",
+    "reason": "GSEA聚类图分析章节"
+   },
+   {
+    "id": "T039",
+    "role": "content_section",
+    "reason": "声明函条款正文"
+   },
+   {
+    "id": "T040",
+    "role": "content_section",
+    "reason": "样品保密管控条款"
+   },
+   {
+    "id": "T041",
+    "role": "content_section",
+    "reason": "承诺函条款正文"
+   },
+   {
+    "id": "T042",
+    "role": "content_section",
+    "reason": "样品流转章节标题"
+   },
+   {
+    "id": "T043",
+    "role": "content_section",
+    "reason": "悬浮细胞取样方法条款"
+   },
+   {
+    "id": "T044",
+    "role": "unknown",
+    "reason": "署名文章业绩列表"
+   },
+   {
+    "id": "T045",
+    "role": "content_section",
+    "reason": "承诺函条款正文"
+   },
+   {
+    "id": "T046",
+    "role": "content_section",
+    "reason": "样品保管条款正文"
+   },
+   {
+    "id": "T047",
+    "role": "content_section",
+    "reason": "检验异议处置措施章节"
+   },
+   {
+    "id": "T048",
+    "role": "content_section",
+    "reason": "样品贮存条件条款"
+   },
+   {
+    "id": "T049",
+    "role": "unknown",
+    "reason": "资质证书附件，非方案内容"
+   },
+   {
+    "id": "T050",
+    "role": "unknown",
+    "reason": "署名文章业绩列表"
+   },
+   {
+    "id": "T051",
+    "role": "content_section",
+    "reason": "样品交接条款正文"
+   },
+   {
+    "id": "T052",
+    "role": "unknown",
+    "reason": "资质证书附件，非方案内容"
+   },
+   {
+    "id": "T053",
+    "role": "content_section",
+    "reason": "质量控制章节"
+   },
+   {
+    "id": "T054",
+    "role": "unknown",
+    "reason": "合作单位业绩证明材料表"
+   },
+   {
+    "id": "T055",
+    "role": "content_section",
+    "reason": "危险样品保管条款"
+   },
+   {
+    "id": "T056",
+    "role": "content_section",
+    "reason": "承诺函条款正文"
+   },
+   {
+    "id": "T057",
+    "role": "content_section",
+    "reason": "色谱性能指标章节"
+   },
+   {
+    "id": "T058",
+    "role": "content_section",
+    "reason": "样品检测状态条款"
+   },
+   {
+    "id": "T059",
+    "role": "content_section",
+    "reason": "土壤样本取样章节标题"
+   },
+   {
+    "id": "T060",
+    "role": "content_section",
+    "reason": "样品保管职责条款"
+   },
+   {
+    "id": "T061",
+    "role": "content_section",
+    "reason": "贵重样品存放条款"
+   },
+   {
+    "id": "T062",
+    "role": "content_section",
+    "reason": "材料清单章节标题"
+   },
+   {
+    "id": "T063",
+    "role": "content_section",
+    "reason": "个性化分析绘图章节"
+   },
+   {
+    "id": "T064",
+    "role": "content_section",
+    "reason": "数据解析方法章节"
+   },
+   {
+    "id": "T065",
+    "role": "content_section",
+    "reason": "仪器设备技术能力清单"
+   },
+   {
+    "id": "T066",
+    "role": "content_section",
+    "reason": "蛋白浓度测定方法章节"
+   },
+   {
+    "id": "T067",
+    "role": "content_section",
+    "reason": "样品储存标识条款"
+   },
+   {
+    "id": "T068",
+    "role": "unknown",
+    "reason": "资质证书附件，非方案内容"
+   },
+   {
+    "id": "T069",
+    "role": "content_section",
+    "reason": "16S技术参数指标章节"
+   },
+   {
+    "id": "T070",
+    "role": "content_section",
+    "reason": "样品制备章节标题"
+   },
+   {
+    "id": "T071",
+    "role": "content_section",
+    "reason": "项目背景章节标题"
+   },
+   {
+    "id": "T072",
+    "role": "content_section",
+    "reason": "危险样品存放条款"
+   },
+   {
+    "id": "T073",
+    "role": "content_section",
+    "reason": "加急服务方案章节"
+   },
+   {
+    "id": "T074",
+    "role": "content_section",
+    "reason": "技术负责人职责条款"
+   },
+   {
+    "id": "T075",
+    "role": "content_section",
+    "reason": "留样管理条款正文"
+   },
+   {
+    "id": "T076",
+    "role": "content_section",
+    "reason": "检测人员职责条款"
+   },
+   {
+    "id": "T077",
+    "role": "content_section",
+    "reason": "STEM趋势分析章节"
+   },
+   {
+    "id": "T078",
+    "role": "content_section",
+    "reason": "投标人实力介绍章节"
+   }
+  ]
+ }
+]

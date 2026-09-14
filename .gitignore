@@ -9,6 +9,22 @@ __pycache__/
 *.db
 .env
 *.log
+# 写前备份（bid_ai_clean_reg.bak-*.db 等，数量多且是大二进制）
+*.bak*.db
+*.bak-*.db
+
+# 派生物（**不进 Git**）—— 与父级 CLAUDE.md「派生物只写本地」一致。
+# 注意：.gitignore **不支持行尾注释**，注释必须独立成行（实测踩到：写成行尾注释放的规则静默失效）。
+tmp/
+#
+# outputs/ 下 r7 dry-run 的 prompt.md 里是**真实投标正文**，绝不能提交
+outputs/
+#
+# 可断点续跑的批次状态（瞬态、360KB）
+data/ocr_batch_state.json
+
+# tmp_probe/：他人建的 API 探测助手（get.py），不是本项目产物；与 tmp/ 同等待遇，不进 Git
+tmp_probe/
 
 # 系统
 Thumbs.db

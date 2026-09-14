@@ -1,0 +1,62 @@
+[
+ {
+  "query_id": "G01",
+  "dimension": "合同产品金额正例",
+  "query_text": "找50万以上的代谢组合同"
+ },
+ {
+  "query_id": "R0NEW-AMT-01",
+  "dimension": "金额冲突（产品明细 vs 合同总额）",
+  "query_text": "验证产品明细金额达到阈值，而非合同总额（代谢总额80万但代谢明细27万应排除）"
+ },
+ {
+  "query_id": "R0NEW-ALIAS-01",
+  "dimension": "产品别名归一",
+  "query_text": "验证LC+GC、双平台、全谱代谢组归一到「代谢组」"
+ },
+ {
+  "query_id": "R0NEW-NEG-01",
+  "dimension": "金额阈值负例 / 无结果",
+  "query_text": "确认库中确实不存在匹配结果才设置 expected_empty=true（当前为 null）"
+ },
+ {
+  "query_id": "R0NEW-DATE-01",
+  "dimension": "日期条件（**应明确拒绝**）",
+  "query_text": "验证合同签订日期「之后/以来」的包含关系（2024年12月之后、非当日）"
+ },
+ {
+  "query_id": "R0NEW-VENDOR-01",
+  "dimension": "我方供应商范围",
+  "query_text": "正文乙方命中欧易/鹿明时判为我方合同"
+ },
+ {
+  "query_id": "R0NEW-COMP-01",
+  "dimension": "竞品排除",
+  "query_text": "竞品响应或竞品合同不得污染我方结果（华大/吉凯供应商须排除）"
+ },
+ {
+  "query_id": "R0ADD-FINANCE-01",
+  "dimension": "财务社保（**应明确拒绝**）",
+  "query_text": "找响应文件里包含 2025年12月 财务/社保月份的资料"
+ },
+ {
+  "query_id": "R0ADD-INS-01",
+  "dimension": "仪器材料（**应明确拒绝**）",
+  "query_text": "找历史投标里的「高分辨质谱」及其采购合同/发票/照片材料"
+ },
+ {
+  "query_id": "R0ADD-SCHEME-01",
+  "dimension": "售后方案",
+  "query_text": "找历史项目里写过「售后方案」的我方响应文件"
+ },
+ {
+  "query_id": "R0ADD-SCHEME-02",
+  "dimension": "培训方案",
+  "query_text": "找历史项目里写过「培训方案」的我方响应文件"
+ },
+ {
+  "query_id": "R0ADD-SCHEME-05",
+  "dimension": "质量控制方案",
+  "query_text": "找历史项目里写过「质量控制方案」的我方响应文件"
+ }
+]

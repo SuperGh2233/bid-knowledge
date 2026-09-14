@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>标书文库 · 检索实验台</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%231f6f5c'/><text x='16' y='23' font-size='20' text-anchor='middle' fill='%23fff' font-family='serif'>标</text></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand-mark" aria-hidden="true">标</div>
+    <div class="brand-text">
+      <h1>标书文库</h1>
+      <p class="subtitle">从历史投标文件里找回可复用的原话，拼成带出处的方案草稿。</p>
+    </div>
+    <div class="mode"><span></span>只读预览</div>
+  </header>
+
+  <main>
+    <section class="workspace">
+      <nav class="tabs" aria-label="功能切换">
+        <button class="tab active" data-tab="search">01 / 材料定位</button>
+        <button class="tab" data-tab="proposal">02 / 方案生成</button>
+      </nav>
+
+      <div id="search" class="panel active">
+        <div class="panel-head">
+          <p class="section-no">需求一 · 历史材料定位</p>
+          <h2>查一份历史材料在哪</h2>
+          <p>写一句话即可，例如「2024年12月以后、代谢组金额2万元以上的合同」。</p>
+        </div>
+
+        <form id="search-form" class="search-box">
+          <label for="query">检索条件</label>
+          <div class="input-row">
+            <input id="query" name="query" value="2024年12月之后，代谢组服务金额2万元以上的合同" autocomplete="off">
+            <button type="submit">开始定位 <span>→</span></button>
+          </div>
+
+          <!-- 三类材料是**高频入口**（需求方点名的三类），2026-09-14 业务评审后从折叠里提出来直展：
+               它们回答"我要找哪类材料"，与输入框是并列的两种起手式，不该藏起来。 -->
+          <p class="example-group">或按类浏览</p>
+          <div class="module-picker" id="module-picker"></div>
+
+          <details class="cite-list mt-sm">
+            <summary><strong>常用问法示例（点开）</strong></summary>
+
+          <p class="example-group">① 查合同 —— 产品 / 金额 / 日期 / 排除</p>
+          <div class="examples">
+            <button type="button" data-query="2024年12月之后，代谢组服务金额4万元以上的合同">代谢组 · 4万以上 · 2024年12月后</button>
+            <button type="button" data-query="查找5万元以上的单细胞合同">单细胞 · 5万以上</button>
+            <button type="button" data-query="查找1万元以上的蛋白组合同，不要宏基因组">蛋白组 · 排除宏基因组</button>
+            <button type="button" data-query="乙方是欧易的代谢组合同">乙方是欧易</button>
+          </div>
+
+          <p class="example-group">② 财务社保 / 仪器材料 —— 哪些文件里有什么</p>
+          <div class="examples">
+            <button type="button" data-query="哪些响应文件包含2025年的社保">2025年的社保</button>
+            <button type="button" data-query="找仪器设备清单">仪器设备清单</button>
+          </div>
+
+          <p class="example-group">③ 历史方案 —— 哪个文件写过</p>
+          <div class="examples">
+            <button type="button" data-query="以前哪个文件写过售后服务方案">售后服务方案</button>
+            <button type="button" data-query="哪些文件写过质量控制方案和保密方案">质量控制 + 保密</button>
+          </div>
+          </details>
+        </form>
+        <div id="search-result" class="result-area empty-state">
+          <span class="folio">01</span>
+          <p>输入条件，点「开始定位」。</p>
+        </div>
+      </div>
+
+      <div id="proposal" class="panel">
+        <div class="panel-head">
+          <p class="section-no">需求二 · 方案生成</p>
+          <h2>生成一份方案草稿</h2>
+          <p>说方案名与必须包含的内容即可，每段带出处、可逐句回溯。</p>
+        </div>
+
+        <form id="proposal-form" class="search-box">
+          <label for="proposal-query">要什么方案</label>
+          <div class="input-row">
+            <input id="proposal-query" name="proposal-query" value="售后服务方案，必须包含服务周期和应急预案" autocomplete="off">
+            <button type="submit">模型起草方案 <span>→</span></button>
+          </div>
+
+          <!-- 方案模块入口直展（2026-09-14 业务评审）：业务同事先"选一类方案"再补内容，
+               这是需求二的第一步，不该藏在折叠里。点一下只填入输入框，不自动生成。 -->
+          <p class="example-group">选择方案类型（点一下填进输入框）</p>
+          <div class="examples" id="proposal-picker"></div>
+        </form>
+        <div id="gen-result" class="result-area empty-state">
+          <span class="folio">02</span>
+          <p>输入方案名或内容，点「模型起草方案」。</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+  <footer>
+    <span id="footer-stats">正在读取…</span>
+    <span class="foot-note" id="footer-note"></span>
+  </footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

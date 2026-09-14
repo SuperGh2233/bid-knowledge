@@ -1,0 +1,667 @@
+[
+ {
+  "document_id": "01921f7d083cd7e7d90a0155c84648ea74d605b1c2ff812b90922388036062ef",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025050036-真核有参转录组测序-杭州医学院-100000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "03e444eb9ddd2f4df0fa46b5cc419498cda4a3d5b0724cada4a5bb2daa307d97",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025030870-二代宏基因组测序（QDOE）-中国人民解放军海军军医大学第一附属医院-732000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "06a8ae9f16d1c9a6847b54758ea52c85a3b27d41f0b666d155f6a8315827d551",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025111909-10X单细胞ATAC测序-北京中医药大学-350000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "08656b629f2fc97b3119ccbfd0bf95200eecfad31e90b0f334a7796ced7aad79",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025073201-Deep高深度血液蛋白质组-青海大学-767833.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "08ad52e36ac6a9bcd33d5ae91a69d1e40d6ff09c1d34aebecb445eb99b865220",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024090883-多组学检测（非范本合同）-郑州市中心医院-110,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "0b41a5f76c2d5c15fc59d8a24f4f0922bab2a12211f2abc5be9639210fddcc3d",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2023040198-MobiNova 单细胞转录组测序-杭州市第一人民医院-300,000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "1b022182b9dc05d3083568cc1b7c9e26c5c0f79a6a6486e20cac6ad43710cabe",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024051590-10x Genomics 空间转录组测序-中国热带农业科学院橡胶研究所-204,600.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "1f1c23ac54de3b4c4cdb0511e26f4b7c4b6c8e0f8bcba41adc99060470d8c650",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025120576-Olink 蛋白质组（S）-宜兴市人民医院-158900.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "21f91a72454a9b04ae596d7733f70461a77f3ffdafe28c8ccbac89f66b5cf857",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024110139-LC-MS-MS精准靶向检测-中长链脂肪酸-中国农业科学院北京畜牧兽医研究所-30,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "22416425eb6fad8c64a447c166634b5d37d48edee95ffc483d0ac18cec97777a",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2023121012-二代宏基因组测序-广东省中医院-144000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "228fcfb03de22005d1636b863a62f7387641305abfe3e6447f314c4412de3ec8",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024082452-LC-MS-MS脂质代谢组检测-湖南中医药大学第一附属医院-55,900.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "24a03424cdf17d940f4b10a82e43a1f632aa45932a198d094760771e3c391954",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024114080-多组学检测（非范本合同）-中国中医科学院西苑医院-369000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "299d550d82be614a9a65c78624d7f311276b98ec7514516bf7dfc75e0b0113de",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024102398-MobiNova 单细胞转录组测序(SP版)-江南大学-785,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "2a19959737ca7b4acb8eaf1c9bae96890ff35555fc2000c447f296db29e880c7",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024112138-10x Genomics 单细胞转录组测序-上海市皮肤病医院-95000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "2b948e28f906b6271b1b4e5abd7f478af2386b902a85a140dfca2a8486989e94",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2026072954-10x Genomics 单细胞转录组测序（GEM-X，3v4）-浙江大学-43000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "2d22bb3c6ea71677376494abde0cffd26700378178205d357db4d428b032b397",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024111007-多组学检测（非范本合同）-中国人民解放军陆军军医大学第二附属医院-413,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "2dd31bda134c3f6c156ffc8f1aaada6836b6bfef35855adea04d63af5250597d",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025073338-空间代谢组-20um-双离子-容大生物工程(长春)有限公司-352000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "3189ed730dafc843fe8b301f9b2e1f983eea20a369ba60bb5962c1e5f3476487",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YLM2024111311-Deep高深度血液蛋白质组-黑龙江中医药大学-144,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "31c42aa7a7488968d572714b04e62df18a4bbef9983b8ec3ee079e3239d0fda0",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024062062-Olink蛋白质组-苏州大学-18,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "3283ee04c1e05c419512b3ce4af43ec0a2c68dd0451006bc7b18ff2ffd77b657",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025072998-10×Xenium 组织原位分析5000（冰冻样本）-上海交通大学医学院附属新华医院-99000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "32e57b5e1eaab353276460ba6fad0b4928d9f3eb40c6ab7b4e2b69ba0b0e5679",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025110621-10x Genomics 单细胞及免疫组库测序（GEM-X，SP）-福建省肿瘤医院-124000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "340230171bdd505d001fb530f78a9e295b8bb1c030d43db9c0c6d98b9ad2ef58",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025011145-LC-MS-MS精准靶向检测-短链脂肪酸-12-北京诚鑫康润医疗设备有限公司-21,870.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "346b621c69051306e88d517a6de2e2c8bca85bcc6bc9aa28df938e25cd70da7c",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025053088-10×Xenium 组织原位分析5000（冰冻样本）-山东第一医科大学第一附属医院-1017600.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "37657afdfdc45b2221e6a9266b04abe3a405e840d693f6420c0934b23cf13c7a",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "·YOE2026050397-多组学检测（非范本合同）-河南科技大学-2710000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "37bfddeac428afaccfab4272057022ca4cf773ab548db5e4179bc2be7dd64af3",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025010660-10x Genomics 单细胞转录组测序 （标准分析版）-广州医科大学附属妇女儿童医疗中心-2370000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "385911ab4ab7159f03cba0aae7e4b0e08deeabd74fbad91d8f59f9a42dd2eb21",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025120208-MobiCube 单细胞及免疫组库测序-无锡市人民医院-48000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "3a75339e7538ad06df3e0876a514f7205aad6c37bf1acde3023a167e15332011",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024042453-10x Genomics 空间转录组测序-北京医院-290,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "3e9712cec61ab129f9c489144c284e9b96ec0d8994f514e27475d5aae3d2cdb9",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025010758-Pro DIA定量蛋白质组-昆明理工大学-551,700.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "456695ad35b2d686c040596ef565020fe8e3ad59a977dc96f198b043e09d8b9d",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025091990-MobiCube 单细胞及免疫组库测序-武汉格信生物科技有限公司-1680000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "48aac7daa1ff7251f8123f2c7e17fe8a1b20cc21a2eee7b8edb3d288c888b65f",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025080195-Pro DIA定量蛋白质组-润晞科技（北京）有限公司-168000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "49bb85abfe012c4e5abcb0c8f0583ff1f12f8ce866a8a89d217c1d0f2320fe52",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025114046-Deep高深度血液蛋白质组（Astral）-浙江大学-26400.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "4bd9aa4a566698a74a490ac0ed73ca831afc6af7a4ea0f629444a86cda96bf79",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024040057-LC-MS-MS精准靶向检测-氨基酸（100）-哈尔滨医科大学附属第一医院-70,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "4faa986d0c5a09b631398e2c20177ba4b27bce6122723bbd4ec19209646fd15d",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025103717-Level One Pro 定量蛋白质组（富集）-安徽医科大学-882000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "50756b6ea251d95e5171846207fd9370c707795070b682aee3a1a98d3bc043ec",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2023102479-10x Genomics 单细胞转录组测序-浙江大学医学院附属第一医院-122,500.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "51035c3cb0ac4804ae502c715ef19826f8c8d5837f57dd5bddd9235a00d8762d",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2025093193-真核有参转录组测序-中国人民解放军陆军军医大学第一附属医院-176320.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "54b4edf3af7482ba8938cc183179895357d5a7c7705a8952e47935265153d1d8",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025103470-MobiCube 单细胞及免疫组库测序-浙江大学-29500.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "5651f2d984c192de25fd6e792ca718545610babc5151be8b6bc6710eb0f6d8b7",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YLM2023102608-DIA定量蛋白质组检测-浙江大学医学院附属第一医院-48,380.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "5c91d691aacaa00d69cdb9ebcf5e3e0b59b7a824005034c15a686eb2c7420ecd",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YLM2024100053-LC-MS-MS全谱代谢组检测-浙江省肿瘤医院-299,460.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "5d5e8434730b5632cbcdf56b84836fabe2952b1402d5497c6dbfc682d5fdab02",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024114337-10x Genomics 空间转录组测序（V1.0）-苏州大学附属第一医院-49,900.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "5fb73914a03eca9a229da3c4df43a5c26a88917dea064719d319fbdb9b5f14ea",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024012006-全基因组重测序（人类）-中国人民解放军海军军医大学第三附属医院-186,360.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "60038ae56dc50b546322e3c1e28201f849827532a51e524d2eb070ccdf382ad9",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025021700-LC-MS-MS全谱代谢组检测-博淼生物科技（北京）有限公司-165,000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "612ecf6728b1ba631a6a37197cdb7944ac7bdc746488b6b5f9f8a2d1ce1fd7f6",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2026011365-全基因组重测序（群体）-广西大学-194400.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "65b7a9d38c33cb686869e6b826450b0ff8157bdbb3e89d5b4e610b6499e5ace0",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024041785-二代宏基因组测序-中国福利会国际和平妇幼保健院-240,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "672c334a2ba4f37da1812ece1ba5a33ca50cfac5367e4dd7c991863766b0a913",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025112231-LC-MS-MS精准靶向检测-氨基酸（100）-中国中医科学院中医基础理论研究所-39000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "67b1886d2eb788e544ddeb0180c5077bda5475882de2840266af8f46c4307f42",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025093392-10x Genomics 单细胞及免疫组库测序（GEM-X，SP）-军事医学研究院-35460.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "6b9327722b21b81608258c9c434d48d3bca813b82ff5cfa6f0c760bf82d04ed8",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024031874-全基因组重测序（人类）-广州预见科技有限公司-42,000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "705d01f6f7ca0d3f52fb0d189e55f344510a890861dfb353b1547ba4ba7c0465",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025104010-MobiCube 单细胞及免疫组库测序-上海瑜阅生物医药科技有限公司-24549.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "7350fd2e6e2cc05741436ef5abae48b0ad3f916c6834ef690ba2e2b71ec62beb",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024120387-LC-MS-MS脂质代谢组检测-博淼生物科技（北京）有限公司-175,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "79904f9875b94209e09f7c7daacf8d400da6c090f0bf05d3ed82bc16ecffedfa",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2026063168-10x Genomics 单细胞转录组测序（GEM-X，3v4）-上海中医药大学附属龙华医院-99000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "7d65f0c447808c49d42ba414b2068d66896f5ddc8ba770c3c14188d49cf8512f",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024101775-MobiNova 单细胞转录组测序(SP版)-广东省科学院动物研究所-38,500.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "7dc50f3f66d60566c908c85b10add389cf00c4c0a1490ec2d5032d0e682f6607",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2023101318-二代宏基因组测序-台州学院-206,400.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "8238b48465386868c9d72721d6b8bfecfe4ccfd6d85290eab8b6ce3d65ed2379",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025051447-全基因组重测序（个体）-中国疾病预防控制中心寄生虫病预防控制所（国家热带病研究中心）-48000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "840f5852923d299ca1b2fdb46d10bb857824098f4b5f7b3d65429d3103fc5c37",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2023111111-10x Genomics 空间转录组测序-浙江大学医学院附属妇产科医院-80,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "89a9dbd9925ab9715e1862c543a94e0e77c1b64ee4b76dd685d5119b0312ab2e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025113750-10x Genomics 单细胞及免疫组库测序（GEM-X，SP）-华中科技大学同济医学院附属同济医院-52100.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "8b98fe984e9c77e2d4c96304f737a0270ae797bb564ba13f16cdb49e16a0975a",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024113539-多组学检测（非范本合同）-江苏农牧科技职业学院-180,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "9325e3df33e0fd31bdfaea20d5513bcfeab1846b89b676914546778791b4823e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2025020832-10x Genomics 单细胞核测序-上海市闵行区中心医院-84,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "98569f538222a1fab5bcb1e78958c511a0b19aa2c351c2892081b5dfd3bc10e5",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2024061256-10x Genomics 单细胞转录组测序-昆明理工大学-40,500.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "99d53a4f6c21404a8ff3641a13bb17a885fbff239d0e9a1377d85abd04694fe2",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2024030220-有参转录组测序-上海感染与免疫科技创新中心-489,600.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "9cca5ceb99ced67dde4e5cc9976001c220f13e2cdd98fdd3982c7d1d00d0d5d5",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025080209-LC-MS-MS全谱代谢组检测-合肥市第四人民医院-63200.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "9ccb6c9c263ea1248298ca23d3514ef0df3abdf9307c6514b8e3d00e359733c6",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025043466-二代宏基因组测序（QDSA）-华中科技大学同济医学院附属同济医院-200000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "a6470550386ad62f82b693f51d71f49bfc30fe487b4253d951137b29843f8c9e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025113110-Olink 蛋白质组（S）-山西医科大学-86000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "ac3be74a0b8d1f7dfea68f4cb9e08c0f66bb824fabc67f4c39aaa96f8f4e07d6",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "大金额 ZOE2025115331-10x Genomics 单细胞及免疫组库测序（GEM-X，SP）-华中科技大学同济医学院附属同济医院-212000.00.",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "b07901e3d16e1beb448809de02f687ac2476fb299b28f0be85c3d3fc992604d2",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024112104-BD Rhapsody 单细胞及免疫组库测序-陆军军医大学-180,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "b22bd8b21ee819e62ff9b11e0a126af9f532fd0c4f343de6aa173cac745ab280",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YLM2023101785-DIA定量蛋白质组检测-浙江大学医学院附属第一医院-49,119.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "b28e937b4a03eaa1be58c1978c2bf61c40a91b3f49d2b0320c9d95f38a7afcf4",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2026013930-Plus DIA定量蛋白质组（Astral）-江苏省苏北人民医院-30000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "b2bbb5507121c6a92496938531e5cd36ccdf46688e83dfe6ffdcce4e7871fe9a",
+  "content_format": "native_text",
+  "role": "our_response",
+  "file": "单细胞-技术开发项目委托合同-欧易.docx",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "b2fb6381ce486848e9914ed8d67e24ac33b307f991cf44471b070f612dbea668",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025102421-10x Genomics 单细胞及免疫组库测序（GEM-X，SP）-微滔生物科技（上海）有限公司-72000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "b36524d4b054b8c07d7c1c3d28ff936b5ef1a7074030d17994a91a1a7309e16e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2026012108-真核有参转录组测序-广东省人民医院-245000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "b91b1f6852ccbe74ede904729fd27314d42752918a47285a36d089a4cdfc8fe0",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2025102904-动植物基因组-全外显子捕获测序（非肿瘤样本）-哈尔滨医科大学附属第二医院-180000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "bca12cd96ec761b45721d856ab3f1539803cb2d22c34faf4e8bfd3c512b4c35d",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024051662-LC-MS-MS精准靶向代谢-新物质-青海大学-44,300.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "bf00af1dae642ebf8a2613a33f8e48ed4f00e66547459a4bfbf0b45b4f6712d8",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2023102481-10x Genomics 空间转录组测序-浙江大学医学院附属第一医院-189,600.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "bf33e599596a2df90a0b2ed5adb6791644172e32232a36e4e906394d94580557",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024032225浙江省肿瘤医院（浙江省癌症中心）-袁莉-潘利斌-LC-MS-MS全谱代谢组检测-浙江省肿瘤医院-3,380,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "bf35fabadc4f0e7ae6ab9bf5441d2b97f59460060a5114f7748a3f43c3254d5c",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024121512-真核有参转录组测序-中国农业大学-195,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "c01483c5aaf5187c402610f63fd4226051c0b8f41b1daf09b9f949f0b4441ff6",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024123820-10x Genomics 单细胞转录组测序-兰州大学第二医院-420000.00 （30样本）.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "c08d2f5f6516cc1ed67dbb8beaec35c9545920c60a77c8c0dfe7dcc57961965c",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2023090218-10x Genomics 空间转录组测序-东莞市妇幼保健院-35,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "c1af8e6335e03a96ef2fa808a947fbf0a9fb45b7222f280c141b75681589582e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024091175-多组学检测（非范本合同）-海口市中医医院-270,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "c3977c223ddb88a0e135c23ecdeb2d9ae2d738ff312d462506320f2daf1d69ad",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024120687-10x Genomics 单细胞核转录组测序 (SP版)-江苏省人民医院（南京医科大学第一附属医院）-48,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "c7f5f98ea04b9374c5d156cc62f7a1019035fc56def7811861cb4116d142827b",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025020322-Olink蛋白质组-北京中医药大学东直门医院-105,600.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "ccd35d74ba8c7cf0324a5fb392f5b761bbcbf3253d4bc5eba74af90d0d354a75",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2025071852-Pro DIA定量蛋白质组-温州医科大学附属第一医院-10990.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "d2d84da5c2b068f9047f5ed7600f56d8e813ec28d683f25f01a126f180337155",
+  "content_format": "native_text",
+  "role": "our_response",
+  "file": "多组学-技术开发项目委托合同-鹿明9.76万.docx",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "d302e0ee610c3e1f2b776dc22833e606aa1f788a78308d0e9677c66c4a094a31",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025092589-10X单细胞ATAC测序-温州医科大学-76000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "d4decf7eece1e396357eaf0faa8614a40f266590a06d25a8bacd6443ee2f9698",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025103608-MobiCube 单细胞及免疫组库测序-安徽医科大学-90000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "d6f38825fb9a65592f9c711a2d0e45c8fab8a75b94d2d4993b0fc2416708e2ad",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025112531-10x Genomics 单细胞及免疫组库测序(SP版)-新景智源生物科技（苏州）有限公司-18000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "d8357724fc4079a9ae0844b056757d834789d57cf5959188d5531acadbc48c9e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024101421-多组学检测（非范本合同）-烟台毓璜顶医院-610,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "d85f341ece8204fb1130bbce9d4615ac45d4022fe430885097826ed66172b589",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024112509-真核有参转录组测序-广州中医药大学深圳医院（福田）-50,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "da905d577d1f36f40fe3cd73efdb8c207fc4a642d3579f3b57e8f389e78e089f",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2023100471-Illumina ASA SNP芯片-新乡医学院-308,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "daf8e161d97d785d22a92c06c7d059379642b149e6ec2c0839bca617cd21654a",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025063700-全基因组重测序（人类）-博淼生物科技（北京）有限公司-1085000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "e5328d0265b7ae47bc563cc9b73ca6dcd4f05ce673d45a79c1790742f5638238",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2023081140-暨南大学-罗钧洪-416,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "ed6d242b7a67f82b6ccd966d44158f06d17e3e068fd0a19c5dba5667ad3d5182",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2026013103-10x Genomics 单细胞及免疫组库测序（GEM-X，SP）-河北菲尼斯生物技术有限公司-1068000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "eda0bd78b8e5d408f8b3eb4e110248017b8e453128d9c6a4e66de840672a50ca",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024100273-全基因组重测序（个体）-浙江大学-100,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "f121a575d36128980cb7ab093111c9b8f601c6db0aa81ebdb47143eaa0eed76e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YLM2023092182-中药代谢检测及分析-上海中医药大学-88,000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "f40b57ec0d719067c03e8a1a2773d76a87a5e1a16e75793e50b34e36c121fed9",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2023100490-Illumina ASA SNP芯片-四川大学华西第四医院-3,990,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "f46e10992135f2b1626b072b31968fe0c45f4e5d23f427ab149d31f3b8368787",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024113147-10x Genomics聽绌洪棿杞綍缁勬祴搴忥紙V1.0锛_鏄嗘槑鐞嗗伐澶у-140,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "f9dd8bc60771bda095203d19d8b55040358c391c7e004b47c2d14f1336ca2d55",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2025110610-10x Genomics 单细胞转录组测序（GEM-X，SP）-澳门科技大学-380000.00(1).pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "fb3cd32c97e976b2fe46f9dfde6e964c59f640e326e9f388ac2c5f45f939b536",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2026010800-10x Genomics 单细胞转录组测序（GEM-X）-四川大学华西医院-292000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ }
+]

@@ -1,0 +1,42 @@
+[
+ {
+  "document_id": "00680f39b54f4e2829cbff1a351d4ae419d1a4af62af0d6e1024c04aac4291a9",
+  "file": "dzfp_YOE2025050036_25312000000405336648_杭州医学院_30,000.00_PDF (1).pdf",
+  "chars": 400,
+  "pages_ok": 1,
+  "pages_total": 1,
+  "sha": "de76b0c7b26f66be"
+ },
+ {
+  "document_id": "01921f7d083cd7e7d90a0155c84648ea74d605b1c2ff812b90922388036062ef",
+  "file": "YOE2025050036-真核有参转录组测序-杭州医学院-100000.00.pdf",
+  "chars": 7486,
+  "pages_ok": 11,
+  "pages_total": 11,
+  "sha": "38ab9b88215ee342"
+ },
+ {
+  "document_id": "03e444eb9ddd2f4df0fa46b5cc419498cda4a3d5b0724cada4a5bb2daa307d97",
+  "file": "YOE2025030870-二代宏基因组测序（QDOE）-中国人民解放军海军军医大学第一附属医院-732000.00.pdf",
+  "chars": 7311,
+  "pages_ok": 14,
+  "pages_total": 14,
+  "sha": "cc87293008fa991f"
+ },
+ {
+  "document_id": "06a8ae9f16d1c9a6847b54758ea52c85a3b27d41f0b666d155f6a8315827d551",
+  "file": "YOE2025111909-10X单细胞ATAC测序-北京中医药大学-350000.00(1).pdf",
+  "chars": 2566,
+  "pages_ok": 4,
+  "pages_total": 4,
+  "sha": "8a94c50c691c8598"
+ },
+ {
+  "document_id": "08656b629f2fc97b3119ccbfd0bf95200eecfad31e90b0f334a7796ced7aad79",
+  "file": "ZOE2025073201-Deep高深度血液蛋白质组-青海大学-767833.00.pdf",
+  "chars": 6967,
+  "pages_ok": 12,
+  "pages_total": 12,
+  "sha": "8e86934b09a38f29"
+ }
+]

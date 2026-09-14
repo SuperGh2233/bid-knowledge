@@ -1,0 +1,48 @@
+{
+ "per_query": [
+  {
+   "query": "G01",
+   "relevant_queryable": 3,
+   "retrieved": 2,
+   "recall": 0.6667,
+   "irrelevant_queryable": 6,
+   "false_positives": 0,
+   "missed": [
+    "YOE2025010758"
+   ],
+   "fp_contracts": []
+  },
+  {
+   "query": "G03",
+   "relevant_queryable": 14,
+   "retrieved": 13,
+   "recall": 0.9286,
+   "irrelevant_queryable": 0,
+   "false_positives": 0,
+   "missed": [
+    "YOE2025010758"
+   ],
+   "fp_contracts": []
+  },
+  {
+   "query": "G05",
+   "relevant_queryable": 9,
+   "retrieved": 9,
+   "recall": 1.0,
+   "irrelevant_queryable": 5,
+   "false_positives": 0,
+   "missed": [],
+   "fp_contracts": []
+  },
+  {
+   "query": "G06",
+   "note": "金标准记录均不在可检索集 → 无法判定"
+  }
+ ],
+ "summary": {
+  "relevant": 26,
+  "retrieved": 24,
+  "false_positives": 0,
+  "recall": 0.9231
+ }
+}

@@ -1,0 +1,337 @@
+/* ============================================================
+   标书文库 · 检索实验台
+   视觉语言：档案纸 + 低饱和青绿（2026-09-14 用户选定「典雅暖沙」方向）
+   —— 强调：单强调色（深青绿）+ 暖沙纸底 + 宋体标题
+   —— 收紧：锐利圆角体系、阴影 tint 到背景、发丝分隔
+   —— 补全：完整暗色模式、focus-visible 焦点环、文字对比硬化
+   信息层级（2026-09-14 业务评审后）：单列工作台（原左侧数据栏已移除，数字降页脚）；
+     两个页签各自「输入框 + 直展的功能入口 + 结果」，辅助内容才折叠。
+   ※ 护栏钉死的类名不得改名：draft-para / cite-ref / draft-cite / cite-list；
+     以及 8 个渲染函数名（见 tests/test_frontend_syntax.py）。
+   ============================================================ */
+
+:root {
+  /* —— 亮色（典雅暖沙：档案纸底 + 深青绿强调）——
+     · --sheet 近白卡片，与 --paper 拉开层次
+     · --seal 深青绿：页面唯一强调色（按钮底 / 品牌标 / 深色标题文字）
+     · 文字对比足够：正文墨褐、辅助文字暖沙灰 */
+  --ink: #26231c;            /* 正文：深暖褐 */
+  --muted: #6f6a5e;          /* 次级文字：暖沙灰 */
+  --paper: #f5f1e8;          /* 页面底：暖沙 */
+  --sheet: #fffdf7;          /* 卡片/输入底：近白 */
+  --line: #ddd5c5;           /* 发丝线/描边：亚麻 */
+  --seal: #1f6f5c;           /* 强调：深青绿（白字按钮对比 5.5:1） */
+  --green: #2e7d66;          /* 语义命中色（hit/ok，非装饰） */
+  --amber: #8a6116;          /* 语义警示色（conflict/warning，非装饰） */
+  --on-dark: #f2efe4;        /* 深底（页眉/页脚/矩阵卡）上的文字色：暖沙白 */
+  --shadow: 0 1px 2px rgba(38, 35, 28, .08), 0 10px 28px rgba(38, 35, 28, .12);
+  --shadow-sm: 0 1px 2px rgba(38, 35, 28, .08);
+  --focus: 0 0 0 3px rgba(31, 111, 92, .25);
+  /* 圆角体系：整页锐利（档案气质）。按钮 2px、卡片 2px、输入 2px。 */
+  --r-sm: 2px;
+  --r-md: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* —— 暗色（档案室夜景：深褐底 + 沙色文字 + 青绿强调）—— */
+    --ink: #e8e3d6;          /* 正文：暖沙 */
+    --muted: #98937f;        /* 次级文字：沙灰 */
+    --paper: #1d1a15;        /* 页面底：深褐 */
+    --sheet: #262219;        /* 卡片/输入底：稍亮深褐 */
+    --line: #3a3429;         /* 发丝线 */
+    --seal: #4da383;         /* 强调：青绿（暗底亮青绿） */
+    --green: #6fae92;        /* 语义命中 */
+    --amber: #c9a45c;        /* 语义警示 */
+    --on-dark: #ece7d8;        /* 深底上的文字色（暗色下略柔） */
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px rgba(0, 0, 0, .5);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --focus: 0 0 0 3px rgba(77, 163, 131, .4);
+  }
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body {
+  margin: 0; color: var(--ink); background: var(--paper);
+  font-family: "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+  text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+
+/* —— 页眉：单一品牌条（2026-09-14 用户指出旧版「贴纸墙」太杂：eyebrow/h1 重复加
+        衬线大字加旋转徽标加绿点长句。现收敛为：静止徽标 + 无衬线标题 + 一行副题 + 只读 pill）—— */
+.masthead {
+  display: grid; grid-template-columns: 52px 1fr auto; gap: 20px;
+  align-items: center; padding: 26px clamp(24px, 6vw, 88px); color: var(--on-dark);
+  background: var(--ink);
+}
+.brand-mark {
+  width: 52px; height: 52px; display: grid; place-items: center;
+  border: 1px solid var(--seal); color: var(--seal);
+  font: 700 28px/1 "STSong", serif;
+  background: color-mix(in srgb, var(--seal) 14%, transparent);
+}
+.brand-text h1 {
+  margin: 0; font: 700 clamp(24px, 3vw, 34px)/1.15 "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  letter-spacing: .02em; color: var(--on-dark);
+}
+.brand-text .subtitle {
+  margin: 5px 0 0; color: var(--muted); font-size: 13px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.section-no {
+  margin: 0 0 7px; letter-spacing: .12em; text-transform: uppercase;
+  font: 700 11px/1.5 Bahnschrift, "Segoe UI", sans-serif; color: var(--seal);
+}
+.mode {
+  align-self: center; border: 1px solid color-mix(in srgb, var(--on-dark) 26%, transparent);
+  padding: 6px 12px; font-size: 12px; color: var(--on-dark); white-space: nowrap;
+  opacity: .9;
+}
+.mode span {
+  display: inline-block; width: 7px; height: 7px; margin-right: 8px;
+  border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 22%, transparent);
+}
+
+/* —— 布局：单列工作台（2026-09-14 业务评审：左侧数据栏占五分之一屏却不帮用户完成任务，
+       已移除；数据规模降为页脚一行）—— */
+main {
+  display: block;
+  max-width: 1180px; margin: 0 auto; min-height: calc(100vh - 152px);
+}
+/* 工作台限宽居中：一屏之内读完，不要横跨整个宽屏 */
+
+.workspace {
+  min-width: 0; padding: 30px clamp(22px, 5vw, 72px) 60px;
+}
+
+/* —— 间隔工具类（取代零散内联 margin，保持间隔可审计）—— */
+.mt-lg { margin-top: 26px; }
+.mt-md { margin-top: 16px; }
+.mt-sm { margin-top: 10px; }
+
+/* —— 页签 —— */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); }
+.tab {
+  border: 0; background: transparent; color: var(--muted);
+  padding: 12px 18px; border-bottom: 2px solid transparent; font-weight: 600;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--ink); border-color: var(--seal); }
+.panel { display: none; }
+.panel.active { display: block; animation: rise .28s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.panel-head { padding: 34px 0 20px; max-width: 820px; }
+.panel-head h2 { margin: 0; font: 600 clamp(24px, 3vw, 34px)/1.25 "STSong", "SimSun", serif; }
+.panel-head > p:last-child { color: var(--muted); line-height: 1.7; }
+
+/* —— 搜索 / 表单容器 —— */
+.search-box { padding: 22px; background: var(--sheet); border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+.search-box label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; }
+.input-row { display: flex; gap: 10px; }
+input, textarea {
+  width: 100%; min-width: 0; border: 1px solid var(--line);
+  background: var(--sheet); color: var(--ink); padding: 13px 14px;
+  outline: none; font-size: 15px;
+}
+input:focus-visible, textarea:focus-visible {
+  border-color: var(--seal); box-shadow: var(--focus);
+}
+.input-row button {
+  flex: none; border: 0; color: #fff; background: var(--seal);
+  padding: 0 20px; font-weight: 700;
+}
+.input-row button:hover { background: color-mix(in srgb, var(--seal) 88%, #000); }
+.input-row button span { margin-left: 12px; }
+
+.example-group {
+  margin: 18px 0 6px; font: 700 11px/1.5 Bahnschrift, "Segoe UI", sans-serif;
+  letter-spacing: .1em; color: var(--seal);
+}
+.example-group:first-of-type { margin-top: 20px; }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.examples button {
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+  padding: 6px 10px; font-size: 12px; border-radius: var(--r-sm);
+}
+.examples button:hover { color: var(--seal); border-color: var(--seal); }
+
+/* —— 方案模块入口卡（需求二）：两列网格,比一行 button 更整齐 —— */
+#proposal-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+#proposal-picker button {
+  border: 1px solid var(--line); background: transparent; color: var(--ink);
+  padding: 8px 10px; font-size: 13px; text-align: left; border-radius: var(--r-sm);
+}
+#proposal-picker button:hover { color: var(--seal); border-color: var(--seal); }
+
+/* —— 结果区 —— */
+.result-area { margin-top: 20px; }
+.empty-state {
+  min-height: 170px; display: grid; place-items: center; position: relative;
+  border: 1.5px dashed var(--line); color: var(--muted);
+  background: color-mix(in srgb, var(--sheet) 55%, transparent); text-align: center;
+}
+.folio {
+  position: absolute; right: 16px; top: 12px; color: var(--muted);
+  font: 700 12px Bahnschrift, "Segoe UI", sans-serif; opacity: .8;
+}
+.summary { display: flex; justify-content: space-between; gap: 20px; align-items: baseline; margin: 22px 0 10px; }
+.summary h3 { margin: 0; font: 600 21px "STSong", "SimSun", serif; }
+.summary p { color: var(--muted); font-size: 12px; }
+
+/* —— 边界说明（诚实性提示：保留醒目但不过度 —— 用警示色而非装饰色）—— */
+.boundary-note {
+  margin: 0 0 14px; padding: 12px 15px;
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
+  border-left: 3px solid var(--amber); color: var(--muted);
+  font-size: 13px; line-height: 1.7;
+}
+.excerpt {
+  margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.6;
+  border-left: 2px solid var(--line); padding-left: 7px;
+}
+
+/* —— 结果卡片（命中=绿边 / 警示=琥珀边，都是语义色，非装饰）—— */
+.result-card {
+  margin: 12px 0; padding: 20px; background: var(--sheet);
+  border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+}
+.result-card.hit { border-left: 3px solid var(--green); }
+.result-card.warning { border-left: 3px solid var(--amber); }
+.card-top { display: flex; gap: 12px; justify-content: space-between; align-items: baseline; }
+.card-top h3 { margin: 0; font: 600 19px "STSong", "SimSun", serif; }
+/* —— 文件优先（2026-09-14）：项目名在上、文件名做主标题，产品降为标签 —— */
+.file-head { min-width: 0; }
+.file-project { margin: 0 0 3px; color: var(--muted); font-size: 12px; }
+/* 文件操作三件套：打开文件夹 / 打开文件 / 复制路径（只带 document_id，前端不传路径） */
+.open-actions { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.open-actions .copy { margin-left: 0; }
+.open-hint { color: var(--muted); font-size: 11px; }
+.amount { flex: none; color: var(--seal); font: 700 23px Bahnschrift, "Segoe UI", sans-serif; }
+.tag {
+  display: inline-block; margin: 8px 6px 0 0; padding: 4px 8px;
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+  color: var(--green); font-size: 11px; border: 1px solid transparent; border-radius: var(--r-sm);
+}
+/* —— 已识别条件标签（2026-09-14 业务评审 P1）：展示"系统理解成了什么" + 点一下可改写重查 —— */
+.cond-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 14px; }
+.cond-hint { color: var(--muted); font-size: 12px; }
+.cond-tag {
+  margin: 0; border: 1px solid var(--line); background: transparent; color: var(--ink);
+  padding: 4px 9px; font-size: 12px; cursor: pointer;
+}
+.cond-tag:hover { color: var(--seal); border-color: var(--seal); }
+.cond-tag-static {
+  margin: 0; border: 1px dashed var(--line); background: transparent; color: var(--muted);
+  padding: 4px 9px; font-size: 12px;
+}
+.metadata { margin: 15px 0 0; display: grid; grid-template-columns: 84px 1fr; gap: 7px 12px; font-size: 13px; }
+.metadata dt { color: var(--muted); }
+.metadata dd { margin: 0; min-width: 0; word-break: break-all; }
+.copy {
+  border: 1px solid var(--line); background: transparent; color: var(--ink);
+  padding: 4px 9px; margin-left: 8px; font-size: 11px; border-radius: var(--r-sm);
+}
+.copy:hover { color: var(--seal); border-color: var(--seal); }
+
+/* —— 批量操作条 —— */
+.batch-bar {
+  display: flex; justify-content: space-between; align-items: center; gap: 14px;
+  flex-wrap: wrap; padding: 11px 14px; margin: 14px 0;
+  border: 1px solid var(--line); background: var(--sheet);
+  font-size: 12px; color: var(--muted);
+}
+.batch-bar div { display: flex; gap: 8px; flex-wrap: wrap; }
+.batch-bar .copy { margin-left: 0; padding: 6px 11px; font-size: 12px; }
+
+.evidence {
+  margin-top: 14px; padding: 12px 14px; color: var(--muted);
+  background: color-mix(in srgb, var(--line) 24%, transparent);
+  font: 12px/1.7 "Microsoft YaHei UI", "PingFang SC", sans-serif;
+}
+
+/* —— 生成区（需求二）—— */
+.scheme-actions {
+  display: flex; justify-content: space-between; gap: 18px; align-items: center;
+  padding: 18px 20px; border: 1px solid var(--line); background: var(--sheet);
+}
+.scheme-actions p { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+button[disabled] { opacity: .55; cursor: default; }
+
+/* —— 方案草稿正文（护栏钉死的类：draft-para / draft-cite / cite-ref / cite-list 不得改名）—— */
+.draft { background: var(--sheet); border: 1px solid var(--line); padding: clamp(20px, 4vw, 46px); line-height: 1.85; box-shadow: var(--shadow-sm); }
+.draft h1, .draft h2, .draft h3 { font-family: "STSong", "SimSun", serif; line-height: 1.3; }
+.draft h1 { font-size: 29px; }
+.draft h2 { margin-top: 34px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-size: 23px; }
+.draft h3 { margin-top: 24px; font-size: 18px; }
+.draft ul { margin: 10px 0; padding-left: 1.4em; }
+.draft li { margin: 6px 0; }
+.draft blockquote {
+  margin: 16px 0; padding: 4px 18px; border-left: 3px solid var(--seal);
+  color: var(--muted); background: color-mix(in srgb, var(--line) 20%, transparent);
+}
+.draft table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.draft th, .draft td { border: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+.draft code { color: var(--seal); }
+.draft-para { margin: 0 0 6px; }
+.draft-para .cite-ref { color: var(--seal); font-weight: 600; }
+.draft-cite { margin: 0 0 14px; padding-left: 2px; color: var(--muted); font-size: 12px; }
+.cite-list summary { cursor: pointer; color: var(--ink); }
+.cite-list ul { margin: 8px 0 0; padding-left: 1.2em; }
+.cite-list li { margin: 5px 0; color: var(--muted); font-size: 12px; }
+
+.error { padding: 15px; color: var(--seal); background: color-mix(in srgb, var(--seal) 10%, transparent); border-left: 3px solid var(--seal); }
+
+footer {
+  padding: 16px 28px; text-align: center; color: var(--on-dark); background: var(--ink);
+  font-size: 12px; line-height: 1.8;
+}
+footer #footer-stats { display: block; opacity: .92; }
+footer .foot-note { display: block; margin-top: 4px; font-size: 11px; opacity: .62; }
+
+/* 推算金额标注：不得与合同明写金额混淆 */
+.derived { display: block; font-size: 11px; font-weight: 400; letter-spacing: .02em; opacity: .75; margin-top: 2px; }
+
+/* —— 三类材料定位卡片 —— */
+.module-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0 6px; }
+.module-card {
+  display: grid; gap: 6px; padding: 16px; text-align: left; background: var(--sheet);
+  border: 1px solid var(--line); color: var(--ink); box-shadow: var(--shadow-sm);
+  transition: border-color .15s, transform .15s;
+}
+.module-card:hover { border-color: var(--seal); transform: translateY(-1px); }
+.module-card b { font: 600 18px "STSong", "SimSun", serif; }
+.module-card .count { font: 600 15px Bahnschrift, "Segoe UI", sans-serif; color: var(--seal); }
+.module-card .fields { color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+.fact-list { margin: 10px 0 0; padding-left: 20px; }
+.fact-list li { margin: 7px 0; font: 12px/1.7 "Microsoft YaHei UI", "PingFang SC", sans-serif; }
+.fact-list .muted, .muted { color: var(--muted); }
+.type-chips { margin: 6px 0 10px; font-size: 12px; color: var(--muted); }
+.type-chips .tag { margin-right: 6px; }
+
+/* —— R6-06 折叠：内部业务记录 —— */
+.inner-records { margin-top: 12px; }
+.inner-records summary { cursor: pointer; color: var(--seal); font-size: 12px; font-weight: 700; }
+.inner-records summary:hover { text-decoration: underline; }
+
+/* 被排除的结果（金额未达门槛／前后对不上／资格被拒）：默认不占主位，但原因可查。
+   2026-09-14 业务评审：查"2万以上"却在列表里看到 1.25 万的条目，用户会问"为什么它在这"。 */
+.excluded-block { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 6px; }
+.excluded-block > summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 6px 0; }
+.excluded-block > summary:hover { color: var(--seal); }
+
+/* —— 移动端收敛 —— */
+@media (max-width: 780px) {
+  .masthead { grid-template-columns: 44px 1fr auto; padding: 20px 18px; gap: 14px; }
+  .brand-mark { width: 44px; height: 44px; font-size: 24px; }
+  .brand-text .subtitle { display: none; }
+  .mode { display: none; }
+  .input-row, .scheme-actions { align-items: stretch; flex-direction: column; }
+  .input-row button { min-height: 46px; }
+  .workspace { padding: 22px 16px 48px; }
+}

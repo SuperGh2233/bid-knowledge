@@ -1,0 +1,179 @@
+{
+ "note": "从「银行回单.zip」**中央目录**读取的 [合同号→银行回单图片] 映射。**只读文件名，未核内容**：receipt_file 表示「存在以该合同号命名的回单图片」，**不等于款项已到账**（断言到账需人工看图或 OCR，属外发，未授权）。读取过程不解压、不写 NAS、不外发。",
+ "count": 19,
+ "distinct_contracts": 8,
+ "matched_in_contracts": 5,
+ "records": [
+  {
+   "contract_number": "BOE2023081556",
+   "norm": "B0E2023081556",
+   "inner_path": "银行回单/BOE2023081556.png",
+   "size": 89671,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": null
+  },
+  {
+   "contract_number": "BOE2025110208",
+   "norm": "B0E2025110208",
+   "inner_path": "银行回单/BOE2025110208.png",
+   "size": 85287,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": null
+  },
+  {
+   "contract_number": "YOE2024030080",
+   "norm": "Y0E2024030080",
+   "inner_path": "银行回单/YOE2024030080-1.png",
+   "size": 164625,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": null
+  },
+  {
+   "contract_number": "YOE2024030080",
+   "norm": "Y0E2024030080",
+   "inner_path": "银行回单/YOE2024030080.png",
+   "size": 78559,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": null
+  },
+  {
+   "contract_number": "YOE2024101421",
+   "norm": "Y0E2024101421",
+   "inner_path": "银行回单/YOE2024101421/013778ca-0749-44ab-9e1f-c8ed8761a7d0.png",
+   "size": 93632,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "YOE2024101421"
+  },
+  {
+   "contract_number": "YOE2024101421",
+   "norm": "Y0E2024101421",
+   "inner_path": "银行回单/YOE2024101421/1ae03a88-ba96-4f00-b5c0-b736247fde70.png",
+   "size": 93759,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "YOE2024101421"
+  },
+  {
+   "contract_number": "YOE2025010758",
+   "norm": "Y0E2025010758",
+   "inner_path": "银行回单/YOE2025010758.png",
+   "size": 100439,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "YOE2025010758"
+  },
+  {
+   "contract_number": "YOE2026050397",
+   "norm": "Y0E2026050397",
+   "inner_path": "银行回单/YOE2026050397/3b7d4542-557f-484b-8408-d6097da768d2.png",
+   "size": 94925,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "YOE2026050397"
+  },
+  {
+   "contract_number": "YOE2026050397",
+   "norm": "Y0E2026050397",
+   "inner_path": "银行回单/YOE2026050397/b84c6c9f-6f80-4eb6-97a8-461b33ef082a.png",
+   "size": 94270,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "YOE2026050397"
+  },
+  {
+   "contract_number": "YOE2026050397",
+   "norm": "Y0E2026050397",
+   "inner_path": "银行回单/YOE2026050397/c25ac34d-481f-43f3-99b8-25d80b322322.png",
+   "size": 95976,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "YOE2026050397"
+  },
+  {
+   "contract_number": "ZOE2025073201",
+   "norm": "Z0E2025073201",
+   "inner_path": "银行回单/ZOE2025073201/8cfe7eae-e871-472e-ba6b-125eb0d72840.png",
+   "size": 90091,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025073201"
+  },
+  {
+   "contract_number": "ZOE2025073201",
+   "norm": "Z0E2025073201",
+   "inner_path": "银行回单/ZOE2025073201/a0318ec8-4e46-41fd-aae6-6705dd28940f.png",
+   "size": 90308,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025073201"
+  },
+  {
+   "contract_number": "ZOE2025073201",
+   "norm": "Z0E2025073201",
+   "inner_path": "银行回单/ZOE2025073201/b2a42c04-900f-457c-a8ad-45ca42e459dd.png",
+   "size": 89118,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025073201"
+  },
+  {
+   "contract_number": "ZOE2025073201",
+   "norm": "Z0E2025073201",
+   "inner_path": "银行回单/ZOE2025073201/c924f36d-8995-4059-b375-7c29934e1ab4.png",
+   "size": 89375,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025073201"
+  },
+  {
+   "contract_number": "ZOE2025103717",
+   "norm": "Z0E2025103717",
+   "inner_path": "银行回单/ZOE2025103717/1f7717af-2879-43dc-a22c-0fbd2ce4721b.png",
+   "size": 108161,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025103717"
+  },
+  {
+   "contract_number": "ZOE2025103717",
+   "norm": "Z0E2025103717",
+   "inner_path": "银行回单/ZOE2025103717/36e97ba1-726e-45d7-85a3-17f0d9c88a81.png",
+   "size": 106454,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025103717"
+  },
+  {
+   "contract_number": "ZOE2025103717",
+   "norm": "Z0E2025103717",
+   "inner_path": "银行回单/ZOE2025103717/66dbb0c4-afb3-4a82-b85c-3f3930687251.png",
+   "size": 108464,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025103717"
+  },
+  {
+   "contract_number": "ZOE2025103717",
+   "norm": "Z0E2025103717",
+   "inner_path": "银行回单/ZOE2025103717/87d5424a-63f8-4ede-a2e0-191de57d1c85.png",
+   "size": 105856,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025103717"
+  },
+  {
+   "contract_number": "ZOE2025103717",
+   "norm": "Z0E2025103717",
+   "inner_path": "银行回单/ZOE2025103717/c9ce92ce-a65c-4d4f-b54a-0996a272329f.png",
+   "size": 108844,
+   "source_zip": "20260810-标书-徐逾鑫-国防科技大学-多组学高通量测序服务采购项目/合同/银行回单.zip",
+   "source_document_id": "6b39c9f2be3c367a022cc00c59150806bef25e739fec447f107cd0337b9babd6",
+   "matched_contract_number": "ZOE2025103717"
+  }
+ ]
+}

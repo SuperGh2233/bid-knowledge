@@ -1,15 +1,23 @@
-# Elasticsearch 需 8.x，Python 3.11+。R1 骨架仅上述核心依赖；扫描/解析在 R2/R3 明确承载后固定精确版本。
+# Elasticsearch 需 8.x，Python 3.11+。
+# 版本按**实测跑通的 conda 环境 `langchain-dev`** 钉死（2026-09-14，pytest 199 passed 的那个环境）——
+# 未钉版本时，"昨天能跑今天装出别的版本"会让 199 passed 变成一句无法复现的话。
 elasticsearch==8.19.3
-pydantic>=2.0
-fastapi
-uvicorn
-python-dotenv
-pymupdf
-python-docx
-openpyxl
+pydantic==2.13.4
+fastapi==0.139.0
+uvicorn==0.50.2
+python-dotenv==1.2.2
+pymupdf==1.28.0
+python-docx==1.2.0
+openpyxl==3.1.5
 
-# LLM/Embedding（OpenAI-compatible 网关）
-openai>=1.0
+# LLM/Embedding（OpenAI-compatible 网关）—— 仅 `mode=llm` 生成走它（**会外发**，需授权）
+openai==2.54.0
+httpx==0.28.1
 
-# OCR：Qwen（本地优先）/ MinerU 兜底
-httpx
+# OCR
+#   rapidocr = **本地**后端（`OCR_BACKEND=local`，零外发、不受外发守卫约束）——
+#   它是 `app/ocr.py` 实际 import 的包，之前漏在清单外，照这份文件装是跑不了本地 OCR 的。
+rapidocr==3.9.2
+onnxruntime==1.29.0
+#   qwen/MinerU 兜底走 HTTP，用上面的 httpx，**不需要额外包**（且**会外发**，须单独授权：
+#   见 docs/ocr-authorization.md、docs/ocr-authorization-response-docs.md）

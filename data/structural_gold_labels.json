@@ -1,0 +1,1762 @@
+[
+ {
+  "labeler": "L1",
+  "labels": [
+   {
+    "id": "S001",
+    "role": "content_section",
+    "reason": "降维聚类分析正文"
+   },
+   {
+    "id": "S002",
+    "role": "content_section",
+    "reason": "测序平台能力正文"
+   },
+   {
+    "id": "S003",
+    "role": "unknown",
+    "reason": "人员姓名清单行"
+   },
+   {
+    "id": "S004",
+    "role": "unknown",
+    "reason": "首轮报价一览表"
+   },
+   {
+    "id": "S005",
+    "role": "content_section",
+    "reason": "无违法记录声明函正文"
+   },
+   {
+    "id": "S006",
+    "role": "content_section",
+    "reason": "数据交付与售后正文"
+   },
+   {
+    "id": "S007",
+    "role": "content_section",
+    "reason": "技术服务团队配置表"
+   },
+   {
+    "id": "S008",
+    "role": "content_section",
+    "reason": "数据安全隐私正文"
+   },
+   {
+    "id": "S009",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S010",
+    "role": "content_section",
+    "reason": "新miRNA预测正文"
+   },
+   {
+    "id": "S011",
+    "role": "unknown",
+    "reason": "专利名称清单"
+   },
+   {
+    "id": "S012",
+    "role": "content_section",
+    "reason": "数据处理方法正文"
+   },
+   {
+    "id": "S013",
+    "role": "content_section",
+    "reason": "个性化分析正文"
+   },
+   {
+    "id": "S014",
+    "role": "toc_entry",
+    "reason": "评审项对应页码索引"
+   },
+   {
+    "id": "S015",
+    "role": "content_section",
+    "reason": "探针设计正文"
+   },
+   {
+    "id": "S016",
+    "role": "content_section",
+    "reason": "分析结果数据表"
+   },
+   {
+    "id": "S017",
+    "role": "content_section",
+    "reason": "能力声明函正文"
+   },
+   {
+    "id": "S018",
+    "role": "unknown",
+    "reason": "纯日期行"
+   },
+   {
+    "id": "S019",
+    "role": "content_section",
+    "reason": "转录本定量正文"
+   },
+   {
+    "id": "S020",
+    "role": "content_section",
+    "reason": "能力声明函正文"
+   },
+   {
+    "id": "S021",
+    "role": "content_section",
+    "reason": "抗体Panel技术要求"
+   },
+   {
+    "id": "S022",
+    "role": "unknown",
+    "reason": "人员姓名清单行"
+   },
+   {
+    "id": "S023",
+    "role": "unknown",
+    "reason": "发表论文清单表"
+   },
+   {
+    "id": "S024",
+    "role": "content_section",
+    "reason": "质控汇总正文"
+   },
+   {
+    "id": "S025",
+    "role": "content_section",
+    "reason": "富集分析正文"
+   },
+   {
+    "id": "S026",
+    "role": "content_section",
+    "reason": "分析内容章节正文"
+   },
+   {
+    "id": "S027",
+    "role": "unknown",
+    "reason": "相关文章清单表"
+   },
+   {
+    "id": "S028",
+    "role": "content_section",
+    "reason": "冷链运输体系正文"
+   },
+   {
+    "id": "S029",
+    "role": "content_section",
+    "reason": "技术响应偏离表内容"
+   },
+   {
+    "id": "S030",
+    "role": "content_section",
+    "reason": "分包意向协议正文"
+   },
+   {
+    "id": "S031",
+    "role": "content_section",
+    "reason": "标本检验流程正文"
+   },
+   {
+    "id": "S032",
+    "role": "content_section",
+    "reason": "售后服务体系正文"
+   },
+   {
+    "id": "S033",
+    "role": "content_section",
+    "reason": "财务报告声明正文"
+   },
+   {
+    "id": "S034",
+    "role": "content_section",
+    "reason": "细胞亚型分析正文"
+   },
+   {
+    "id": "S035",
+    "role": "content_section",
+    "reason": "人员配置方案表"
+   },
+   {
+    "id": "S036",
+    "role": "content_section",
+    "reason": "技术原理正文"
+   },
+   {
+    "id": "S037",
+    "role": "unknown",
+    "reason": "专利名称清单"
+   },
+   {
+    "id": "S038",
+    "role": "content_section",
+    "reason": "测序仪器配置清单"
+   },
+   {
+    "id": "S039",
+    "role": "content_section",
+    "reason": "人员配置正文"
+   },
+   {
+    "id": "S040",
+    "role": "content_section",
+    "reason": "承诺函正文"
+   },
+   {
+    "id": "S041",
+    "role": "content_section",
+    "reason": "仪器软件参数正文"
+   },
+   {
+    "id": "S042",
+    "role": "content_section",
+    "reason": "DMP分析正文"
+   },
+   {
+    "id": "S043",
+    "role": "unknown",
+    "reason": "表单残留行表头为无"
+   },
+   {
+    "id": "S044",
+    "role": "unknown",
+    "reason": "开标一览表"
+   },
+   {
+    "id": "S045",
+    "role": "unknown",
+    "reason": "表单残留项目编号行"
+   },
+   {
+    "id": "S046",
+    "role": "content_section",
+    "reason": "专职人员简历表"
+   },
+   {
+    "id": "S047",
+    "role": "content_section",
+    "reason": "服务方案正文"
+   },
+   {
+    "id": "S048",
+    "role": "content_section",
+    "reason": "分析内容章节正文"
+   },
+   {
+    "id": "S049",
+    "role": "content_section",
+    "reason": "单细胞设备清单"
+   },
+   {
+    "id": "S050",
+    "role": "content_section",
+    "reason": "样本返还正文"
+   },
+   {
+    "id": "S051",
+    "role": "content_section",
+    "reason": "开户许可证证明正文"
+   },
+   {
+    "id": "S052",
+    "role": "content_section",
+    "reason": "保密措施正文"
+   },
+   {
+    "id": "S053",
+    "role": "content_section",
+    "reason": "联合筛选分析正文"
+   },
+   {
+    "id": "S054",
+    "role": "content_section",
+    "reason": "标准曲线正文"
+   },
+   {
+    "id": "S055",
+    "role": "content_section",
+    "reason": "承诺函正文"
+   },
+   {
+    "id": "S056",
+    "role": "content_section",
+    "reason": "单位负责人授权书正文"
+   },
+   {
+    "id": "S057",
+    "role": "content_section",
+    "reason": "结果异议处理正文"
+   },
+   {
+    "id": "S058",
+    "role": "content_section",
+    "reason": "时限要求响应内容"
+   },
+   {
+    "id": "S059",
+    "role": "content_section",
+    "reason": "细胞类型鉴定正文"
+   },
+   {
+    "id": "S060",
+    "role": "content_section",
+    "reason": "生信分析方案正文"
+   },
+   {
+    "id": "S061",
+    "role": "content_section",
+    "reason": "承诺书正文"
+   },
+   {
+    "id": "S062",
+    "role": "content_section",
+    "reason": "投标函正文"
+   },
+   {
+    "id": "S063",
+    "role": "toc_entry",
+    "reason": "投标文件目录含页码"
+   },
+   {
+    "id": "S064",
+    "role": "content_section",
+    "reason": "报价函正文"
+   },
+   {
+    "id": "S065",
+    "role": "content_section",
+    "reason": "授权委托书正文"
+   },
+   {
+    "id": "S066",
+    "role": "content_section",
+    "reason": "承诺函正文"
+   },
+   {
+    "id": "S067",
+    "role": "content_section",
+    "reason": "响应函正文"
+   },
+   {
+    "id": "S068",
+    "role": "content_section",
+    "reason": "响应函附录内容"
+   },
+   {
+    "id": "S069",
+    "role": "content_section",
+    "reason": "磋商响应函正文"
+   },
+   {
+    "id": "S070",
+    "role": "content_section",
+    "reason": "磋商响应声明正文"
+   },
+   {
+    "id": "S071",
+    "role": "unknown",
+    "reason": "开标报价一览表"
+   },
+   {
+    "id": "S072",
+    "role": "toc_entry",
+    "reason": "页码索引表"
+   },
+   {
+    "id": "S073",
+    "role": "content_section",
+    "reason": "谈判响应声明正文"
+   },
+   {
+    "id": "S074",
+    "role": "unknown",
+    "reason": "开标报价一览表"
+   },
+   {
+    "id": "S075",
+    "role": "content_section",
+    "reason": "谈判响应函正文"
+   },
+   {
+    "id": "S076",
+    "role": "content_section",
+    "reason": "磋商响应函正文"
+   },
+   {
+    "id": "S077",
+    "role": "content_section",
+    "reason": "授权委托书正文"
+   },
+   {
+    "id": "S078",
+    "role": "content_section",
+    "reason": "报价函正文"
+   },
+   {
+    "id": "S079",
+    "role": "content_section",
+    "reason": "授权委托书正文"
+   },
+   {
+    "id": "S080",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S081",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S082",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S083",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S084",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S085",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S086",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S087",
+    "role": "table_caption",
+    "reason": "表题"
+   },
+   {
+    "id": "S088",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S089",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S090",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S091",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S092",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S093",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S094",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S095",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S096",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S097",
+    "role": "table_caption",
+    "reason": "图题"
+   },
+   {
+    "id": "S098",
+    "role": "unknown",
+    "reason": "总报价与分项报价表"
+   },
+   {
+    "id": "S099",
+    "role": "unknown",
+    "reason": "股东资质信息表"
+   },
+   {
+    "id": "S100",
+    "role": "unknown",
+    "reason": "表单残留行"
+   },
+   {
+    "id": "S101",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S102",
+    "role": "unknown",
+    "reason": "人员凭证行"
+   },
+   {
+    "id": "S103",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S104",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S105",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S106",
+    "role": "unknown",
+    "reason": "纯日期行"
+   },
+   {
+    "id": "S107",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S108",
+    "role": "unknown",
+    "reason": "表单残留签字行"
+   },
+   {
+    "id": "S109",
+    "role": "unknown",
+    "reason": "人员凭证行"
+   },
+   {
+    "id": "S110",
+    "role": "unknown",
+    "reason": "表单残留备注行"
+   },
+   {
+    "id": "S111",
+    "role": "unknown",
+    "reason": "股东身份证资质表"
+   },
+   {
+    "id": "S112",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S113",
+    "role": "unknown",
+    "reason": "表单残留签字行"
+   },
+   {
+    "id": "S114",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S115",
+    "role": "unknown",
+    "reason": "报价表行"
+   },
+   {
+    "id": "S116",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S117",
+    "role": "unknown",
+    "reason": "纯日期行"
+   },
+   {
+    "id": "S118",
+    "role": "unknown",
+    "reason": "业绩表行"
+   }
+  ]
+ },
+ {
+  "labeler": "L2",
+  "labels": [
+   {
+    "id": "S055",
+    "role": "content_section",
+    "reason": "承诺函正文，有实质声明内容"
+   },
+   {
+    "id": "S061",
+    "role": "content_section",
+    "reason": "承诺书正文，有实质声明内容"
+   },
+   {
+    "id": "S103",
+    "role": "unknown",
+    "reason": "业绩合同清单表，属噪声"
+   },
+   {
+    "id": "S099",
+    "role": "unknown",
+    "reason": "申报人股东资质信息表"
+   },
+   {
+    "id": "S051",
+    "role": "unknown",
+    "reason": "开户许可证凭证信息行"
+   },
+   {
+    "id": "S117",
+    "role": "unknown",
+    "reason": "日期行下接报价明细表"
+   },
+   {
+    "id": "S033",
+    "role": "content_section",
+    "reason": "财务状况声明正文"
+   },
+   {
+    "id": "S085",
+    "role": "table_caption",
+    "reason": "图题：图21蛋白聚类树"
+   },
+   {
+    "id": "S094",
+    "role": "table_caption",
+    "reason": "图题：图21 circos图"
+   },
+   {
+    "id": "S111",
+    "role": "unknown",
+    "reason": "股东身份证资质表"
+   },
+   {
+    "id": "S082",
+    "role": "table_caption",
+    "reason": "图题：图24富集柱状图"
+   },
+   {
+    "id": "S028",
+    "role": "content_section",
+    "reason": "冷链运输体系方案内容"
+   },
+   {
+    "id": "S081",
+    "role": "table_caption",
+    "reason": "图题：图11 clonotype注释"
+   },
+   {
+    "id": "S052",
+    "role": "content_section",
+    "reason": "保密措施章节内容"
+   },
+   {
+    "id": "S039",
+    "role": "content_section",
+    "reason": "人员配置章节标题"
+   },
+   {
+    "id": "S077",
+    "role": "content_section",
+    "reason": "授权委托书正文"
+   },
+   {
+    "id": "S022",
+    "role": "unknown",
+    "reason": "人员职务名单行"
+   },
+   {
+    "id": "S045",
+    "role": "unknown",
+    "reason": "标题为项目编号的表单残片"
+   },
+   {
+    "id": "S068",
+    "role": "content_section",
+    "reason": "响应函附录条款内容"
+   },
+   {
+    "id": "S095",
+    "role": "table_caption",
+    "reason": "图题：EIC二级质谱图"
+   },
+   {
+    "id": "S019",
+    "role": "content_section",
+    "reason": "转录本定量分析内容"
+   },
+   {
+    "id": "S006",
+    "role": "content_section",
+    "reason": "数据交付服务章节"
+   },
+   {
+    "id": "S026",
+    "role": "content_section",
+    "reason": "多样性分析章节标题"
+   },
+   {
+    "id": "S083",
+    "role": "table_caption",
+    "reason": "图题：图7.2.2.2"
+   },
+   {
+    "id": "S044",
+    "role": "unknown",
+    "reason": "开标一览表属报价类"
+   },
+   {
+    "id": "S079",
+    "role": "content_section",
+    "reason": "授权委托书正文"
+   },
+   {
+    "id": "S002",
+    "role": "content_section",
+    "reason": "测序平台能力介绍"
+   },
+   {
+    "id": "S057",
+    "role": "content_section",
+    "reason": "检测异议处理条款"
+   },
+   {
+    "id": "S011",
+    "role": "unknown",
+    "reason": "专利清单条目行"
+   },
+   {
+    "id": "S001",
+    "role": "content_section",
+    "reason": "降维聚类可视化分析"
+   },
+   {
+    "id": "S109",
+    "role": "unknown",
+    "reason": "人员凭证材料行"
+   },
+   {
+    "id": "S003",
+    "role": "unknown",
+    "reason": "人员职务名单行"
+   },
+   {
+    "id": "S035",
+    "role": "content_section",
+    "reason": "人员配置方案章节"
+   },
+   {
+    "id": "S012",
+    "role": "content_section",
+    "reason": "数据处理步骤方法"
+   },
+   {
+    "id": "S020",
+    "role": "content_section",
+    "reason": "声明函正文"
+   },
+   {
+    "id": "S025",
+    "role": "content_section",
+    "reason": "差异基因富集分析"
+   },
+   {
+    "id": "S010",
+    "role": "content_section",
+    "reason": "新miRNA预测结果"
+   },
+   {
+    "id": "S027",
+    "role": "content_section",
+    "reason": "相关文章章节清单"
+   },
+   {
+    "id": "S048",
+    "role": "content_section",
+    "reason": "Bins质量分布图分析项"
+   },
+   {
+    "id": "S059",
+    "role": "content_section",
+    "reason": "细胞类型鉴定内容"
+   },
+   {
+    "id": "S054",
+    "role": "content_section",
+    "reason": "标准曲线方法说明"
+   },
+   {
+    "id": "S046",
+    "role": "content_section",
+    "reason": "专职人员简历表章节"
+   },
+   {
+    "id": "S076",
+    "role": "content_section",
+    "reason": "磋商响应函正文"
+   },
+   {
+    "id": "S049",
+    "role": "content_section",
+    "reason": "单细胞设备情况介绍"
+   },
+   {
+    "id": "S115",
+    "role": "unknown",
+    "reason": "报价汇总表，属噪声"
+   },
+   {
+    "id": "S023",
+    "role": "content_section",
+    "reason": "署名文章清单章节"
+   },
+   {
+    "id": "S040",
+    "role": "content_section",
+    "reason": "承诺函正文"
+   },
+   {
+    "id": "S038",
+    "role": "content_section",
+    "reason": "测序仪器能力清单"
+   },
+   {
+    "id": "S096",
+    "role": "table_caption",
+    "reason": "图题：EIC二级质谱图"
+   },
+   {
+    "id": "S053",
+    "role": "content_section",
+    "reason": "甲基化联合筛选分析"
+   },
+   {
+    "id": "S007",
+    "role": "content_section",
+    "reason": "技术服务团队章节"
+   },
+   {
+    "id": "S013",
+    "role": "content_section",
+    "reason": "个性化分析内容"
+   },
+   {
+    "id": "S078",
+    "role": "content_section",
+    "reason": "报价函正文"
+   },
+   {
+    "id": "S073",
+    "role": "content_section",
+    "reason": "谈判响应声明正文"
+   },
+   {
+    "id": "S101",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   },
+   {
+    "id": "S015",
+    "role": "content_section",
+    "reason": "探针设计技术说明"
+   },
+   {
+    "id": "S062",
+    "role": "content_section",
+    "reason": "投标函正文"
+   },
+   {
+    "id": "S098",
+    "role": "unknown",
+    "reason": "总报价表，属噪声"
+   },
+   {
+    "id": "S116",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   },
+   {
+    "id": "S108",
+    "role": "unknown",
+    "reason": "签字表单残留行"
+   },
+   {
+    "id": "S047",
+    "role": "content_section",
+    "reason": "服务方案章节内容"
+   },
+   {
+    "id": "S064",
+    "role": "content_section",
+    "reason": "报价函正文"
+   },
+   {
+    "id": "S087",
+    "role": "table_caption",
+    "reason": "表题：KEGG富集表"
+   },
+   {
+    "id": "S071",
+    "role": "unknown",
+    "reason": "开标报价一览表"
+   },
+   {
+    "id": "S110",
+    "role": "unknown",
+    "reason": "表单残留“备注：”行"
+   },
+   {
+    "id": "S014",
+    "role": "toc_entry",
+    "reason": "章名加页码的目录索引"
+   },
+   {
+    "id": "S102",
+    "role": "unknown",
+    "reason": "授权签字人凭证行"
+   },
+   {
+    "id": "S092",
+    "role": "table_caption",
+    "reason": "图题：图1项目流程图"
+   },
+   {
+    "id": "S008",
+    "role": "content_section",
+    "reason": "数据安全隐私方案"
+   },
+   {
+    "id": "S075",
+    "role": "content_section",
+    "reason": "谈判响应函正文"
+   },
+   {
+    "id": "S021",
+    "role": "content_section",
+    "reason": "抗体Panel技术要求"
+   },
+   {
+    "id": "S090",
+    "role": "table_caption",
+    "reason": "图题：质谱检测模式图"
+   },
+   {
+    "id": "S105",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   },
+   {
+    "id": "S060",
+    "role": "content_section",
+    "reason": "生信分析方案章节"
+   },
+   {
+    "id": "S070",
+    "role": "content_section",
+    "reason": "磋商响应声明正文"
+   },
+   {
+    "id": "S063",
+    "role": "toc_entry",
+    "reason": "投标文件目录含页码"
+   },
+   {
+    "id": "S009",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   },
+   {
+    "id": "S043",
+    "role": "unknown",
+    "reason": "标题为“无”的表单残片"
+   },
+   {
+    "id": "S118",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   },
+   {
+    "id": "S032",
+    "role": "content_section",
+    "reason": "售后服务体系内容"
+   },
+   {
+    "id": "S084",
+    "role": "table_caption",
+    "reason": "图题：图7.3.1.1"
+   },
+   {
+    "id": "S005",
+    "role": "content_section",
+    "reason": "书面声明正文"
+   },
+   {
+    "id": "S017",
+    "role": "content_section",
+    "reason": "声明函正文"
+   },
+   {
+    "id": "S089",
+    "role": "table_caption",
+    "reason": "图题：KEGG通路图"
+   },
+   {
+    "id": "S036",
+    "role": "content_section",
+    "reason": "技术原理说明"
+   },
+   {
+    "id": "S112",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   },
+   {
+    "id": "S018",
+    "role": "unknown",
+    "reason": "日期行下接分项报价表"
+   },
+   {
+    "id": "S024",
+    "role": "content_section",
+    "reason": "质控指标说明章节"
+   },
+   {
+    "id": "S091",
+    "role": "table_caption",
+    "reason": "图题：图6.1箱型图"
+   },
+   {
+    "id": "S037",
+    "role": "unknown",
+    "reason": "专利清单条目行"
+   },
+   {
+    "id": "S042",
+    "role": "content_section",
+    "reason": "DMP差异甲基化分析"
+   },
+   {
+    "id": "S029",
+    "role": "content_section",
+    "reason": "技术响应部分内容"
+   },
+   {
+    "id": "S093",
+    "role": "table_caption",
+    "reason": "图题：基因覆盖度统计"
+   },
+   {
+    "id": "S067",
+    "role": "content_section",
+    "reason": "响应函正文"
+   },
+   {
+    "id": "S058",
+    "role": "content_section",
+    "reason": "时限要求响应内容"
+   },
+   {
+    "id": "S088",
+    "role": "table_caption",
+    "reason": "图题：图6.4.1.3"
+   },
+   {
+    "id": "S016",
+    "role": "content_section",
+    "reason": "ASV物种丰度结果表"
+   },
+   {
+    "id": "S041",
+    "role": "content_section",
+    "reason": "实验仪器及软件参数"
+   },
+   {
+    "id": "S031",
+    "role": "content_section",
+    "reason": "标本检验流程步骤"
+   },
+   {
+    "id": "S030",
+    "role": "unknown",
+    "reason": "空白分包意向协议模板"
+   },
+   {
+    "id": "S069",
+    "role": "content_section",
+    "reason": "磋商响应函正文"
+   },
+   {
+    "id": "S074",
+    "role": "unknown",
+    "reason": "开标报价一览表"
+   },
+   {
+    "id": "S066",
+    "role": "content_section",
+    "reason": "承诺函正文"
+   },
+   {
+    "id": "S080",
+    "role": "table_caption",
+    "reason": "图题：图32箱线图"
+   },
+   {
+    "id": "S106",
+    "role": "unknown",
+    "reason": "日期行下接报价明细表"
+   },
+   {
+    "id": "S097",
+    "role": "table_caption",
+    "reason": "图题：入血成分EIC图"
+   },
+   {
+    "id": "S100",
+    "role": "unknown",
+    "reason": "控股管理关系表头行"
+   },
+   {
+    "id": "S056",
+    "role": "content_section",
+    "reason": "单位负责人授权书正文"
+   },
+   {
+    "id": "S104",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   },
+   {
+    "id": "S107",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   },
+   {
+    "id": "S113",
+    "role": "unknown",
+    "reason": "表单残留“供应商代表签字”行"
+   },
+   {
+    "id": "S072",
+    "role": "toc_entry",
+    "reason": "页码索引表，章名加页码"
+   },
+   {
+    "id": "S114",
+    "role": "unknown",
+    "reason": "业绩合同表，属噪声"
+   }
+  ]
+ },
+ {
+  "labeler": "L3",
+  "labels": [
+   {
+    "id": "S055",
+    "role": "content_section",
+    "reason": "承诺函正文，完整章节"
+   },
+   {
+    "id": "S061",
+    "role": "content_section",
+    "reason": "承诺书正文内容"
+   },
+   {
+    "id": "S103",
+    "role": "unknown",
+    "reason": "业绩合同表噪声行"
+   },
+   {
+    "id": "S099",
+    "role": "unknown",
+    "reason": "申报人身份证资质表"
+   },
+   {
+    "id": "S051",
+    "role": "content_section",
+    "reason": "开户许可证章节"
+   },
+   {
+    "id": "S117",
+    "role": "unknown",
+    "reason": "日期标题+报价明细表"
+   },
+   {
+    "id": "S033",
+    "role": "content_section",
+    "reason": "财务状况报告声明"
+   },
+   {
+    "id": "S085",
+    "role": "table_caption",
+    "reason": "图题：蛋白聚类树"
+   },
+   {
+    "id": "S094",
+    "role": "table_caption",
+    "reason": "图题：circos图"
+   },
+   {
+    "id": "S111",
+    "role": "unknown",
+    "reason": "股东身份证号表"
+   },
+   {
+    "id": "S082",
+    "role": "table_caption",
+    "reason": "图题：KEGG柱状图"
+   },
+   {
+    "id": "S028",
+    "role": "content_section",
+    "reason": "冷链运输方案内容"
+   },
+   {
+    "id": "S081",
+    "role": "table_caption",
+    "reason": "图题：注释结果"
+   },
+   {
+    "id": "S052",
+    "role": "content_section",
+    "reason": "保密措施正文"
+   },
+   {
+    "id": "S039",
+    "role": "content_section",
+    "reason": "人员配置章节"
+   },
+   {
+    "id": "S077",
+    "role": "content_section",
+    "reason": "授权委托书正文"
+   },
+   {
+    "id": "S022",
+    "role": "unknown",
+    "reason": "人员名单行"
+   },
+   {
+    "id": "S045",
+    "role": "content_section",
+    "reason": "商务条件响应表"
+   },
+   {
+    "id": "S068",
+    "role": "content_section",
+    "reason": "响应函附录承诺表"
+   },
+   {
+    "id": "S095",
+    "role": "table_caption",
+    "reason": "图题：EIC质谱图"
+   },
+   {
+    "id": "S019",
+    "role": "content_section",
+    "reason": "转录本定量方法"
+   },
+   {
+    "id": "S006",
+    "role": "content_section",
+    "reason": "数据交付说明"
+   },
+   {
+    "id": "S026",
+    "role": "content_section",
+    "reason": "分析项目清单正文"
+   },
+   {
+    "id": "S083",
+    "role": "table_caption",
+    "reason": "仅图号，属图题"
+   },
+   {
+    "id": "S044",
+    "role": "unknown",
+    "reason": "开标一览表报价"
+   },
+   {
+    "id": "S079",
+    "role": "content_section",
+    "reason": "授权委托书正文"
+   },
+   {
+    "id": "S002",
+    "role": "content_section",
+    "reason": "平台能力介绍"
+   },
+   {
+    "id": "S057",
+    "role": "content_section",
+    "reason": "异议处理条款"
+   },
+   {
+    "id": "S011",
+    "role": "unknown",
+    "reason": "专利标题清单行"
+   },
+   {
+    "id": "S001",
+    "role": "content_section",
+    "reason": "降维聚类方法正文"
+   },
+   {
+    "id": "S109",
+    "role": "unknown",
+    "reason": "人员凭证行"
+   },
+   {
+    "id": "S003",
+    "role": "unknown",
+    "reason": "人员名单行"
+   },
+   {
+    "id": "S035",
+    "role": "content_section",
+    "reason": "人员配置方案章节"
+   },
+   {
+    "id": "S012",
+    "role": "content_section",
+    "reason": "数据处理方法步骤"
+   },
+   {
+    "id": "S020",
+    "role": "content_section",
+    "reason": "能力声明函正文"
+   },
+   {
+    "id": "S025",
+    "role": "content_section",
+    "reason": "富集分析章节"
+   },
+   {
+    "id": "S010",
+    "role": "content_section",
+    "reason": "miRNA预测结果"
+   },
+   {
+    "id": "S027",
+    "role": "unknown",
+    "reason": "相关论文列表"
+   },
+   {
+    "id": "S048",
+    "role": "content_section",
+    "reason": "分析章节正文"
+   },
+   {
+    "id": "S059",
+    "role": "content_section",
+    "reason": "细胞类型鉴定方法"
+   },
+   {
+    "id": "S054",
+    "role": "content_section",
+    "reason": "标准曲线方法"
+   },
+   {
+    "id": "S046",
+    "role": "content_section",
+    "reason": "人员简历章节标题"
+   },
+   {
+    "id": "S076",
+    "role": "content_section",
+    "reason": "磋商响应函正文"
+   },
+   {
+    "id": "S049",
+    "role": "content_section",
+    "reason": "设备清单章节"
+   },
+   {
+    "id": "S115",
+    "role": "unknown",
+    "reason": "报价汇总表"
+   },
+   {
+    "id": "S023",
+    "role": "unknown",
+    "reason": "发表论文列表"
+   },
+   {
+    "id": "S040",
+    "role": "content_section",
+    "reason": "承诺函正文"
+   },
+   {
+    "id": "S038",
+    "role": "content_section",
+    "reason": "仪器清单章节"
+   },
+   {
+    "id": "S096",
+    "role": "table_caption",
+    "reason": "图题：EIC质谱图"
+   },
+   {
+    "id": "S053",
+    "role": "content_section",
+    "reason": "联合筛选分析正文"
+   },
+   {
+    "id": "S007",
+    "role": "content_section",
+    "reason": "服务团队章节"
+   },
+   {
+    "id": "S013",
+    "role": "content_section",
+    "reason": "个性化分析内容"
+   },
+   {
+    "id": "S078",
+    "role": "content_section",
+    "reason": "报价函正文"
+   },
+   {
+    "id": "S073",
+    "role": "content_section",
+    "reason": "谈判响应声明正文"
+   },
+   {
+    "id": "S101",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S015",
+    "role": "content_section",
+    "reason": "探针设计方法"
+   },
+   {
+    "id": "S116",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S062",
+    "role": "content_section",
+    "reason": "投标函正文"
+   },
+   {
+    "id": "S108",
+    "role": "unknown",
+    "reason": "签字表单残留行"
+   },
+   {
+    "id": "S047",
+    "role": "content_section",
+    "reason": "服务方案正文"
+   },
+   {
+    "id": "S064",
+    "role": "content_section",
+    "reason": "报价函正文"
+   },
+   {
+    "id": "S087",
+    "role": "table_caption",
+    "reason": "表题：KEGG富集表"
+   },
+   {
+    "id": "S071",
+    "role": "unknown",
+    "reason": "开标报价一览表"
+   },
+   {
+    "id": "S110",
+    "role": "unknown",
+    "reason": "表单残留“备注：”"
+   },
+   {
+    "id": "S014",
+    "role": "toc_entry",
+    "reason": "含页码的目录条目"
+   },
+   {
+    "id": "S102",
+    "role": "unknown",
+    "reason": "授权签字人凭证行"
+   },
+   {
+    "id": "S092",
+    "role": "table_caption",
+    "reason": "图题：项目流程图"
+   },
+   {
+    "id": "S008",
+    "role": "content_section",
+    "reason": "数据安全章节"
+   },
+   {
+    "id": "S075",
+    "role": "content_section",
+    "reason": "谈判响应函正文"
+   },
+   {
+    "id": "S021",
+    "role": "content_section",
+    "reason": "检测要求正文"
+   },
+   {
+    "id": "S090",
+    "role": "table_caption",
+    "reason": "图题：检测模式图"
+   },
+   {
+    "id": "S105",
+    "role": "unknown",
+    "reason": "业绩合同表行"
+   },
+   {
+    "id": "S060",
+    "role": "content_section",
+    "reason": "生信分析方案"
+   },
+   {
+    "id": "S070",
+    "role": "content_section",
+    "reason": "磋商响应声明正文"
+   },
+   {
+    "id": "S063",
+    "role": "toc_entry",
+    "reason": "投标文件目录页码"
+   },
+   {
+    "id": "S009",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S043",
+    "role": "unknown",
+    "reason": "标题为表单填写值"
+   },
+   {
+    "id": "S118",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S032",
+    "role": "content_section",
+    "reason": "售后服务体系"
+   },
+   {
+    "id": "S084",
+    "role": "table_caption",
+    "reason": "仅图号，属图题"
+   },
+   {
+    "id": "S005",
+    "role": "content_section",
+    "reason": "无违法记录声明"
+   },
+   {
+    "id": "S017",
+    "role": "content_section",
+    "reason": "能力声明函正文"
+   },
+   {
+    "id": "S089",
+    "role": "table_caption",
+    "reason": "图题：KEGG通路图"
+   },
+   {
+    "id": "S036",
+    "role": "content_section",
+    "reason": "技术原理正文"
+   },
+   {
+    "id": "S112",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S018",
+    "role": "unknown",
+    "reason": "日期标题+分项报价表"
+   },
+   {
+    "id": "S024",
+    "role": "content_section",
+    "reason": "质控汇总方法"
+   },
+   {
+    "id": "S091",
+    "role": "table_caption",
+    "reason": "图题：箱型图"
+   },
+   {
+    "id": "S037",
+    "role": "unknown",
+    "reason": "专利标题清单行"
+   },
+   {
+    "id": "S042",
+    "role": "content_section",
+    "reason": "DMP分析章节"
+   },
+   {
+    "id": "S029",
+    "role": "content_section",
+    "reason": "技术响应偏离表"
+   },
+   {
+    "id": "S093",
+    "role": "table_caption",
+    "reason": "图题：覆盖度统计"
+   },
+   {
+    "id": "S067",
+    "role": "content_section",
+    "reason": "响应函正文"
+   },
+   {
+    "id": "S058",
+    "role": "content_section",
+    "reason": "时限要求响应内容"
+   },
+   {
+    "id": "S088",
+    "role": "table_caption",
+    "reason": "仅图号，属图题"
+   },
+   {
+    "id": "S016",
+    "role": "content_section",
+    "reason": "结果数据表，方案内容"
+   },
+   {
+    "id": "S041",
+    "role": "content_section",
+    "reason": "仪器及软件章节"
+   },
+   {
+    "id": "S031",
+    "role": "content_section",
+    "reason": "检验流程正文"
+   },
+   {
+    "id": "S030",
+    "role": "content_section",
+    "reason": "分包协议章节"
+   },
+   {
+    "id": "S069",
+    "role": "content_section",
+    "reason": "磋商响应函正文"
+   },
+   {
+    "id": "S074",
+    "role": "unknown",
+    "reason": "开标报价一览表"
+   },
+   {
+    "id": "S066",
+    "role": "content_section",
+    "reason": "承诺函正文"
+   },
+   {
+    "id": "S080",
+    "role": "table_caption",
+    "reason": "图题：箱线图"
+   },
+   {
+    "id": "S098",
+    "role": "unknown",
+    "reason": "报价表"
+   },
+   {
+    "id": "S097",
+    "role": "table_caption",
+    "reason": "图题：EIC质谱图"
+   },
+   {
+    "id": "S100",
+    "role": "unknown",
+    "reason": "管理关系表填写行"
+   },
+   {
+    "id": "S056",
+    "role": "content_section",
+    "reason": "单位负责人授权书"
+   },
+   {
+    "id": "S106",
+    "role": "unknown",
+    "reason": "日期标题+报价明细表"
+   },
+   {
+    "id": "S050",
+    "role": "content_section",
+    "reason": "样本返还条款"
+   },
+   {
+    "id": "S004",
+    "role": "unknown",
+    "reason": "首轮报价一览表"
+   },
+   {
+    "id": "S034",
+    "role": "content_section",
+    "reason": "细胞亚型分析"
+   },
+   {
+    "id": "S086",
+    "role": "table_caption",
+    "reason": "图题：肽段分布图"
+   },
+   {
+    "id": "S065",
+    "role": "content_section",
+    "reason": "授权委托书正文"
+   },
+   {
+    "id": "S104",
+    "role": "unknown",
+    "reason": "业绩合同表行"
+   },
+   {
+    "id": "S107",
+    "role": "unknown",
+    "reason": "业绩表行"
+   },
+   {
+    "id": "S113",
+    "role": "unknown",
+    "reason": "签字表单残留行"
+   },
+   {
+    "id": "S072",
+    "role": "toc_entry",
+    "reason": "页码索引目录表"
+   },
+   {
+    "id": "S114",
+    "role": "unknown",
+    "reason": "业绩表行"
+   }
+  ]
+ }
+]

@@ -9,6 +9,10 @@
 """
 from __future__ import annotations
 
+import hashlib
+import json
+import os
+import re
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -17,7 +21,7 @@ import app.config as config
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS documents (
-    document_id TEXT PRIMARY KEY,
+    document_id TEXT PRIMARY KEY NOT NULL,
     source_root_id TEXT NOT NULL,
     project_folder TEXT NOT NULL,
     relative_path TEXT NOT NULL,
@@ -30,9 +34,21 @@ CREATE TABLE IF NOT EXISTS documents (
     content_format TEXT,
     parse_status TEXT, pipeline_version TEXT, error_message TEXT,
     canonical_document_id TEXT,      -- D3A：内容去重，同 sha256 只解析一次
+    doc_subtype TEXT,                -- 框架协议/供应商库样稿 等业务子类（审计/资格用）
+    CHECK (document_id IS NOT NULL AND length(trim(document_id)) > 0 AND document_id NOT IN ('', 'NULL')),
     UNIQUE (source_root_id, relative_path)
 );
 CREATE INDEX IF NOT EXISTS idx_documents_sha256 ON documents(sha256);
+
+CREATE TABLE IF NOT EXISTS parse_artifacts (
+    canonical_document_id TEXT PRIMARY KEY,
+    sha256 TEXT UNIQUE NOT NULL,
+    text TEXT,
+    page_metadata TEXT,
+    content_format TEXT,
+    parser_name TEXT,
+    parser_version TEXT
+);
 
 CREATE TABLE IF NOT EXISTS contracts (
     contract_id TEXT PRIMARY KEY,
@@ -44,7 +60,9 @@ CREATE TABLE IF NOT EXISTS contracts (
     vendor_conflict INTEGER DEFAULT 0,                              -- D5A
     contract_date TEXT,
     total_amount REAL,
-    evidence_text TEXT
+    evidence_text TEXT,
+    source_sha256 TEXT,          -- D13v: 明细提取时使用的来源内容 SHA（仅 sync 提交时更新）
+    parser_version TEXT          -- D13v: 明细提取时使用的解析器版本
 );
 
 CREATE TABLE IF NOT EXISTS contract_items (
@@ -60,7 +78,9 @@ CREATE TABLE IF NOT EXISTS contract_items (
 CREATE TABLE IF NOT EXISTS material_facts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     document_id TEXT NOT NULL REFERENCES documents(document_id),
-    fact_type TEXT,   -- finance_period|social_security_month|instrument|purchase_contract|invoice|instrument_photo
+    fact_type TEXT,   -- finance_period|social_security_month|instrument|purchase_contract|invoice|instrument_photo|qualification
+    -- qualification（2026-09-11 加）：资质证书类材料（营业执照/ISO/CNAS/高新技术企业证书/软件著作权…）。
+    -- 实测 136 条「我方已附材料」里 99 条是资质证书，原 6 值枚举装不下；fact_type 无 CHECK 约束故无需迁移。
     fact_value TEXT,
     evidence_text TEXT
 );
@@ -74,6 +94,35 @@ def connect() -> sqlite3.Connection:
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA foreign_keys=ON")
     return con
+
+
+def stable_path_key(source_root_id: str, relative_path: str) -> str:
+    """文件身份标准化：只统一分隔符（/），不删空格/转全半角/改大小写。
+
+    相对源根完整路径（含项目目录）与 database 唯一约束
+    (source_root_id, relative_path) 使用同一规范化。
+    """
+    if not isinstance(source_root_id, str) or not isinstance(relative_path, str):
+        raise TypeError("source_root_id 与 relative_path 必须为字符串")
+    root = source_root_id
+    rel = relative_path.replace("\\", "/").lstrip("./")
+    if not root or not root.strip():
+        raise ValueError("source_root_id 不能为空")
+    if not rel or not rel.strip():
+        raise ValueError("relative_path 不能为空")
+    return root, rel
+
+
+def deterministic_document_id(source_root_id: str, relative_path: str) -> str:
+    """文件身份 = 稳定 hash(JSON[source_root_id, relative_path])。
+
+    注意：哈希的是文件身份（来源根+完整相对路径），不是文件内容；
+    文件内容 SHA-256 由 parse_artifacts.sha256 承担去重。保留完整 64 位十六进制。
+    同身份恒同 ID；改内容/大小/时间 ID 不变。
+    """
+    root, rel = stable_path_key(source_root_id, relative_path)
+    material = json.dumps([root, rel], ensure_ascii=False)
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
 
 def init_db(force: bool = False) -> None:

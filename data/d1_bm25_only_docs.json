@@ -1,0 +1,646 @@
+{
+ "target": 900,
+ "added": [
+  {
+   "file": "血液10X单细胞免疫组测序分析(第三次)+上海欧易生物医学科技有限公司.pdf",
+   "chars": 127692,
+   "sections": 126
+  },
+  {
+   "file": "转录组学（商务技术文件）+上海欧易生物医学科技有限公司.pdf",
+   "chars": 120426,
+   "sections": 107
+  },
+  {
+   "file": "上海欧易生物医学科技有限公司投标文件.pdf",
+   "chars": 112514,
+   "sections": 48
+  },
+  {
+   "file": "血液蛋白质组学和代谢组学检测技术服务+上海欧易生物医学科技有限公司.pdf",
+   "chars": 112188,
+   "sections": 93
+  },
+  {
+   "file": "单细胞测序采购项目+上海欧易生物医学科技有限公司.pdf",
+   "chars": 109943,
+   "sections": 158
+  },
+  {
+   "file": "上海欧易 子包 3.科研用途代谢组学、蛋白组学等检测外送服务.pdf",
+   "chars": 105871,
+   "sections": 134
+  },
+  {
+   "file": "商务文件.pdf",
+   "chars": 103312,
+   "sections": 35
+  },
+  {
+   "file": "商务技术文件-上海欧易生物医学科技有限公司-中国医学科学院北京协和医院大队列人群粪便样本多组学测序与分析服务.pdf",
+   "chars": 95146,
+   "sections": 76
+  },
+  {
+   "file": "投标文件 正本 上海欧易生物医学科技有限公司（盖章版）.pdf",
+   "chars": 94376,
+   "sections": 112
+  },
+  {
+   "file": "上海欧易生物医学科技有限公司 比价文件.pdf",
+   "chars": 77367,
+   "sections": 151
+  },
+  {
+   "file": "成都中医药大学附属医院（四川省中医医院）2026年代谢综合征外送检测采购项目-上海欧易生物医学科技有限公司.pdf",
+   "chars": 69328,
+   "sections": 137
+  },
+  {
+   "file": "2026年水中心基因检测与分析、高通量测序服务项目+上海欧易生物医学科技有限公司_20260706083658.pdf",
+   "chars": 53534,
+   "sections": 48
+  },
+  {
+   "file": "青岛市中医医院（市海慈医院）科研用测序服务项目二次采购（第11包）+上海欧易生物医学科技有限公司.pdf",
+   "chars": 52253,
+   "sections": 44
+  },
+  {
+   "file": "欧易生物响应文件老师检查版.pdf",
+   "chars": 29334,
+   "sections": 20
+  },
+  {
+   "file": "2026年水中心基因检测与分析、高通量测序服务项目+上海欧易生物医学科技有限公司_20260731105517.pdf",
+   "chars": 23732,
+   "sections": 1
+  },
+  {
+   "file": "报价表.docx",
+   "chars": 14802,
+   "sections": 1
+  },
+  {
+   "file": "宁波大学附属妇女儿童医院-欧易补充.docx",
+   "chars": 13639,
+   "sections": 2
+  },
+  {
+   "file": "多组学-科研外协单位考察情况报告表-鹿明9.76万.docx",
+   "chars": 13519,
+   "sections": 1
+  },
+  {
+   "file": "响应文件-欧易.docx",
+   "chars": 12144,
+   "sections": 2
+  },
+  {
+   "file": "火箭军特色医学中心-基于16S测序和非靶向代谢组构建营养风险因素预测模型数据库服务-火箭军特色医学中心-响应文件--20250425.docx",
+   "chars": 10098,
+   "sections": 1
+  },
+  {
+   "file": "单细胞-外协单位考察情况报告表-欧易19.98万.docx",
+   "chars": 10078,
+   "sections": 1
+  },
+  {
+   "file": "完成50例小鼠样本的单细胞转录组测序+2026-JQ07-F3082+上海欧易生物医学科技有限公司 报名.pdf",
+   "chars": 8916,
+   "sections": 1
+  },
+  {
+   "file": "25例组织转录和蛋白组测序+2025-JQ07-F3064+上海欧易生物医学科技有限公司.pdf",
+   "chars": 7772,
+   "sections": 1
+  },
+  {
+   "file": "商务响应表.pdf",
+   "chars": 7418,
+   "sections": 1
+  },
+  {
+   "file": "单细胞-技术开发项目委托合同-欧易.docx",
+   "chars": 6616,
+   "sections": 1
+  },
+  {
+   "file": "台州市第一人民医院技术文件--欧易.docx",
+   "chars": 5752,
+   "sections": 2
+  },
+  {
+   "file": "真核转录组测序+上海欧易生物医学科技有限公司.docx",
+   "chars": 5498,
+   "sections": 2
+  },
+  {
+   "file": "售后服务与技术支持.pdf",
+   "chars": 4680,
+   "sections": 1
+  },
+  {
+   "file": "00 标书正本 资格证明分册 一正两副.docx",
+   "chars": 3980,
+   "sections": 1
+  },
+  {
+   "file": "其他技术证明文件.pdf",
+   "chars": 3934,
+   "sections": 1
+  },
+  {
+   "file": "多组学高通量测序服务采购项目（价格文件）+上海欧易生物医学科技有限公司.docx",
+   "chars": 3920,
+   "sections": 1
+  },
+  {
+   "file": "重庆市人民医院-检验科人血清全谱代谢组双平台检测-欧易生物-响应文件-20250103.docx",
+   "chars": 3759,
+   "sections": 1
+  },
+  {
+   "file": "2bRAD-M 微生物检测首都儿科研究所比价文件.docx",
+   "chars": 3630,
+   "sections": 2
+  },
+  {
+   "file": "2025-JLJYAP-W4018+感染病样肺泡灌洗液单细胞和免疫组库测序及分析+上海欧易生物医学科技有限公司.pdf",
+   "chars": 3567,
+   "sections": 1
+  },
+  {
+   "file": "2025-JLJYAP-W4020+感染病样肺泡灌洗液单细胞和免疫组库测序及分析+上海欧易生物医学科技有限公司.pdf",
+   "chars": 3453,
+   "sections": 1
+  },
+  {
+   "file": "上海欧易生物医学科技有限公司报名材料-被授权人罗蕾版.pdf",
+   "chars": 3344,
+   "sections": 1
+  },
+  {
+   "file": "报价单.pdf",
+   "chars": 3306,
+   "sections": 1
+  },
+  {
+   "file": "欧易-报价文件.docx",
+   "chars": 3286,
+   "sections": 1
+  },
+  {
+   "file": "移液器001.pdf",
+   "chars": 3242,
+   "sections": 1
+  },
+  {
+   "file": "多组学高通量测序服务采购项目+2026-YKLIXY-F3008+上海欧易生物医学科技有限公司.pdf",
+   "chars": 3239,
+   "sections": 1
+  },
+  {
+   "file": "重庆市人民医院检验科-欧易响应文件.docx",
+   "chars": 3209,
+   "sections": 1
+  },
+  {
+   "file": "小鼠睾丸组织单细胞转录组测序与高级分析（第二次）+价格文件+上海欧易生物医学科技有限公司.docx",
+   "chars": 3146,
+   "sections": 1
+  },
+  {
+   "file": "Olink蛋白质组学检测及风险预测模型构建服务采购+包1+上海欧易生物医学科技有限公司.pdf",
+   "chars": 3126,
+   "sections": 1
+  },
+  {
+   "file": "欧易三次报价.docx",
+   "chars": 2975,
+   "sections": 1
+  },
+  {
+   "file": "欧易二次报价.docx",
+   "chars": 2975,
+   "sections": 1
+  },
+  {
+   "file": "1 报价文件.docx",
+   "chars": 2818,
+   "sections": 1
+  },
+  {
+   "file": "第1包-非靶向代谢组检测和16sRNA测序分析服务采购（价格文件）-上海欧易生物医学科技有限公司.docx",
+   "chars": 2484,
+   "sections": 1
+  },
+  {
+   "file": "欧易-投标涵.docx",
+   "chars": 2302,
+   "sections": 1
+  },
+  {
+   "file": "基于16S测序和非靶向代谢组构建营养风险因素预测模型数据库服务(2025-JJIICBB-F9006)+包1+上海欧易生物医学科技有限公司.pdf",
+   "chars": 2246,
+   "sections": 1
+  },
+  {
+   "file": "03 报价部分.docx",
+   "chars": 2199,
+   "sections": 1
+  },
+  {
+   "file": "第1包-25例组织转录组和蛋白组测序-北京百奥智汇科技有限公司-报价文件.docx",
+   "chars": 1823,
+   "sections": 1
+  },
+  {
+   "file": "Olink蛋白质组学检测及风险预测模型构建服务采购+包1+上海欧易生物医学科技有限公司.docx",
+   "chars": 1705,
+   "sections": 1
+  },
+  {
+   "file": "00 投标文件 报价文件  上海欧易生物.docx",
+   "chars": 1613,
+   "sections": 1
+  },
+  {
+   "file": "多组学高通量测序服务采购项目（价格文件）+上海欧易生物医学科技有限公司.pdf",
+   "chars": 1460,
+   "sections": 2
+  },
+  {
+   "file": "03 报价文件.docx",
+   "chars": 1374,
+   "sections": 1
+  },
+  {
+   "file": "样品检测询价函_上海欧易生物医学科技有限公司(1).docx",
+   "chars": 1303,
+   "sections": 1
+  },
+  {
+   "file": "03 报价文件部分.docx",
+   "chars": 1173,
+   "sections": 1
+  },
+  {
+   "file": "浙江疾控资格文件-欧易初稿.docx",
+   "chars": 1097,
+   "sections": 1
+  },
+  {
+   "file": "第1包-Olink蛋白质组学检测及风险预测模型构建服务采购（价格文件）-上海欧易生物医学科技有限公司.pdf",
+   "chars": 946,
+   "sections": 1
+  },
+  {
+   "file": "ZLM2024031570-Pro DIA定量蛋白质组-浙江大学医学院附属邵逸夫医院-21,600.00_02.jpg",
+   "chars": 923,
+   "sections": 1
+  },
+  {
+   "file": "第1包-价格文件-空间单细胞转录测序-上海欧易生物医学科技有限公司.pdf",
+   "chars": 905,
+   "sections": 1
+  },
+  {
+   "file": "数据保密承诺书.docx",
+   "chars": 850,
+   "sections": 5
+  },
+  {
+   "file": "委托外单位开展样本转录组检测+2024-JOYYCY-F3010+上海欧易生物医学科技有限公司-报名文件.docx",
+   "chars": 849,
+   "sections": 2
+  },
+  {
+   "file": "00 封条.docx",
+   "chars": 829,
+   "sections": 2
+  },
+  {
+   "file": "欧易报名文件.docx",
+   "chars": 793,
+   "sections": 2
+  },
+  {
+   "file": "项目的特定资格要求.pdf",
+   "chars": 787,
+   "sections": 1
+  },
+  {
+   "file": "单细胞-保密承诺书-欧易.docx",
+   "chars": 762,
+   "sections": 1
+  },
+  {
+   "file": "多组学-保密承诺书 -鹿明.docx",
+   "chars": 760,
+   "sections": 1
+  },
+  {
+   "file": "投标人资格声明书.pdf",
+   "chars": 756,
+   "sections": 1
+  },
+  {
+   "file": "报价单.docx",
+   "chars": 749,
+   "sections": 1
+  },
+  {
+   "file": "01 投标文件信封封面 欧易生物.docx",
+   "chars": 701,
+   "sections": 1
+  },
+  {
+   "file": "01 投标文件信封封面 兰州硕宇.docx",
+   "chars": 697,
+   "sections": 1
+  },
+  {
+   "file": "报名文件-上海欧易生物医学科技有限公司.docx",
+   "chars": 647,
+   "sections": 1
+  },
+  {
+   "file": "上海欧易生物医学科技有限公司报告_10.jpg",
+   "chars": 610,
+   "sections": 1
+  },
+  {
+   "file": "报价 欧易.docx",
+   "chars": 603,
+   "sections": 1
+  },
+  {
+   "file": "上海欧易生物医学科技有限公司报告_26.jpg",
+   "chars": 586,
+   "sections": 1
+  },
+  {
+   "file": "报价单 g.docx",
+   "chars": 564,
+   "sections": 1
+  },
+  {
+   "file": "报价单 o.docx",
+   "chars": 563,
+   "sections": 1
+  },
+  {
+   "file": "报价单 N.docx",
+   "chars": 551,
+   "sections": 1
+  },
+  {
+   "file": "01 报价文件.docx",
+   "chars": 534,
+   "sections": 1
+  },
+  {
+   "file": "单细胞测序架协议采购（报价文件）+上海欧易生物医学科技有限公司.docx",
+   "chars": 534,
+   "sections": 1
+  },
+  {
+   "file": "提取自中国原子能科学研究院细胞样品全转录组测序+上海欧易生物医学科技有限公司.pdf",
+   "chars": 516,
+   "sections": 2
+  },
+  {
+   "file": "报价表.docx",
+   "chars": 493,
+   "sections": 1
+  },
+  {
+   "file": "欧易报价.docx",
+   "chars": 441,
+   "sections": 1
+  },
+  {
+   "file": "【AA出行-233.63元-4个行程】高德打车电子发票 欧易.pdf",
+   "chars": 401,
+   "sections": 1
+  },
+  {
+   "file": "【AA出行-57.90元-2个行程】高德打车电子发票.pdf",
+   "chars": 391,
+   "sections": 1
+  },
+  {
+   "file": "【燕抖出行-42.71元-1个行程】高德打车电子发票.pdf",
+   "chars": 391,
+   "sections": 1
+  },
+  {
+   "file": "【众约出行-25.72元】百度地图打车电子发票.pdf",
+   "chars": 371,
+   "sections": 1
+  },
+  {
+   "file": "26332000006027105226_上海欧易生物医学科技有限公司 200.pdf",
+   "chars": 368,
+   "sections": 1
+  },
+  {
+   "file": "【阳光出行-218.05元-1个行程】高德打车电子发票.pdf",
+   "chars": 366,
+   "sections": 1
+  },
+  {
+   "file": "【星徽出行-72.51元-3个行程】高德打车电子发票.pdf",
+   "chars": 364,
+   "sections": 1
+  },
+  {
+   "file": "【添猫出行-15.00元-1个行程】高德打车电子发票.pdf",
+   "chars": 363,
+   "sections": 1
+  },
+  {
+   "file": "【飞嘀打车-68.23元-2个行程】高德打车电子发票 欧易.pdf",
+   "chars": 363,
+   "sections": 1
+  },
+  {
+   "file": "【星徽出行-35.50元-1个行程】高德打车电子发票.pdf",
+   "chars": 362,
+   "sections": 1
+  },
+  {
+   "file": "【62580约车-48.20元-3个行程】高德打车电子发票.pdf",
+   "chars": 361,
+   "sections": 1
+  },
+  {
+   "file": "【旗妙出行-173.74元-2个行程】高德打车电子发票.pdf",
+   "chars": 361,
+   "sections": 1
+  },
+  {
+   "file": "上海欧易生物医学科技有限公司 600元替代发票.pdf",
+   "chars": 359,
+   "sections": 1
+  },
+  {
+   "file": "上海欧易生物医学科技有限公司_20250826_20250825-87207-01_500.00_25312000000269289126.pdf",
+   "chars": 356,
+   "sections": 1
+  },
+  {
+   "file": "【桔子出行-17.92元-1个行程】高德打车电子发票.pdf",
+   "chars": 356,
+   "sections": 1
+  },
+  {
+   "file": "【星徽出行-72.06元-1个行程】高德打车电子发票.pdf",
+   "chars": 351,
+   "sections": 1
+  },
+  {
+   "file": "滴滴电子发票 29.27.pdf",
+   "chars": 341,
+   "sections": 1
+  },
+  {
+   "file": "法人授权委托书.docx",
+   "chars": 341,
+   "sections": 1
+  },
+  {
+   "file": "【享道出行-15.05元-1个行程】高德打车电子发票.pdf",
+   "chars": 340,
+   "sections": 1
+  },
+  {
+   "file": "【火箭出行-107.96元-4个行程】高德打车电子发票.pdf",
+   "chars": 337,
+   "sections": 1
+  },
+  {
+   "file": "5-报价单-上海欧易.pdf",
+   "chars": 327,
+   "sections": 1
+  },
+  {
+   "file": "03-第一次报价-单独密封.docx",
+   "chars": 322,
+   "sections": 1
+  },
+  {
+   "file": "_上海欧易生物 医学科技有限公 司_25112000000277454811_20251210103452 300 数字证书.pdf",
+   "chars": 316,
+   "sections": 1
+  },
+  {
+   "file": "_上海欧易生物 医学科技有限公 司_25112000000277419554_20251210103452 200加急.pdf",
+   "chars": 315,
+   "sections": 1
+  },
+  {
+   "file": "_上海欧易生物 医学科技有限公 司_25112000000277500149_20251210103453 50 智能钥匙.pdf",
+   "chars": 314,
+   "sections": 1
+  },
+  {
+   "file": "_上海欧易生物医 学科技有限公司发票  上海寅乾商务咨询有限公 司.pdf",
+   "chars": 305,
+   "sections": 1
+  },
+  {
+   "file": "【高德打车-16.09元-1个行程】高德打车电子发票.pdf",
+   "chars": 304,
+   "sections": 1
+  },
+  {
+   "file": "【高德打车-63.14元-2个行程】高德打车电子发票.pdf",
+   "chars": 304,
+   "sections": 1
+  },
+  {
+   "file": "ZLM2024031570-Pro DIA定量蛋白质组-浙江大学医学院附属邵逸夫医院-21,600.00_07.jpg",
+   "chars": 294,
+   "sections": 1
+  },
+  {
+   "file": "报价表.pdf",
+   "chars": 292,
+   "sections": 1
+  },
+  {
+   "file": "分项报价表.docx",
+   "chars": 285,
+   "sections": 1
+  },
+  {
+   "file": "易损易耗件清单.pdf",
+   "chars": 276,
+   "sections": 1
+  },
+  {
+   "file": "易损易耗件清单.pdf",
+   "chars": 273,
+   "sections": 1
+  },
+  {
+   "file": "商务技术文件封面-一正三副.docx",
+   "chars": 261,
+   "sections": 2
+  },
+  {
+   "file": "BLM2024030222-Deep高深度血液蛋白质组-上海感染与免疫科技创新中心-483,000.00(1)_09.jpg",
+   "chars": 260,
+   "sections": 1
+  },
+  {
+   "file": "商务技术文件封面-一正二副.docx",
+   "chars": 255,
+   "sections": 2
+  },
+  {
+   "file": "ZLM2024031570-Pro DIA定量蛋白质组-浙江大学医学院附属邵逸夫医院-21,600.00_09.jpg",
+   "chars": 233,
+   "sections": 1
+  },
+  {
+   "file": "欧易-一正四副-封面.docx",
+   "chars": 223,
+   "sections": 2
+  },
+  {
+   "file": "开启一览表.docx",
+   "chars": 217,
+   "sections": 1
+  },
+  {
+   "file": "包(4)_报价表.pdf",
+   "chars": 214,
+   "sections": 1
+  },
+  {
+   "file": "包(2)_报价表.pdf",
+   "chars": 192,
+   "sections": 1
+  },
+  {
+   "file": "包(5)_报价表.pdf",
+   "chars": 192,
+   "sections": 1
+  },
+  {
+   "file": "封套-商务技术文件.docx",
+   "chars": 143,
+   "sections": 1
+  },
+  {
+   "file": "商务技术文件封套.docx",
+   "chars": 140,
+   "sections": 1
+  }
+ ],
+ "note": "这些文档的章节只进 BM25，无 embedding（embedding_state=absent_bm25_only）"
+}
