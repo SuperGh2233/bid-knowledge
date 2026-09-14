@@ -197,7 +197,8 @@ const draftResp = { mode:'llm', kb_used:false, scope_note:'这是草稿，不是
     .join(String.fromCharCode(10)),
   citations:[{ref:'E1',heading:'售后服务承诺 1 项',file_name:'投标文件 正文.docx',source_path:'\\\\nas\\01 投标项目文件\\X\\投标文件 正文.docx'}],
   warnings:[{message:'「售后方案」的「响应」在不同历史文件里不一致：24h（…）；48h（…）'}],
-  gaps:[], validation:[], modules:['售后方案'], coverage:{requested:1,ok:1,sparse:0,insufficient:0} };
+  gaps:[], validation:[], modules:[{module:'售后方案',status:'ok',evidence:[{ref:'E1'}]}],
+  coverage:{requested:1,ok:1,sparse:0,insufficient:0} };
 const prevFetch = global.fetch;
 global.fetch = (url, opts) => String(url).includes('/api/proposal-generate')
   ? Promise.resolve({ok:true, json: async () => draftResp})
@@ -211,6 +212,10 @@ R.generateDraft('llm').then(
     if (!out.includes('引用来源 1 条')) { console.log('FAIL 引用来源未折叠'); process.exit(1); }
     if (!out.includes('copy-draft')) { console.log('FAIL 复制草稿按钮缺失'); process.exit(1); }
     if (!out.includes('result-card warning')) { console.log('FAIL 警示卡缺失'); process.exit(1); }
+    // 「方案生成不是黑盒」：必须显示识别到的小节与证据覆盖（2026-09-14 业务评审）
+    if (!out.includes('识别到的方案小节')) { console.log('FAIL 缺「识别到的方案小节」'); process.exit(1); }
+    if (!out.includes('售后方案 · 证据充足')) { console.log('FAIL 模块状态未显示'); process.exit(1); }
+    if (!out.includes('证据覆盖 1/1')) { console.log('FAIL 证据覆盖未显示'); process.exit(1); }
     // 警示只应有一张卡（原来三条警示各占一张黄卡 → 现在合成一张清单）
     const alertCards = (out.match(/<div class="result-card warning">/g) || []).length;
     if (alertCards !== 1) { console.log('FAIL 警示卡数量='+alertCards+'，应合并为一张'); process.exit(1); }

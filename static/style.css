@@ -285,6 +285,8 @@ button[disabled] { opacity: .55; cursor: default; }
 .cite-list li { margin: 5px 0; color: var(--muted); font-size: 12px; }
 
 .error { padding: 15px; color: var(--seal); background: color-mix(in srgb, var(--seal) 10%, transparent); border-left: 3px solid var(--seal); }
+/* 生成中的「已用 N 秒」——模型起草要 20~30 秒，必须让人看到还在跑 */
+.elapsed { color: var(--muted); font-size: 12px; margin-left: 6px; }
 
 footer {
   padding: 16px 28px; text-align: center; color: var(--on-dark); background: var(--ink);

@@ -494,10 +494,9 @@ function renderMarkdown(markdown) {
 // 已经逐条给出出处 —— 中间那一步不产生用户要的东西。按第一性原理删掉中间步骤与
 // 冻结示范稿（原页签 02）：**需求二就是一个输入框 → 一份方案**。
 
-document.querySelectorAll("[data-proposal]").forEach(button => button.addEventListener("click", () => {
-  $("#proposal-query").value = button.dataset.proposal;
-  $("#proposal-form").requestSubmit();
-}));
+// 注：原先这里有一个 `[data-proposal]`（3 个示例按钮「点一下直接生成」）的绑定 ——
+// 那 3 个按钮已在 2026-09-14 的示例瘦身中移除（改由 `#proposal-picker` 的模块按钮填入输入框），
+// 绑定成了死代码，已删。示例只保留在页签 01 的折叠里。
 
 $("#proposal-form").addEventListener("submit", event => {
   event.preventDefault();
@@ -533,7 +532,10 @@ async function generateDraft(mode) {
     clearInterval(timer); _draftInFlight = false;
     btns.forEach(b => { b.disabled = false; });
   };
-  target.innerHTML = `<div class='result-card'>正在起草方案…</div>`;
+  // 进度反馈：模型起草要 20~30 秒，必须让用户看到"还在跑"（否则会以为卡死、再点一次 ——
+  // 那原本是评审 P1 的问题；`_draftInFlight` + 禁用按钮挡住了重复请求，这里补上"看得见的进度"）。
+  // ⚠️ 之前这个计时器指向一个**永不存在**的 `.elapsed` 元素（空转）—— 现已把该元素放进加载卡。
+  target.innerHTML = `<div class='result-card'>正在起草方案… <span class="elapsed"></span></div>`;
   try {
     const data = await request("/api/proposal-generate", {
       method: "POST", headers: {"Content-Type":"application/json"},
@@ -545,10 +547,25 @@ async function generateDraft(mode) {
     // ⚠️ 冲突/缺节是**必须一眼看见**的信息（关系到撤回风险与诚实边界），不折叠；
     // 但三条警示不要再各占一张黄卡片 —— 合成一张清单。
     const alerts = problems + warn + gaps;
+    // 「系统理解成了什么 + 证据够不够」——2026-09-14 业务评审：方案生成原是个黑盒，
+    // 用户看不到识别了哪些小节、证据够不够。**纯渲染**（响应里已有 modules/coverage/gaps），不新增接口。
+    const MOD_STATUS = { ok: "证据充足", sparse: "证据不足", insufficient: "没有找到" };
+    const modTags = (data.modules || []).map(m => {
+      const n = (m.evidence || []).length;
+      return `<span class="tag cond-tag-static">${esc(m.module)} · ${esc(MOD_STATUS[m.status] || m.status)}`
+             + `${n ? ` · ${n} 条证据` : ""}</span>`;
+    }).join("");
+    const cov = data.coverage || {};
+    const covLine = cov.requested
+      ? `证据覆盖 ${cov.ok || 0}/${cov.requested} 个小节充足`
+        + (cov.sparse ? `，${cov.sparse} 个不足` : "")
+        + (cov.insufficient ? `，${cov.insufficient} 个没找到` : "")
+      : "";
     const cites = (data.citations || []).map(c =>
       `<li><b>${esc(c.ref)}</b> · ${esc(c.heading || "（无标题）")} <span class="excerpt">${esc(c.file_name)}</span></li>`).join("");
     target.innerHTML = `<div class="summary"><h3>方案草稿（不是最终稿）</h3>
-      <p><strong>本次产物：</strong>${esc(MODE_LABEL[data.mode] || data.mode)}</p>
+      <p><strong>本次产物：</strong>${esc(MODE_LABEL[data.mode] || data.mode)}</p></div>
+      ${modTags ? `<div class="cond-tags"><span class="cond-hint">识别到的方案小节${covLine ? `（${esc(covLine)}）` : ""}：</span>${modTags}</div>` : ""}
       ${alerts ? `<div class="result-card warning"><ul class="fact-list">${alerts}</ul></div>` : ""}
       <article class="draft">${renderMarkdown(data.markdown || "")}</article>
       <details class="cite-list" style="margin-top:14px"><summary><strong>用稿须知</strong></summary>
