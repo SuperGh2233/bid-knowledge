@@ -7,6 +7,7 @@
 **每个样本包含**
 - `meta.json` —— 查询、模式、coverage、引用数、冲突、gaps、warnings（机器可判定项）
 - `report.md` —— 产物正文（评审同事主要读这个）
+- `response.json` —— **原始响应体**（要完整复现展示流程就看它；`report.md` 只是其中 markdown 那一项）
 
 **样本设计**（7 个，覆盖不同能力面）
 | # | 查询 | 模式 | 评什么 |
@@ -120,6 +121,12 @@ def main() -> int:
         (out / "report.md").write_text(
             (r.get("markdown") or f"[该样本无草稿产物] {json.dumps(r, ensure_ascii=False)[:800]}"),
             encoding="utf-8")
+        # ⚠️ **原始响应体必须落盘**（2026-09-14 走查补）：先前只存摘要 meta.json，于是
+        # `citations`（引用编号→文件）/`validation`/`scope_note`/`refs` 事后全无法复现 ——
+        # 想拿真实结果走一遍**完整展示流程**时只能靠重建，等于验不了引用与校验那两段。
+        # 含真实投标正文，只能留在 outputs/（已 gitignore）。
+        (out / "response.json").write_text(
+            json.dumps(r, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"  ✓ {name}: modules={modules} coverage={r.get('coverage')} "
               f"warnings={len(meta['warnings'])} gaps={len(meta['gaps'])} kb={meta['kb_used']}")
     print("样本包生成完成（全部为模型起草产物，含外发）。")

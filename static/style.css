@@ -175,10 +175,6 @@ input:focus-visible, textarea:focus-visible {
   border: 1.5px dashed var(--line); color: var(--muted);
   background: color-mix(in srgb, var(--sheet) 55%, transparent); text-align: center;
 }
-.folio {
-  position: absolute; right: 16px; top: 12px; color: var(--muted);
-  font: 700 12px Bahnschrift, "Segoe UI", sans-serif; opacity: .8;
-}
 .summary { display: flex; justify-content: space-between; gap: 20px; align-items: baseline; margin: 22px 0 10px; }
 .summary h3 { margin: 0; font: 600 21px "STSong", "SimSun", serif; }
 .summary p { color: var(--muted); font-size: 12px; }
