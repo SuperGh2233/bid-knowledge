@@ -304,15 +304,22 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
 
 ## 11. Git State
 
-- 分支 `main`，HEAD **`cc28082`**（唯一提交：R1 骨架）。
-- `git status --short`：**36 `??` + 5 `M` = 41 行**（`M`：`.gitignore`、`README.md`、`app/config.py`、
-  `app/db.py`、`requirements.txt`）。
-  ⚠️ 其中**近期新增**的四个尚未纳入任何清单：`app/tender.py`、`tests/test_frontend_syntax.py`、
-  `tests/test_module_counts.py`、`tmp_probe/`。
-- **禁提交**：`bid_ai_clean_reg*.bak*.db`（26 个写前备份，共 441MB）、`tmp/`、`outputs/`、`*.db`、`.env`、`*.log`、`_render_probe.js`、`tmp_probe/`。
-  ⚠️ `outputs/` **必须保持忽略** —— `r7-*/prompt.md` 是**真实投标正文**。
+- **分支 `feat/info-architecture-rework`，HEAD `3b52af9`**（2026-09-14 用户指示「把他们纳入一次提交」）。
+  这是**本项目的第一个正式回滚点**：106 个文件 / +28,912 行，含 `app/`、`static/`、`tests/`、
+  `scripts/`、`docs/`、`data/`。**`main` 仍停在 `cc28082`（R1 骨架）**，未动。
+  ⚠️ **在此之前 `static/` 与 `tests/` 从未进过 Git**（不是被忽略，是没 `add` 过）——
+  所以那之前"用 `git checkout` 回滚前端"是**空话**（对未跟踪文件无效）。现已解决。
+- **提交前做过密钥扫描**（`sk-*` / `api_key=` / `Bearer` / `password=`）—— 干净；`data/` 只有
+  文件白名单与评测产物（无敏感内容）。
+- `git status --short`：**0 行**（工作区干净）。
+- **禁提交 / 保持忽略**：`.env`（**含真实 key**）、`bid_ai_clean_reg*.bak*.db`（26 个写前备份，441MB）、
+  `*.db`、`tmp/`、`outputs/`、`tmp_probe/`、`data/ocr_batch_state.json`、`*.log`。
+  ⚠️ `outputs/` **必须保持忽略** —— `r7-*/prompt.md` 与评审样本是**真实投标正文**。
   ⚠️ **`.gitignore` 不支持行尾注释**（注释必须独立成行，否则规则静默失效——已踩过）。
+  ⚠️ 行尾：本机 `core.autocrlf` 会在提交时把 CRLF 归一为 LF（提交时有大量 warning，属正常）。
 - 数据库备份**已按用户确认瘦身**：50 个 → **26 个**（保留被脚本具名读取的 + 最近回滚点）。
+- **回滚方式**：`git checkout -- <path>` / `git revert 3b52af9` / `git checkout main` 回到骨架。
+  另有文件级快照 `tmp/pre-p0-20260914/`（P0 改动前），**仅作双保险、不是主回滚手段**。
 
 ## 12. Recovery Command
 
