@@ -189,6 +189,19 @@
    **变异验证**：把 `id="metrics"` 改名为 `metricsX` → ①③ 双双失败（② 不响，因为它在 `.then` 里而非顶层）；
    还原后 4 passed。⚠️ 另修：探针 `subprocess.run(text=True)` 用本机 **GBK** 解码 stdout，
    探针一开始输出中文就崩 —— 已显式 `encoding="utf-8"`。
+22. **P1 收尾三项（2026-09-14）**：
+   ① **需求二生成结果显示「识别到的小节 + 证据覆盖」**（对治"方案生成是个黑盒"）：顶部渲染
+   `modules[]`（每个小节 → 模块名 · 证据充足/不足/没有找到 · N 条证据）与一行
+   `证据覆盖 N/M 个小节充足`。**纯渲染**（响应里早就有 `modules`/`coverage`），**不新增接口**、
+   不做"生成前预检"（那要新开端点，本轮不做）。
+   ② **三类材料 / 材料事实 / 方案章节的卡片也装上「打开文件 / 打开所在文件夹 / 复制路径」** ——
+   原先只有合同卡片有，其余仍是「复制文件位置（给IT定位用）」，而它们的行里**同样有 `document_id`**，
+   用户一样"找到了文件却打不开"。做法：`metaBlock` 的复制按钮换成 `fileActions(r)`（同一个函数，
+   缺 `document_id` 时自动降级为只给复制路径），并在三处调用点补 `bindOpenButtons`
+   —— ⚠️ **渲染了按钮就必须绑事件**，否则是个点了没反应的死按钮（护栏抓不到，靠这条规矩）。
+   ③ **死代码清理**（计划中原定 P1 之后单独做）：删 `[data-proposal]` 死绑定；`.elapsed` 计时器
+   原本指向一个**永不存在**的元素（空转）——**选择让它真正生效**（把 `.elapsed` 放进加载卡，
+   让 20~30 秒的生成过程有可见进度，这本是它原本的意图）而不是删掉。
 
 ## 5. Contracts and Constraints
 
@@ -254,6 +267,16 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
   ⚠️ 更正：旧版这里还写了 `_render_probe.js` —— 那个在 `tmp/` 下，**已被挡住**（实测确认），别误删护栏。
 - ~~B2B 评审那一轮未记入 §10~~ → **已补记**（本轮把「前端 P0 `rsplit` + 护栏测试 + 195 passed」那一行
   补进 `../bid-ai/MINIMAL_REBUILD_PLAN.md` §10；旧版说「B2B 零命中」是**错判**，§10 早有 B2B 行）。
+
+### 待清理候选（**需用户确认后再动，别擅自删**）
+- **`app/r5_evidence.py` 是死模块**（2026-09-14 实测：全仓**没有任何 import**，只有 `app/proposal.py` 两处
+  **注释**说"沿用其判据"——是照抄了判据、不是引用）。约 140 行，含 `is_score_line` / `merge_passages` /
+  `extract_evidence` / `source_path_of` / `validate_report` 等 R5 阶段函数。**它里面的 `SOURCE_ROOTS`
+  是文件根路径的第 4 份拷贝**（另三份见下）。删它属"删模块"级动作，按本仓惯例（删除均经用户确认）先记账。
+- **根路径 `DEFAULT_ROOTS`/`SOURCE_ROOTS` 在 4 处各写一份**：`app/search.py:27`（**活的那份**）、
+  `app/r5_evidence.py:22`、`scripts/r5_batch_parse.py:34`、`scripts/r5_parse_more.py:29`。
+  ⚠️ **新代码一律 `from app.search import DEFAULT_ROOTS`**（`app/routes_open.py` 就是这么做的）。
+  合并它们价值有限（后三处要么是死模块、要么是一次性脚本），但**新增第 5 份拷贝是真隐患**。
 
 ## 8. Next Actions
 
