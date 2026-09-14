@@ -160,7 +160,7 @@ def test_same_project_cap(monkeypatch):
 
 
 def test_score_lines_excluded(monkeypatch):
-    """评分要求行不得进入正式证据（沿用 r5_evidence 判据）。"""
+    """评分要求行不得进入正式证据（判据自 R5 阶段沿用）。"""
     con = _con([("d1", "our_response", "p1"), ("d2", "our_response", "p2")])
     monkeypatch.setattr(P, "_recall", lambda mod, n: [
         _cand("s1", "d1", "1、售后服务", "售后服务方案得2分，评分标准见下表。", "p1"),

@@ -54,7 +54,7 @@ def _load_module_keywords() -> dict[str, tuple[str, ...]]:
 MODULE_KEYWORDS: dict[str, tuple[str, ...]] = _load_module_keywords()
 
 VALID_ROLES = ("our_response", "final_signed")
-# 评分要求行不得进入正式证据（沿用 r5_evidence 的判据）
+# 评分要求行不得进入正式证据（判据自 R5 阶段沿用；现就地定义在本文件，不再有旁支模块）
 _SCORE_KW = ("得2分", "得1分", "评分项目", "评分标准", "评审标准", "打分", "得分标准")
 
 # 近重复阈值：同一模板跨项目复制的章节，4-gram Jaccard 通常 ≥0.8；不同主题 <0.4
@@ -179,7 +179,7 @@ def _is_score_line(text: str) -> bool:
 def _is_score_section(heading: str, text: str) -> bool:
     """整个章节是不是**评分要求章节**（而不是正文里顺带提了一次）。
 
-    ⚠️ 判据必须比 `r5_evidence` 更宽：那里是**逐行**用的（一行不采），这里拿到的是**整章**
+    ⚠️ 判据**不能照搬 R5 阶段的逐行判据**：那里是**逐行**用的（一行不采），这里拿到的是**整章**
     （可达 7 万字）。**在整章粒度上照搬逐行判据会把真方案整章剔除** —— 对抗性复核实测：
     「13、服务方案」6,002 字，只因正文含「对代谢物进行打分（Score）」这一处实验方法描述被整条丢弃；
     九模块合计误剔 15 条候选，其中一条 70,898 字的章节本应进入正文兜底池。

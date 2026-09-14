@@ -269,14 +269,13 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
   补进 `../bid-ai/MINIMAL_REBUILD_PLAN.md` §10；旧版说「B2B 零命中」是**错判**，§10 早有 B2B 行）。
 
 ### 待清理候选（**需用户确认后再动，别擅自删**）
-- **`app/r5_evidence.py` 是死模块**（2026-09-14 实测：全仓**没有任何 import**，只有 `app/proposal.py` 两处
-  **注释**说"沿用其判据"——是照抄了判据、不是引用）。约 140 行，含 `is_score_line` / `merge_passages` /
-  `extract_evidence` / `source_path_of` / `validate_report` 等 R5 阶段函数。**它里面的 `SOURCE_ROOTS`
-  是文件根路径的第 4 份拷贝**（另三份见下）。删它属"删模块"级动作，按本仓惯例（删除均经用户确认）先记账。
-- **根路径 `DEFAULT_ROOTS`/`SOURCE_ROOTS` 在 4 处各写一份**：`app/search.py:27`（**活的那份**）、
-  `app/r5_evidence.py:22`、`scripts/r5_batch_parse.py:34`、`scripts/r5_parse_more.py:29`。
+- ~~`app/r5_evidence.py` 是死模块~~ → **已删除**（2026-09-14 用户确认；187 行。删前复核：全仓无静态/动态
+  导入，只有 `app/proposal.py` 两处**注释**与 `tests/test_proposal.py` 一处 docstring 提到它 —— 已改写为
+  "判据自 R5 阶段沿用"，不再指向已不存在的模块。**它里面的 `SOURCE_ROOTS` 是文件根路径的又一份拷贝。**）
+- **根路径 `DEFAULT_ROOTS`/`SOURCE_ROOTS` 仍有 3 份拷贝**：`app/search.py:27`（**活的那份**）、
+  `scripts/r5_batch_parse.py:34`、`scripts/r5_parse_more.py:29`（后两者是一次性脚本）。
   ⚠️ **新代码一律 `from app.search import DEFAULT_ROOTS`**（`app/routes_open.py` 就是这么做的）。
-  合并它们价值有限（后三处要么是死模块、要么是一次性脚本），但**新增第 5 份拷贝是真隐患**。
+  合并这两处价值有限（一次性脚本），但**新增拷贝是真隐患**。
 
 ## 8. Next Actions
 
