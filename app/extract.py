@@ -52,15 +52,68 @@ def _to_yuan(amount_raw, unit: str | None) -> float | None:
         val = float(str(amount_raw).replace(",", "").strip())
     except (TypeError, ValueError):
         return None
-    if unit == "万元":
-        return round(val * 10000, 2)
+    # 「万」与「万元」等价（2026-09-16：实测表格里金额格常写 `3.5万`，没有「元」字，
+    # 旧实现只认「万元」→ 19 条明明写了金额却落成未知）。
+    # 合理上限：本语料是检测服务投标，业绩金额量级在 1 万 ~ 300 万；实测最大值 253.7 万。
+    # 超过 1 亿的一律判为**误读**（实锤：一条 4.46119200 亿 = 电话号码被当成金额）。
+    # 宁缺毋滥：宁可漏一个真实的亿级合同，也不把电话号当金额上屏。
+    _MAX_YUAN = 100_000_000.0
+    if unit in ("万元", "万"):
+        val = val * 10000
+        return round(val, 2) if val <= _MAX_YUAN * 10 else None
     if unit == "元":
-        return round(val, 2)
+        return round(val, 2) if val <= _MAX_YUAN else None
     return None
 
 
-def _parse_row(row_text: str, unit: str | None) -> dict:
-    """解析一行业绩行 → 采购人/项目名称/金额/年份（缺失=None，不臆测）。"""
+_AMOUNT_COL = re.compile(r"金额|总价|价格|合同额")
+_PROJECT_COL = re.compile(r"项目名称|项目内容|服务名称|业绩名称|工作主要内容|合同主要内容|采购内容")
+_DATE_COL = re.compile(r"签订|签约|年份|竣工验收|时间")
+
+
+# 机构名标记：业绩行的采购人是**单位**（医院/大学/公司…）。用于剔除"表头认出来了、
+# 但表体其实是别的表"的误抽行（见 `_looks_like_ledger_row`）。
+_ORG_MARKERS = ("公司", "大学", "医院", "研究院", "研究所", "学院", "中心", "学校",
+                "科学院", "实验室", "集团", "疾控", "检测", "检验", "设计院", "事务所",
+                "委员会", "管理局", "部队", "保健院", "防治", "总院", "分院", "附属")
+
+
+def _looks_like_ledger_row(r: dict) -> bool:
+    """一行是否**像**业绩行：有金额，或采购人像机构名。两者皆无 → 不是业绩行。"""
+    if r.get("total_amount") is not None:
+        return True
+    party = r.get("party_a_raw") or ""
+    return any(m in party for m in _ORG_MARKERS)
+
+
+def _column_index(header_line: str) -> dict:
+    """从**表头行**推出各字段所在列（按列名，不按"第一个中文格"）。
+
+    由来（2026-09-16）：业绩表的列序差异极大 —— 有的写 `序号|采购人|项目名称|…`（当事人列在前），
+    有的写 `序号|项目名称|项目内容|…|单位名称`（当事人列在后）。旧实现取"第一个中文格当采购人"，
+    后者会把**项目名当采购人**。按列名定位两类都能正确。
+    """
+    cells = [c.strip() for c in header_line.split("|")]
+    idx = {}
+    for i, c in enumerate(cells):
+        if not c:
+            continue
+        if "party" not in idx and any(k in c for k in _PARTY_KEYS):
+            idx["party"] = i
+        if "amount" not in idx and _AMOUNT_COL.search(c) and "单价" not in c:
+            idx["amount"] = i
+        if "project" not in idx and _PROJECT_COL.search(c):
+            idx["project"] = i
+        if "date" not in idx and _DATE_COL.search(c):
+            idx["date"] = i
+    return idx if "party" in idx or "amount" in idx else {}
+
+
+def _parse_row(row_text: str, unit: str | None, header_line: str | None = None) -> dict:
+    """解析一行业绩行 → 采购人/项目名称/金额/年份（缺失=None，不臆测）。
+
+    `header_line` 给了就**按列名定位**；给不出可用的列映射时退回原位置启发式（行为不变）。
+    """
     cells = [c.strip() for c in row_text.split("|") if c and c.strip()]
     ord_ = None
     rest = cells
@@ -68,32 +121,78 @@ def _parse_row(row_text: str, unit: str | None) -> dict:
         ord_ = int(cells[0])
         rest = cells[1:]
     party = None
+    amount_raw = None
+    unit_eff = unit
+    project_by_col = None
+    colmap = _column_index(header_line) if header_line else {}
+    raw_cells = [c.strip() for c in row_text.split("|")]
+
+    def _at(kind):
+        i = colmap.get(kind)
+        if i is None or i >= len(raw_cells):
+            return None
+        v = raw_cells[i].strip()
+        return v or None
+
+    if colmap:
+        p = _at("party")
+        # 列映射给的采购人只接受"像机构名"的值（避免把表头残留/数字当采购人）
+        if p and re.fullmatch(r"[一-龥·（）()A-Za-z0-9]{2,40}", p) and not _PURE_NUM.match(p):
+            party = p
+        a = _at("amount")
+        if a:
+            m = re.fullmatch(r"(\d+(?:\.\d+)?)\s*(万元|万|元)?", a)
+            if m and not re.match(r"^(?:19|20)\d{2}$", m.group(1)):
+                amount_raw = m.group(1)
+                if m.group(2) in ("万元", "万"):
+                    unit_eff = "万元"
+                elif m.group(2) == "元":
+                    unit_eff = "元"
+        project_by_col = _at("project")
     for c in rest:
+        if party:
+            break
         if re.fullmatch(r"[一-龥·（）()]{2,40}", c):
             party = c
             break
-    amount_raw = None
-    for c in rest[1:] if party else rest:
-        if not c:
-            continue
-        if _PURE_NUM.match(c) and not re.match(r"^(?:19|20)\d{2}$", c):
-            amount_raw = c
-            break
+    if amount_raw is None:
+        for c in rest[1:] if party else rest:
+            if not c:
+                continue
+            if _PURE_NUM.match(c) and not re.match(r"^(?:19|20)\d{2}$", c):
+                amount_raw = c
+                break
+            # 金额格自带单位：`3.5万` / `3.5万元`（旧实现只认纯数字格 → 落成未知）
+            m_inline = re.fullmatch(r"(\d+(?:\.\d+)?)\s*(万元|万)", c)
+            if m_inline:
+                amount_raw = m_inline.group(1)
+                unit_eff = "万元"
+                break
     year = None
     for c in rest:
         y = _year_of(c)
         if y:
             year = y
             break
-    project = None
-    for c in rest:
-        if c != party and c != amount_raw and len(c) >= 4 and not _year_of(c):
-            project = c
-            break
-    total = _to_yuan(amount_raw, unit)
+    project = project_by_col
+    if not project:
+        for c in rest:
+            if c != party and c != amount_raw and len(c) >= 4 and not _year_of(c):
+                project = c
+                break
+    if amount_raw is None:
+        # 金额被写在项目名里（实测 `10x Genomics 单细胞空转￥39.9万元`、
+        # `代谢学检测技术服务合同（30万元）`、`LC-MS/MS脂质组检测 9万元`）——
+        # 表格里没有独立金额列，但金额是**明确写着**的，属"能取就该取"。
+        joined = " ".join(rest)
+        m_emb = re.search(r"(\d+(?:\.\d+)?)\s*万元", joined)
+        if m_emb:
+            amount_raw = m_emb.group(1)
+            unit_eff = "万元"
+    total = _to_yuan(amount_raw, unit_eff)
     return {"row_ord": ord_, "party_a_raw": party, "project_raw": project,
             "total_amount": total,
-            "unit": unit or ("" if amount_raw is None else "单位不明"),
+            "unit": unit_eff or ("" if amount_raw is None else "单位不明"),
             "year_raw": year, "row_text": row_text.strip()}
 
 
@@ -131,7 +230,10 @@ _ORD_LINE_FAIL = ("parse_unparsable_row",)
 #     1 | 中药入血/入靶成分分析-PLUS 版技术服务合同 | 南京市食品药品监督检验院 | 3.5万 | 2025.4.1 | 周蓉馨；15951640117
 # 原实现只认「序号 + 采购人」的横排表，两种都漏——实测 13 份响应文件中 10 份含业绩清单，
 # 却只提出 1 份。**清单文字里已含项目名称/采购人/金额/日期，无需 OCR 下方合同扫描件。**
-_PARTY_KEYS = ("采购人", "买方", "使用单位", "客户", "甲方", "委托方", "项目单位", "采购单位")
+_PARTY_KEYS = ("采购人", "买方", "使用单位", "客户", "甲方", "委托方", "项目单位", "采购单位",
+               # 2026-09-16 补齐：从 42 条真实业绩表头统计出的当事人列写法（旧词表只有上面 8 个，
+               # 「单位名称/用户情况/客户名称/业主单位」全部认不出 → 83 份文档整片跳过）。
+               "单位名称", "用户情况", "客户名称", "业主单位", "业主情况", "用户单位", "委托单位")
 # 业绩清单标题（实测有多种写法：近五年主要项目业绩清单 / 类似业绩一览表 / 业绩情况表 …）
 _LEDGER_TITLE = re.compile(r"(业绩|类似项目|合同).{0,10}(清单|一览|汇总|情况表|列表)")
 _VERT_BLOCK = re.compile(r"^\s*\d{1,3}\s*[、.．]\s*业绩\s*\d*\s*$")
@@ -248,6 +350,14 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
         # 横排表头：序号 + 当事人列。实测列名多样（采购人/买方/使用单位/客户…），
         # 原判据只认「采购人」，把「使用单位」等写法整片漏掉。
         if "序号" in ln and any(k in ln for k in _PARTY_KEYS):
+            # ️ **必须还有金额列**（2026-09-16 实测踩到）：扩展当事人词表后，
+            # 「序号 | 单位名称 | 相互关系」这类**关联方表**也被当成了业绩表 → 把电话号码
+            # 当成了金额（实测一条 4.46 亿）。业绩清单按定义就列合同金额，没有金额列的
+            # 不可能是业绩清单。表头常跨行（金额列可能写在下一行，如 合同 / 金额 / （万元）），故在 ±4 行窗口内找。
+            window = [x for x in lines[i: i + 5]]
+            window += [x for x in lines[max(0, i - 2): i]]
+            if not any(_AMOUNT_COL.search(x) for x in window):
+                continue
             header = i
             break
     if header < 0:
@@ -256,6 +366,10 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
     unit = None
     for i in range(max(anchor, 0), min(header + 4, len(lines))):
         if "万元" in lines[i]:
+            unit = "万元"
+            break
+        # 表头只写「（万）」也要认（同一类漏认，2026-09-16）
+        if re.search(r"[（(]\s*万\s*[）)]", lines[i]):
             unit = "万元"
             break
         if re.search(r"（元）|\(元\)|\b元$", lines[i]):
@@ -274,8 +388,20 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
     def flush():
         nonlocal buf, buf_start, unparsed
         if buf:
-            r = _parse_row(" | ".join(buf), unit)
+            r = _parse_row(" | ".join(buf), unit, lines[header] if header < len(lines) else None)
             if r.get("party_a_raw") or r.get("total_amount") is not None:
+                # —— 行级可信性（2026-09-16）——
+                # 扩展当事人列词表后实测出现**误抽**：某文档的表标题是「投标人业绩情况表」，
+                # 但表体其实是**技术响应偏离表**（"我司完全响应/无偏离"），24 行全假
+                # （采购人=项目名、无金额）。判据：**既无金额、采购人又不像机构名** → 丢弃。
+                # ⚠️ 丢弃**不计入 `unparsed`** —— 它压根不是业绩行（是别的表），
+                # 计进去会把整份文档判成"不完整"，反而伤及正常文档。
+                if not _looks_like_ledger_row(r):
+                    # ⚠️ 这里是 `flush()` **内部函数**，不是循环 —— 只能用 return 提前退出
+                    # （第一版写成 `continue`，直接语法错误）。
+                    buf = []
+                    buf_start = -1
+                    return
                 r["source_doc_id"] = source_doc_id
                 r["source_context"] = lines[start_idx] if start_idx >= 0 else ""
                 r["evidence_idx"] = buf_start + 1
@@ -296,7 +422,7 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
             flush()
             closed = True
             break
-        if "序号" in ln and "采购人" in ln:
+        if "序号" in ln and any(k in ln for k in _PARTY_KEYS):
             cur += 1
             continue
         if _ORD.match(ln):
@@ -318,7 +444,7 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
     empty_confirmed = bool(full_result and records == [] and _has_empty_ledger_evidence(lines, header))
     return {"header_found": True, "records": records, "full_result": full_result,
             "empty_confirmed": empty_confirmed, "truncated": not full_result,
-            "unparsed_rows": unparsed}
+            "closed": closed, "unparsed_rows": unparsed}
 
 
 def extract_contract_ledger(text: str, source_doc_id: str = "") -> list[dict]:
@@ -361,7 +487,7 @@ def _evidence(r: dict, ord_: int) -> str:
 
 def sync_contract_ledger(con, source_doc_id: str, header_found: bool, records: list[dict],
                          *, full_result: bool = True, empty_confirmed: bool = False,
-                         truncated: bool = False) -> dict:
+                         truncated: bool = False, closed: bool = False) -> dict:
     """同一事务内按目标状态替换 [source_doc_id] 的业绩清单快照。
 
     完整性门槛（本次收紧）：
@@ -386,11 +512,22 @@ def sync_contract_ledger(con, source_doc_id: str, header_found: bool, records: l
                 "kept_updated": 0, "cleared": 0, "total": total,
                 "reason": "未取得业绩清单表头锚点，不清空、不更新"}
     if truncated or (header_found and not full_result):
-        total = con.execute("SELECT COUNT(*) FROM contracts WHERE contract_id LIKE ?",
-                            (prefix + "%",)).fetchone()[0]
-        return {"status": "incomplete", "upserted": 0, "deleted": 0,
-                "kept_updated": 0, "cleared": 0, "total": total,
-                "reason": "表头命中但未取得完整清单（截断/尾段缺失），不清空、不做缺行删除"}
+        existing = con.execute("SELECT COUNT(*) FROM contracts WHERE contract_id LIKE ?",
+                               (prefix + "%",)).fetchone()[0]
+        # —— 受限放行（2026-09-16，PLAN-20260916-track-record-search §5.2）——
+        # 旧规则：只要有一行解析失败 → 整份不写（宁缺毋滥）。实测这拦下了 **14 份 / 312 条**，
+        # 而它们**全部**满足：① 表格有明确闭合锚点（不是被截断）；② 该文档**当前没有任何业绩行**
+        # → 属于**纯新增**，既不会删旧行、也不会覆盖既有快照。
+        # 故：仅当「有行 + 已收尾 + 无既有行」三者同时成立才放行，状态另记为 `synced_partial`
+        # （与完整解析的 `synced` 严格区分，可审计）；**删除保护路径一字未动**。
+        if not (records and closed and existing == 0):
+            return {"status": "incomplete", "upserted": 0, "deleted": 0,
+                    "kept_updated": 0, "cleared": 0, "total": existing,
+                    "reason": "表头命中但未取得完整清单（截断/尾段缺失/已有快照），"
+                              "不清空、不做缺行删除"}
+        partial = True
+    else:
+        partial = False
 
     desired: dict[int, dict] = {}
     for r in records:
@@ -450,7 +587,7 @@ def sync_contract_ledger(con, source_doc_id: str, header_found: bool, records: l
                      r.get("party_a_raw"), None, None, None, None,
                      None, r.get("total_amount"), evid))
                 stats["upserted"] += 1
-        stats["status"] = "synced"
+        stats["status"] = "synced_partial" if partial else "synced"
     stats["total"] = con.execute(
         "SELECT COUNT(*) FROM contracts WHERE contract_id LIKE ?", (prefix + "%",)).fetchone()[0]
     return stats
@@ -470,7 +607,8 @@ def extract_and_sync(con, source_doc_id: str, native_text: str | None) -> dict:
     return sync_contract_ledger(con, source_doc_id, state["header_found"], state["records"],
                                 full_result=state["full_result"],
                                 empty_confirmed=state["empty_confirmed"],
-                                truncated=state["truncated"])
+                                truncated=state["truncated"],
+                                closed=state.get("closed", False))
 
 
 # ============================================================================

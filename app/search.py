@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +29,16 @@ from app.extract import (parse_contract_service_table, product_amount_status,
 # 金额按「文件名唯一产品 × 合同总额」归因。该来源值 **必须**与真实明细的 `declared`
 # 严格区分 —— 它是**归因**不是正文声明，前端/接入方据此可辨。
 FILENAME_PRODUCT_TOTAL = "filename_product_total"
+
+# —— 业绩清单（LEDGER-*）检索（PLAN-20260916-track-record-search）——
+# 响应文件里的「业绩清单」是我方**自己写的声明**，不是合同原件。故：
+#   · 走**独立闸**（角色 = our_response/final_signed），**不进** `approved_documents.json`；
+#   · **不参与金额过滤**（业绩表只有合同总额，红线禁止用它当产品金额）——
+#     这一点由 `locate_track_records` **签名里没有金额参数**从结构上保证；
+#   · 返回时**单列 + 显式来源标签**，绝不与合同原件混排。
+TRACK_SOURCE_LABEL = "业绩清单声明（我方响应文件）"
+TRACK_RECORD_ROLES = ("our_response", "final_signed")
+_TRACK_PROJECT = re.compile(r"项目:(.*?)(?:\s+采购人:|\s+金额:|\s*\|)")
 
 DEFAULT_ROOTS = {
     "2025年": Path(r"\\192.168.10.188\大客户部\01 投标项目文件\2025年"),
@@ -460,3 +471,95 @@ def locate_by_product_amount(con, product_keywords: tuple[str, ...], min_amount:
     # 原实现没有这一层（按 `contract_id` 字典序返回）。缺它 Success@5/Precision@10 无定义。
     out.sort(key=locate_sort_key)
     return out
+
+# ============================================================================
+# 业绩清单（LEDGER-*）检索 —— 响应文件里的「我方业绩声明」
+# ============================================================================
+
+def locate_track_records(con, *, party: str = "", products: tuple = (), year: str = "",
+                         limit: int = 50) -> dict:
+    """按 **采购人 / 产品词 / 年份** 检索业绩清单行（`contracts.contract_id LIKE 'LEDGER-%'`）。
+
+    ⚠️ **签名里没有金额参数** —— 这是刻意的：业绩表中的「合同金额」是**合同总额**，
+    按项目红线（产品金额 = 同产品明细行 `line_amount` 之和，`total_amount` 不得替代）
+    **不得参与任何金额过滤**。没有参数就没有这条路径，比"记得别用"可靠。
+
+    ⚠️ **独立闸**：只收 `our_response` / `final_signed` 角色（业绩清单是我方响应文件里的声明），
+    **不查** `approved_documents.json`（那份白名单的语义是「已核**合同原件**」，
+    混入会让 `/api/status` 的 `queryable_contracts` 与"已核"含义一起失真）。
+
+    返回 `{records, count, source_label, scope_note}`；`records` 逐条带 `source_label`，
+    调用方**必须**把它与合同原件**分列**展示（不可混排 —— 一个是原始凭证，一个是我方声明）。
+    """
+    cap = max(1, min(int(limit or 50), 500))
+    records: list[dict] = []
+    groups: dict[str, dict] = {}          # 内容签名 → 记录（**折叠同一声明**）
+    order: list[str] = []
+    total = 0
+    for r in con.execute(
+            """SELECT c.contract_id, c.ordinal, c.party_a, c.total_amount, c.evidence_text,
+                      d.document_id, d.relative_path, d.source_root_id, d.project_folder,
+                      d.content_format, d.document_role
+               FROM contracts c JOIN documents d ON d.document_id = c.document_id
+               WHERE c.contract_id LIKE 'LEDGER-%'
+                 AND d.document_role IN (?, ?)
+               ORDER BY c.party_a, c.contract_id""",
+            TRACK_RECORD_ROLES):
+        ev = r["evidence_text"] or ""
+        if party and party not in (r["party_a"] or ""):
+            continue
+        if products and not any(p and p in ev for p in products):
+            continue
+        if year and str(year) not in ev:
+            continue
+        total += 1
+        # —— 折叠「同一行业绩声明」——
+        # 同一份响应文件常被复制到多个项目文件夹各存一份（实测：同一标的 20260717 与 20260812
+        # 两个目录各一份 `02 商务技术部分.docx`），**canonical 也不同**（文件被重新保存过），
+        # 所以按 canonical 去重拦不住。业绩行的身份是**它声明的内容本身** → 用证据文本做签名，
+        # 折叠成一条并保留**全部来源路径**（与项目既有原则一致：同一规范内容只展示一次）。
+        key = ev or f"{r['party_a']}|{r['total_amount']}|{r['ordinal']}"
+        if key in groups:
+            g = groups[key]
+            g["also_in"].append({
+                "relative_path": r["relative_path"], "document_id": r["document_id"],
+                "project_folder": r["project_folder"], "source_root_id": r["source_root_id"],
+                "content_format": r["content_format"]})
+            g["copy_count"] += 1
+            continue
+        order.append(key)
+        m = _TRACK_PROJECT.search(ev)
+        groups[key] = {
+            "contract_id": r["contract_id"],
+            "ordinal": r["ordinal"],
+            "party_a": r["party_a"],
+            "project": (m.group(1).strip() if m else ""),
+            "amount": round(r["total_amount"], 2) if r["total_amount"] is not None else None,
+            # ⚠️ 金额的语义标签必须与数字同屏：这是**合同总额**（清单列头），不是产品金额
+            "amount_note": "业绩清单所列合同金额（非产品明细金额，不参与金额筛选）",
+            "evidence_text": ev,
+            "relative_path": r["relative_path"],
+            "project_folder": r["project_folder"],
+            "document_id": r["document_id"],
+            "source_root_id": r["source_root_id"],
+            "content_format": r["content_format"],
+            "document_role": r["document_role"],
+            "source_label": TRACK_SOURCE_LABEL,
+            "also_in": [],            # 同一内容的其它副本（保留来源，不重复展示）
+            "copy_count": 1,
+        }
+    for k in order:
+        if len(records) < cap:
+            records.append(groups[k])
+    return {
+        "records": records,
+        "count": len(groups),          # **折叠后**的条数（= 实际展示的卡片数，口径必须一致）
+        "raw_count": total,            # 折叠前（含多副本）
+        "folded_copies": total - len(groups),
+        "truncated": len(groups) > len(records),
+        "source_label": TRACK_SOURCE_LABEL,
+        "scope_note": "业绩清单是**我方响应文件里的声明**（非合同原件）—— 可作为"
+                      "「做过什么、给谁做过」的线索；**其合同金额不参与金额筛选**，"
+                      "需要金额/产品明细请以合同原件为准。"
+                      "同一份响应文件被复制到多个项目文件夹时**只展示一次**，其余副本位置见 `also_in`。",
+    }

@@ -23,7 +23,7 @@ from app.api import (BASE_DIR, PRODUCT_ALIASES, PRODUCT_MATCH_EXCLUDE,
                      resolve_instrument_query, scope_filter_note)
 from app.intent import recognize_intent
 from app.search import DEFAULT_ROOTS as MATERIAL_ROOTS
-from app.search import locate_by_product_amount, search_scheme_sections
+from app.search import locate_by_product_amount, locate_track_records, search_scheme_sections
 
 router = APIRouter()
 
@@ -64,7 +64,7 @@ def _contract_search_body(con, *, product, keywords, minimum, date_from, date_to
     # 用户要在一堆重复卡片里找——而他要的是「哪几份文件可用」。
     hits_folded = _fold_by_contract([r for r in rows if r["hit"]])
     excluded_folded = _fold_by_contract([r for r in rows if not r["hit"]])
-    return {
+    resp = {
         "parsed": {"product": product, "minimum_amount": minimum, "operator": ">=",
                    "party_include": list(party_inc), "party_exclude": list(party_exc),
                    "product_exclude": list(prod_exc_keys),
@@ -86,6 +86,30 @@ def _contract_search_body(con, *, product, keywords, minimum, date_from, date_to
                       f"不含公司合同台账 —— 因此「查不到」不等于「公司没有这份合同」，"
                       f"成交合同的完整清点请以合同台账为准。",
     }
+    # —— 业绩清单（LEDGER-*，响应文件里的我方业绩声明）——
+    # 有金额条件时**也返回**（2026-09-16 用户口径修正），但整段标注「未参与金额筛选」：
+    # 用户要的是「不拿业绩金额比大小」，不是「金额查询里看不到这些响应文件」。
+    ledger = _ledger_for(con, minimum=minimum, keywords=keywords)
+    resp["ledger"] = ledger
+    return resp
+
+
+def _ledger_for(con, *, minimum, keywords, limit: int = 50):
+    """业绩清单段 —— **永不参与金额筛选**，但**有金额条件时照样返回**。
+
+    ⚠️ **2026-09-16 口径修正（用户反馈）**：原话「召回的合同还是只有 pdf；用户可以接受自己去
+    word 文档里去找，**我方响应文档里包含合同就行**」。原先"有金额条件就整段不返回"**过严** ——
+    用户要的是**不拿业绩金额去比大小**，而不是"金额查询里看不到这些响应文件"。
+    现在：有金额条件时也返回，整段带 `amount_condition=True`，前端据此写明「**未参与金额筛选**」；
+    硬约束仍在：业绩行**永不进入 `hits`**、**不参与任何过滤**、**不进 `approved_documents.json`**。
+
+    ⚠️ **不按查询里的「乙方」过滤业绩行**：查询里的乙方是**供应商/我方**，而业绩行的
+    `party_a` 是**采购人（客户）** —— 两个角色不同名同义会误杀（实测 `乙方是欧易的代谢组合同`
+    因此返回 0 条，而库里确有 9 条代谢组业绩）。业绩行只按**产品词**筛。
+    """
+    d = locate_track_records(con, products=tuple(keywords or ()), limit=limit)
+    d["amount_condition"] = bool(minimum)
+    return d
 
 
 @router.post("/api/material-search")
@@ -440,8 +464,15 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
                     MATERIAL_ROOTS.get(r.pop("source_root_id"), Path("")).joinpath(
                         *r["relative_path"].split("/")))
             n_receipt = sum(1 for r in rows if r["payment_status"] == "receipt_file")
+            # —— 业绩清单（LEDGER-*）：**单列来源**，不与上面的合同原件混排 ——
+            # 它是我方响应文件里的**业绩声明**，不是合同原件；金额是**合同总额**，
+            # 不参与金额筛选（PLAN-20260916-track-record-search §6）。
+            ledger = locate_track_records(con, limit=cap)
             return {"module": module, "spec": THREE_MODULES[module], "count": len(rows),
                     "records": rows, "product_summary": product_summary,
+                    "ledger_records": ledger["records"], "ledger_count": ledger["count"],
+                    "ledger_source_label": ledger["source_label"],
+                    "ledger_scope_note": ledger["scope_note"],
                     "scope_note": f"本次只列**已完成核对、可查询**的 {len(rows)} 份合同"
                                   "（与查询路径同一批文件；库内尚未核对的合同不在内，"
                                   "数据总览里另有说明）。"
@@ -455,7 +486,10 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
                                   "（在 `银行回单.zip` 内，**只读了文件名、未核内容**，"
                                   "故**不等于已到账**，需人工看图或 OCR 才能断言）。"
                                   f"本次台账覆盖 {len(pay)} 个合同号；"
-                                  f"回单文件通道另覆盖 {n_receipt} 份合同（见每条 `receipt_files`）。"}
+                                  f"回单文件通道另覆盖 {n_receipt} 份合同（见每条 `receipt_files`）。"
+                                  f"另有 **{ledger['count']} 条业绩清单声明**单列在 `ledger_records`"
+                                  "（来自我方响应文件、**不是合同原件**，其金额为合同总额、"
+                                  "**不参与金额筛选**）。"}
 
         # 财务社保 / 仪器设备：都走 material_facts。类型表**引用上面那两个常量**，
         # 与概览卡同源（分开写死过一次，结果卡上 546、点进去 722）。

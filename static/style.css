@@ -335,3 +335,28 @@ footer .foot-note { display: block; margin-top: 4px; font-size: 11px; opacity: .
   .input-row button { min-height: 46px; }
   .workspace { padding: 22px 16px 48px; }
 }
+/* —— 业绩清单段（响应文件里的我方业绩声明）——
+   与合同原件**视觉上必须能分开**：虚线边框 + 左侧色条 + 明确的来源标签。
+   2026-09-16 新增，见 docs/plans/active/PLAN-20260916-track-record-search.md */
+.ledger-block {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px dashed var(--line, #d8d8d8);
+  border-left: 3px solid #7a8ca3;
+  border-radius: 6px;
+  background: rgba(122, 140, 163, 0.04);
+}
+.ledger-block h4 { margin: 0 0 0.35rem; font-size: 1rem; }
+.ledger-list { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+.ledger-list > li {
+  padding: 0.45rem 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 0.9rem;
+}
+.ledger-list .amount-sm { margin-left: 0.4rem; color: #555; }
+.ledger-meta { margin-top: 0.25rem; }
+.tag-ledger {
+  background: rgba(122, 140, 163, 0.14);
+  color: #46566a;
+  border: 1px solid rgba(122, 140, 163, 0.3);
+}

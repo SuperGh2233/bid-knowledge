@@ -17,6 +17,7 @@
 | 文档 | 状态 | 何时读 |
 |---|---|---|
 | `plans/active/PLAN-20260915-demo-feedback-issues.md` | **active** | 需求方试用反馈 5 条问题的**权威记录**：§6 需求 / §8 已定口径 / §9 实现与遗留 / §11 验证证据 / §12 状态 |
+| `plans/active/PLAN-20260916-track-record-search.md` | **completed** | **业绩清单**（响应文件内的历史合同声明）进入检索：**29→402 条 / 4→50 份 / 带金额 50→289 条**；独立闸、单列来源、不参与金额过滤。§5.2–5.5 记四轮金额修订、两类误抽拦截、受限放行、OCR 分诊（199/201 为真扫描件，本轮不 OCR）|
 | `plans/legacy/MINIMAL_REBUILD_PLAN.md` | legacy（冻结） | 旧系统最小重建路线（§2 金额口径修订 / §10 执行记录 / §11A 门槛）。2026-09-16 自旧系统仓库逐字复制入仓 |
 | `plans/legacy/MINIMAL_REBUILD_PLAN-DECISIONS.md` | legacy（冻结） | 同一路线的决策覆盖层（D1–D15，与基线冲突时以它为准） |
 
@@ -55,7 +56,7 @@
 | `business/proposal-quality-review.md` | active | 方案质量人工评审指引与判定标准（评审须业务发起） |
 | `business/demo-feedback-open-questions.md` | completed | 试用反馈 PLAN 的一页纸（三个口径已全部拍板） |
 | `business/material-facts-feasibility.md` | completed | 材料事实抽取可行性结论 |
-| `business/query-nl-mapping.md` | archived 性质 | 冻结 query 集的自然语言问法对照（2026-09-10 快照） |
+| `business/query-nl-mapping.md` | active（含 2026-09-16 复测） | 自然语言问法对照；**§二 是前端 13 个示例按钮的逐条实测基线**（结果数、意图、耗时、两条边界）|
 
 ## Operations
 

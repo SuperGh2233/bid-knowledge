@@ -119,8 +119,7 @@ GET /api/ask?q=2024年12月之后，代谢组服务金额4万元以上的合同
 **响应**
 ```json
 {
-  "parsed": {"product": "代谢组", "minimum_amount": 100000.0, "operator": ">=",
-             "party_include": [], "party_exclude": [], "product_exclude": []},
+  "parsed": {"product": "代谢组", "minimum_amount": 100000.0, "operator": ">=",             "party_include": [], "party_exclude": [], "product_exclude": []},
   "hits": [ { "contract_id": "CTL-...", "file_name": "...pdf", "product": "代谢组学",
               "amount": 117000.0, "amount_status": "ok", "amount_source": "declared",
               "detail_evidence": "代谢组学 | 例 | 450.00 | 260 | 117,000.00 元",
@@ -156,6 +155,29 @@ GET /api/ask?q=2024年12月之后，代谢组服务金额4万元以上的合同
 - **金额可省的前提**（都是**收窄**条件，不是放宽）：给了日期，**或**给了机构/排除条件。
   故「乙方是欧易的代谢组合同」现在可用（原先会被要求"请写明最低金额"）。
   三个都没有 → 仍然拒绝。
+
+---
+
+## 2A. 业绩清单段（`ledger`）—— 2026-09-16 新增，**两条红线**
+
+响应文件里的**业绩清单**（近三年主要项目业绩表）是我方**自己写的声明**，不是合同原件。
+它已被抽取为 `LEDGER-*` 行（2026-09-16 从 29 条补到 **126 条 / 16 份**）并进入检索，
+但**必须**按下面两条口径返回：
+
+| 红线 | 落地方式 |
+|---|---|
+| **不参与金额过滤** | 业绩行的金额（**合同总额**）**永不用于筛选**，且业绩行**永不进入 `hits`/`excluded`**（它们是独立字段）。有金额条件时**照样返回**该段，但整段带 `amount_condition=true`，接入方**必须**据此写明「未参与金额筛选」—— 用户口径（2026-09-16）：「召回的合同还是只有 pdf；用户可以接受自己去 word 文档里去找，**我方响应文档里包含合同就行**」 |
+| **单列来源、不混排** | 业绩行放在独立字段（不是 `hits`），每条带 `source_label = "业绩清单声明（我方响应文件）"` 与 `amount_note`（写明是合同总额、不参与筛选）；**绝不与合同原件混在同一个列表** |
+
+**出现的位置**：
+- `POST /api/material-search` 与 `GET /api/ask`（合同路径）→ 无金额条件时返回 `ledger: {records[], count, truncated, source_label, scope_note}`；
+- `GET /api/three-modules?module=项目业绩` → 返回 `ledger_records[]` / `ledger_count` / `ledger_source_label` / `ledger_scope_note`（与合同原件 `records` **并列而不混**）。
+
+**每条字段**：`{contract_id, ordinal, party_a, project, amount, amount_note, evidence_text, relative_path, project_folder, document_id, source_root_id, content_format, document_role, source_label}`。
+
+⚠️ **两条已知语义**：① 业绩行**没有合同编号**（实测 0/126），**无法与合同原件自动对账** ——
+不要按合同号去 join；② 查询里的「乙方」**不用于筛业绩行**（查询里乙方=供应商/我方，
+业绩行的 `party_a`=采购人/客户，角色不同名同义会误杀）。
 
 ---
 

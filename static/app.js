@@ -287,6 +287,52 @@ function renderInnerRecords(row) {
  *  而用户真正要的是「这份材料在哪个我方响应文件里」。字段顺序据此重排（**后端响应不变**）：
  *  CTL 合同与 document 实测严格 1:1，所以这只是渲染层的事，不必改折叠分组。
  */
+/**
+ * 业绩清单行 → **与合同原件同一张卡片、同一个列表**（2026-09-16 用户口径：
+ * 「把这些文档和 pdf 走一样的召回路径，不用这样区分」）。
+ *
+ * 保留的只有**每张卡片上的一个小标记**：`业绩声明` + （有金额条件时）`金额未参与核验`。
+ * 为什么标记不能省：实测「单细胞」相关业绩行 61 条里 **45 条没有任何金额** ——
+ * 若与 PDF 合同完全同形，用户会以为它们也达到了金额门槛（那正是需求方第一条反馈的形态）。
+ */
+function ledgerCardOf(r, amountCondition) {
+  const amt = r.amount == null
+    ? "<small class='derived'>金额未记载</small>"
+    : `¥ ${Number(r.amount).toLocaleString("zh-CN")} <small class='derived'>（业绩清单所列合同总额）</small>`;
+  return `<article class="result-card ledger-card">
+    <div class="card-top">
+      <div class="file-head">
+        <p class="file-project">${esc(r.project_folder || "（项目未登记）")}</p>
+        <h3>${esc((r.relative_path || "").split("/").pop() || "（文件名缺失）")}</h3>
+      </div>
+      <span class="amount">${amt}</span>
+    </div>
+    <span class="tag tag-ledger">业绩声明</span>
+    <span class="tag">采购人：${esc(r.party_a || "未识别")}</span>
+    <span class="tag">${esc(formatLabel(r.content_format))}</span>
+    ${amountCondition ? "<span class='tag tag-warn'>金额未参与核验</span>" : ""}
+    ${r.also_in && r.also_in.length ? `<div class="boundary-note">同一份业绩声明另存于 ${r.also_in.length} 处`
+      + `（共 ${r.copy_count} 份副本，多为同一标的不同批次/项目文件夹各存一份）—— `
+      + `**只展示一次**，不重复计入结果。</div>` : ""}
+    <dl class="metadata">
+      <dt>项目</dt><dd>${esc(r.project || "（项目名未识别）")}</dd>
+      <dt>来源</dt><dd>我方响应文件里的业绩清单 —— <b>不是合同原件</b>；金额为合同总额，不参与金额筛选</dd>
+      <dt>原文</dt><dd class="ledger-evidence">${esc(r.evidence_text || "")}</dd>
+      <dt>打开文件</dt><dd>${fileActions(r)}</dd>
+    </dl>
+  </article>`;
+}
+
+/** 业绩行卡片组（同一列表用；不再单独成段） */
+function ledgerCards(data) {
+  const l = data && (data.ledger || (data.ledger_records
+    ? { records: data.ledger_records, count: data.ledger_count, amount_condition: false }
+    : null));
+  if (!l || !l.records || !l.records.length) return "";
+  const CAP = 20;
+  return l.records.slice(0, CAP).map(r => ledgerCardOf(r, !!l.amount_condition)).join("");
+}
+
 function renderContractAnswer(data, target) {
   const p = data.parsed || {};
   const threshold = p.minimum_amount > 0 ? p.minimum_amount : 0;
@@ -350,10 +396,13 @@ function renderContractAnswer(data, target) {
          ${excludedCards}</details>`
     : "";
   const filterNote = data.filter_note ? `<div class="boundary-note">${esc(data.filter_note)}</div>` : "";
+  const ledgerN = (data.ledger && data.ledger.records ? data.ledger.records.length : 0);
   const hitLine = data.hits.length
     ? `找到 ${data.hits.length} 份符合条件的文件`
       + (data.hit_records > data.hits.length ? `（共 ${data.hit_records} 条业务记录）` : "")
-    : "没有同时满足「产品对得上」和「金额达标」的文件";
+      + (ledgerN ? ` ＋ ${ledgerN} 份含此类合同（业绩）的响应文件（见带「业绩声明」标记的卡片）` : "")
+    : (ledgerN ? `没有符合金额条件的合同原件 ＋ ${ledgerN} 份含此类合同（业绩）的响应文件`
+               : "没有同时满足「产品对得上」和「金额达标」的文件");
   // 「系统理解成了什么」用**可点标签**呈现（替换原先那行纯文本）：
   // 业务评审要的是"查看系统理解了哪些条件"，且每个条件允许用户改了重查。
   target.innerHTML = `<div class="summary"><h3>${hitLine}</h3></div>
@@ -362,6 +411,7 @@ function renderContractAnswer(data, target) {
     <div class="boundary-note">${esc(data.scope_note)}</div>
     ${batchBar(data.hits, CONTRACT_CSV)}
     ${hitCards || "<div class='result-card'>当前已准备的样本里没有这个产品的记录。</div>"}
+    ${ledgerCards(data)}
     ${excludedBlock}`;
   bindCopyButtons(target);
   bindOpenButtons(target);
@@ -825,7 +875,8 @@ async function loadModule(name) {
       ${roleNote}
       <div class="boundary-note">${esc(data.scope_note || "")}</div>
       ${batchBar(rows, MODULE_CSV[name], "条记录")}
-      ${cards || "<div class='result-card'>这一类暂无可展示的记录。</div>"}`;
+      ${cards || "<div class='result-card'>这一类暂无可展示的记录。</div>"}
+      ${name === "项目业绩" ? ledgerCards(data) : ""}`;
     bindCopyButtons(target);
     bindOpenButtons(target);
     bindBatchBar(target, rows, `三类材料定位-${name}.csv`, MODULE_CSV[name]);
