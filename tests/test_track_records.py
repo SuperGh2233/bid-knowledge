@@ -108,7 +108,7 @@ def test_every_record_carries_source_label_and_amount_note(tmp_path):
     assert "响应文件" in d["source_label"]
     for r in d["records"]:
         assert r["source_label"] == TRACK_SOURCE_LABEL
-        assert "不参与金额筛选" in r["amount_note"]
+        assert "合同总额" in r["amount_note"]      # 口径改判后仍须写明是合同总额（诚实性不变）
     # 口径改判后：说明里**必须**仍写明金额是"合同总额、非产品明细金额"（诚实性不随口径变）
     assert "合同总额" in d["scope_note"] and "非产品明细金额" in d["scope_note"]
 

@@ -33,8 +33,8 @@ FILENAME_PRODUCT_TOTAL = "filename_product_total"
 # —— 业绩清单（LEDGER-*）检索（PLAN-20260916-track-record-search）——
 # 响应文件里的「业绩清单」是我方**自己写的声明**，不是合同原件。故：
 #   · 走**独立闸**（角色 = our_response/final_signed），**不进** `approved_documents.json`；
-#   · **不参与金额过滤**（业绩表只有合同总额，红线禁止用它当产品金额）——
-#     这一点由 `locate_track_records` **签名里没有金额参数**从结构上保证；
+#   · **参与金额筛选**（2026-09-16 用户改判）：用其**合同总额**过门槛；依据是实测
+#     「误返 0 份、漏召最多 2 份」（见 `locate_track_records` docstring）；
 #   · 返回时**单列 + 显式来源标签**，绝不与合同原件混排。
 TRACK_SOURCE_LABEL = "业绩清单声明（我方响应文件）"
 TRACK_RECORD_ROLES = ("our_response", "final_signed")
@@ -552,7 +552,9 @@ def locate_track_records(con, *, party: str = "", products: tuple = (), year: st
             "project": (m.group(1).strip() if m else ""),
             "amount": round(r["total_amount"], 2) if r["total_amount"] is not None else None,
             # ⚠️ 金额的语义标签必须与数字同屏：这是**合同总额**（清单列头），不是产品金额
-            "amount_note": "业绩清单所列合同金额（非产品明细金额，不参与金额筛选）",
+            # ️ 口径改判后（2026-09-16）**不得**再写"不参与金额筛选"——金额已按门槛参与筛选。
+            # 仍必须写明它是**合同总额**（非产品明细金额）—— 诚实性不随口径变。
+            "amount_note": "业绩清单所列金额（合同总额，非产品明细金额）",
             # 无金额时**说明为什么**（业务要能分辨"数据没有"与"我们没提到"）
             "amount_absent": "" if r["total_amount"] is not None else (
                 (re.search(r"金额说明:(表未设金额列|本行未取到)", ev) or [None, ""])[1]),

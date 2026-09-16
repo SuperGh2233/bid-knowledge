@@ -478,7 +478,7 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
             n_receipt = sum(1 for r in rows if r["payment_status"] == "receipt_file")
             # —— 业绩清单（LEDGER-*）：**单列来源**，不与上面的合同原件混排 ——
             # 它是我方响应文件里的**业绩声明**，不是合同原件；金额是**合同总额**，
-            # 不参与金额筛选（PLAN-20260916-track-record-search §6）。
+            # 并**已按金额门槛筛选**（2026-09-16 口径改判，PLAN-20260916 §8-2）。
             ledger = locate_track_records(con, limit=cap)
             return {"module": module, "spec": THREE_MODULES[module], "count": len(rows),
                     "records": rows, "product_summary": product_summary,
@@ -501,7 +501,7 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
                                   f"回单文件通道另覆盖 {n_receipt} 份合同（见每条 `receipt_files`）。"
                                   f"另有 **{ledger['count']} 条业绩清单声明**单列在 `ledger_records`"
                                   "（来自我方响应文件、**不是合同原件**，其金额为合同总额、"
-                                  "**不参与金额筛选**）。"}
+                                  "已按金额门槛筛选；未达门槛只报数、金额未记载单列）。"}
 
         # 财务社保 / 仪器设备：都走 material_facts。类型表**引用上面那两个常量**，
         # 与概览卡同源（分开写死过一次，结果卡上 546、点进去 722）。
