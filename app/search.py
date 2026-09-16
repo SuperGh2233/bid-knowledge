@@ -537,6 +537,9 @@ def locate_track_records(con, *, party: str = "", products: tuple = (), year: st
             "amount": round(r["total_amount"], 2) if r["total_amount"] is not None else None,
             # ⚠️ 金额的语义标签必须与数字同屏：这是**合同总额**（清单列头），不是产品金额
             "amount_note": "业绩清单所列合同金额（非产品明细金额，不参与金额筛选）",
+            # 无金额时**说明为什么**（业务要能分辨"数据没有"与"我们没提到"）
+            "amount_absent": "" if r["total_amount"] is not None else (
+                (re.search(r"金额说明:(表未设金额列|本行未取到)", ev) or [None, ""])[1]),
             "evidence_text": ev,
             "relative_path": r["relative_path"],
             "project_folder": r["project_folder"],

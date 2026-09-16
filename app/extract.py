@@ -91,10 +91,9 @@ _ORG_MARKERS = ("公司", "大学", "医院", "研究院", "研究所", "学院"
 
 def _looks_like_ledger_row(r: dict) -> bool:
     """一行是否**像**业绩行：有金额，或采购人像机构名。两者皆无 → 不是业绩行。"""
-    if r.get("amount_source"):
-        parts.append(f"金额来源:{r['amount_source']}")
-        if r.get("amount_source_line"):
-            parts.append(f"依据:{r['amount_source_line']}")
+    # ⚠️ 教训（2026-09-16）：上一轮用"盲替换"往「含 `if r.get("total_amount") is not None:` 的函数」
+    # 里插代码，结果插进了**本函数**（本函数也含这一行）→ 标记从未写入证据，且差点改坏本函数。
+    # **改代码要用函数边界定位，不能靠一行文本匹配。**
     if r.get("total_amount") is not None:
         return True
     party = r.get("party_a_raw") or ""
@@ -267,7 +266,10 @@ def _parse_row(row_text: str, unit: str | None, header_line: str | None = None) 
         # `代谢学检测技术服务合同（30万元）`、`LC-MS/MS脂质组检测 9万元`）——
         # 表格里没有独立金额列，但金额是**明确写着**的，属"能取就该取"。
         joined = " ".join(rest)
-        m_emb = re.search(r"(\d+(?:\.\d+)?)\s*万元", joined)
+        # 格内金额的三种实测写法：`…空转￥39.9万元` / `…合同（30万元）` / **`…测序服务，237万`**
+        # （最后一种：分隔符 + 裸「万」——曾漏掉，实测 3 条）
+        m_emb = (re.search(r"(\d+(?:\.\d+)?)\s*万元", joined)
+                 or re.search(r"[，,、]\s*(\d+(?:\.\d+)?)\s*万(?!元)", joined))
         if m_emb:
             amount_raw = m_emb.group(1)
             unit_eff = "万元"
@@ -432,6 +434,7 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
             return {"header_found": True, "records": vrecs, "full_result": True,
                     "empty_confirmed": False, "truncated": False, "unparsed_rows": 0}
     header = -1
+    _header_has_amount_col = [False]
     search_from = anchor if anchor >= 0 else 0
     for i in range(search_from, min(search_from + 25, len(lines))):
         ln = lines[i]
@@ -450,14 +453,16 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
             #   ② 业绩内容列：实测有的业绩表**不含金额**（如「…承担相关业绩一览表」只列
             #      履约时间/服务内容/采购单位/履约情况）—— 若一律拒掉，那张表的行
             #      **再也不会被重新解析**，早期写错的旧值就永远留在库里（用户实测 6 条如此）。
-            if not (any(_AMOUNT_COL.search(x) for x in window)
-                    or any(_LEDGER_CONTENT_COL.search(x) for x in window)):
+            has_amount_col = any(_AMOUNT_COL.search(x) for x in window)
+            if not (has_amount_col or any(_LEDGER_CONTENT_COL.search(x) for x in window)):
                 continue
             header = i
+            _header_has_amount_col[0] = has_amount_col      # 传给记录（见下方 nonlocal 用法）
             break
     if header < 0:
         return {"header_found": False, "records": [], "full_result": False,
                 "empty_confirmed": False, "truncated": False, "unparsed_rows": 0}
+    header_has_amount_col = _header_has_amount_col[0]
     unit = None
     for i in range(max(anchor, 0), min(header + 4, len(lines))):
         if "万元" in lines[i]:
@@ -558,6 +563,12 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
                 r["unit"] = "万元"
                 r["amount_source"] = "同文档合同清单"
                 r["amount_source_line"] = src_line      # 可审计：金额出自哪一行原文
+    # 仍无金额的行：**如实标出原因**（区分"这张表压根没有金额列"与"有金额列但本行没取到"）——
+    # 业务看结果时要能分辨是数据没有、还是我们没提到（本项目一贯的诚实性口径）。
+    for r in records:
+        if r.get("total_amount") is None:
+            r["amount_absent"] = ("表未设金额列" if not header_has_amount_col
+                                  else "本行未取到")
     if records:
         full_result = unparsed == 0 and closed
     else:
@@ -604,6 +615,10 @@ def _evidence(r: dict, ord_: int) -> str:
         parts.append(f"金额来源:{r['amount_source']}")
         if r.get("amount_source_line"):
             parts.append(f"依据:{r['amount_source_line']}")
+    if r.get("total_amount") is None and r.get("amount_absent"):
+        # 无金额时**写清原因**（持久化在证据里 —— `contracts` 表没有该列）：
+        # 业务看原文时能分辨"这张表压根没设金额列"与"有金额列但本行没取到"。
+        parts.append(f"金额说明:{r['amount_absent']}")
     if r.get("total_amount") is not None:
         amt = r["total_amount"]
         parts.append(f"金额:{amt:,.0f}元" if float(amt).is_integer() else f"金额:{amt:,.2f}元")

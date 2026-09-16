@@ -305,8 +305,9 @@ function renderInnerRecords(row) {
  * 若与 PDF 合同完全同形，用户会以为它们也达到了金额门槛（那正是需求方第一条反馈的形态）。
  */
 function ledgerCardOf(r, amountCondition) {
+  // 无金额时**说清为什么**：这张表压根没设金额列 vs 有金额列但本行没取到
   const amt = r.amount == null
-    ? "<small class='derived'>金额未记载</small>"
+    ? `<small class='derived'>${r.amount_absent ? "金额未记载（" + esc(r.amount_absent) + "）" : "金额未记载"}</small>`
     : `¥ ${Number(r.amount).toLocaleString("zh-CN")} <small class='derived'>（业绩清单所列合同总额）</small>`;
   return `<article class="result-card ledger-card">
     <div class="card-top">
