@@ -9,8 +9,7 @@
 
 交付两个能力（**只有这两个**，不得扩第三条主链路）：**需求一** 历史材料定位（自然语言条件 → 我方响应文件 + 内部业务记录）；**需求二** 模块级方案生成（方案名 + 必须包含内容 → 带出处草稿）。
 
-**当前没有进行中的开发任务。** 最近一轮是需求方试用反馈 5 条的六轮整改（2026-09-15/16，已全部实施+验证）与仓库发布/工作区清理（2026-09-16）。
-⚠️ **唯一未完成项**：把旧系统目录搬出工作区（被一个残留 `tail` 进程锁住 → 见 §8/§9 第 1 条）。
+**当前没有进行中的开发任务。** 最近一轮是需求方试用反馈 5 条的六轮整改（2026-09-15/16，已全部实施+验证）、仓库发布与工作区清理（2026-09-16）。
 
 退出门槛 vs 实测（未回退）：
 
@@ -69,7 +68,7 @@
 
 **第二轮（同日，清文档债）**：`docs/specs/api.md` 补齐 4 项（`recognition` / `files` / `file_count` / §8 `tender-check`）**并修正两处契约漂移**（§0 外发声明、§1 旧计数）；计划与一页纸的「当前基线」数字 245/256 → **267**（逐轮历史数字保留）；`AGENTS.md` 补「已知问题与风险」「持久决策」两个恢复指针；计划 §9 两处「遗留」改写为**终态**；`docs/index.md` 去掉 api.md 的债务标注。**纯文档改动，未动代码。**
 
-⚠️ **旧目录搬运尚未完成**：`bid-ai/` 与 `bid-ai-r0-snapshot/` **仍在工作区**（被残留 `tail` 进程锁住，见 §8/§9 第 1 条）。
+✅ **旧系统搬运已完成**（2026-09-16 下午）：用户结束残留 `tail` 进程后，`bid-ai/` 与 `bid-ai-r0-snapshot/` 已移入 `C:\Users\hao.guo\Desktop\标书文库-旧系统归档\`。**搬运后逐项核对**：文件数 **1600 / 85** 与搬运前完全一致；旧仓库 git 完整（HEAD `6590fc2`、**12 个提交**、分支 `r0-baseline-20260907`、tag ×2、**0 行未提交**）；`.env`（1212 字节）与 `app/tests/scripts/data` 均在位。工作区 **913M → 544M**。
 
 已提交的代码/测试改动在 `deda794`（`git show --stat deda794`），**不在此重复**；实现细节见计划 §9/§11。
 
@@ -117,10 +116,6 @@ BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api   # → http://12
 ## 8. Problems and Risks
 
 ### Confirmed problems（已知、未修，均已记录）
-- **旧版本搬运被残留进程阻塞（2026-09-16，待执行一条命令）**：`tail -f bid-ai\tmp\pilot30_run.log`
-  （实测 PID 30880，早前会话追日志留下的常驻进程）持有 `bid-ai\tmp\` 内文件的句柄 →
-  Windows **拒绝重命名/移动整个旧目录**。逐目录诊断已证明锁**只在 `tmp/`**（`app/`、`tests/`、`scripts/` 等都能改名）。
-  结束该进程后一次 `Move-Item` 即可完成（见 §9 第 1 条）。
 - **OCR 混扫召回污染**：几份扫描 PDF 把合同正本/财务报表与响应文件扫进同一文件，新增 930 条章节里 **159 条**能命中方案关键词、其中 **51 条**标题含合同/财会噪声（如「售后租回」误命中「售后」）。**是数据源特性而非抽取 bug**；治本要「OCR 后按页归属拆分」，**独立课题**。
 - **`华大` 查不到是数据事实**：该词在本语料里既不是甲乙方也不是产品文本（各 0 条）。「平台名当产品」（如 `华大Stereo-seq`）不在已完成范围。
 - **泛问「找仪器」仍映射到 `instrument`（存期间）**：有意不改，有既有测试钉住。
@@ -133,22 +128,12 @@ BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api   # → http://12
 
 ## 9. Next Actions
 
-1. **结束残留 `tail` 进程 → 完成旧版本搬运**（2026-09-16 实测：它锁着 `bid-ai\tmp\`，导致整个旧目录无法改名/移动；`app/` 等其余目录已验证可移动）：
-   ```powershell
-   taskkill /PID 30880 /F      # tail -f bid-ai\tmp\pilot30_run.log（早前会话追日志留下的常驻进程）
-   Move-Item 'C:\Users\hao.guo\Desktop\标书文库\bid-ai' 'C:\Users\hao.guo\Desktop\标书文库-旧系统归档\bid-ai'
-   Move-Item 'C:\Users\hao.guo\Desktop\标书文库\bid-ai-r0-snapshot' 'C:\Users\hao.guo\Desktop\标书文库-旧系统归档\bid-ai-r0-snapshot'
-   ```
-   归档目录 `桌面\标书文库-旧系统归档\` 与其 `README.md`（含「旧 git 历史只剩这一份」「`.env` 含真 key 勿外发」「怎么移回」）**已就绪**。
-2. **推送 docs 重组提交到两个远端**（本地提交已完成，见 `git log -1`；纯文档 + 代码注释路径，无敏感文件）：
-   ```bash
-   cd "C:/Users/hao.guo/Desktop/标书文库/bid-ai-clean"
-   git push origin main && git push github main
-   ```
-3. ~~同步 `docs/specs/api.md`；统一计划里的测试数字；补 AGENTS.md 两处恢复指针~~ → **已于本轮完成**（见 §5）。
-4. **演示前重启服务并复核**：`netstat -ano | grep :8000` 记下 PID → 结束旧进程 → `BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api` → `GET /api/status` 应返回 `queryable_contracts=136`。
-5. **把 `docs/business/demo-feedback-open-questions.md` 带给需求方复核**五条修复（**必须由用户/业务发起**）。
-6. **等用户点头再动**：`refresh_catalog.bat` 挂计划任务（需定时间与运行账号）；GitLab 令牌轮换；删掉已无独立价值的 `feat/info-architecture-rework` 分支；补 `CHANGELOG.md`；方案质量业务评审；OCR 按页归属拆分。
+1. **演示前重启服务并复核**：`netstat -ano | grep :8000` 记下 PID → 结束旧进程 → `BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api` → `GET /api/status` 应返回 `queryable_contracts=136`。
+2. **把 `docs/business/demo-feedback-open-questions.md` 带给需求方复核**五条修复（**必须由用户/业务发起**）。
+3. **等用户点头再动**：`refresh_catalog.bat` 挂计划任务（需定时间与运行账号）；GitLab 令牌轮换；删掉已无独立价值的 `feat/info-architecture-rework` 分支；补 `CHANGELOG.md`；方案质量业务评审；OCR 按页归属拆分。
+
+> **本轮已完成的动作**（勿重做）：旧系统目录搬出工作区（用户结束残留 `tail` 进程后移入归档，逐项核对见 §4）；
+> `docs/specs/api.md` 契约补齐 + 测试数字统一（见 §5）；两个提交 `19213cb` / `925e6b8` 已推送至 origin + github。
 
 ## 10. Do Not Repeat / Do Not Change
 
@@ -180,8 +165,9 @@ BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api   # → http://12
 - **提交数 12**；根提交 `cc28082`（R1 骨架）。
 - **tag**：`v1.0.0`（→`deda794`）、`minimal-rebuild-r1-20260907`。
 - `git status --short`：**0 行**（本轮改动已全部入提交；**尚未推送**，见 §9 第 2 条）。
-- **工作区根（`标书文库\`，不在任何 git 仓库内）**：`CLAUDE.md`（已改写为新系统）、三份设计文档 + `任务分析.docx`、
-  `.claude/`，加上**待搬走的** `bid-ai/`、`bid-ai-r0-snapshot/`；根残留 `.pytest_cache/` 已删。
+- **工作区根（`标书文库\`，不在任何 git 仓库内）**：`CLAUDE.md`（纯拓扑）、三份历史设计文档 + `任务分析.docx`、`.claude/`、
+  以及 **`bid-ai-clean/`（唯一代码目录）**。旧系统的 `bid-ai/`、`bid-ai-r0-snapshot/` **已移出**（见 §1/§4），根残留 `.pytest_cache/` 已删。
+  工作区体积 **913M → 544M**；归档目录 369M。
 - **远端**（`git ls-remote` 与本地逐字节一致）：
 
 | 远端 | 地址 | 角色 |
