@@ -27,7 +27,7 @@
 
 | 文档 | 状态 | 何时读 |
 |---|---|---|
-| `specs/api.md` | active | HTTP 契约（端点、字段、错误语义、踩坑）。⚠️ 已知文档债：`recognition`/`files`/`file_count` 字段与 `tender-check` 条目待补 |
+| `specs/api.md` | active | HTTP 契约（端点、字段、错误语义、踩坑）。2026-09-16 已同步 `recognition` / `files` / `file_count` 与 §8 `tender-check` |
 
 ## Authorizations（外发授权，范围不可自行扩大）
 

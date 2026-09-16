@@ -67,6 +67,8 @@
 | **仓库外** 工作区根 `.pytest_cache/` | **已删除**（4 文件 / 15K，仅 pytest 缓存元数据） |
 | **仓库外** `标书文库-旧系统归档\README.md` | 已建（说明内容、旧 git 历史唯一副本警告、`.env` 含真 key 勿外发、恢复步骤） |
 
+**第二轮（同日，清文档债）**：`docs/specs/api.md` 补齐 4 项（`recognition` / `files` / `file_count` / §8 `tender-check`）**并修正两处契约漂移**（§0 外发声明、§1 旧计数）；计划与一页纸的「当前基线」数字 245/256 → **267**（逐轮历史数字保留）；`AGENTS.md` 补「已知问题与风险」「持久决策」两个恢复指针；计划 §9 两处「遗留」改写为**终态**；`docs/index.md` 去掉 api.md 的债务标注。**纯文档改动，未动代码。**
+
 ⚠️ **旧目录搬运尚未完成**：`bid-ai/` 与 `bid-ai-r0-snapshot/` **仍在工作区**（被残留 `tail` 进程锁住，见 §8/§9 第 1 条）。
 
 已提交的代码/测试改动在 `deda794`（`git show --stat deda794`），**不在此重复**；实现细节见计划 §9/§11。
@@ -75,11 +77,13 @@
 
 已落档的决策：三份+1 外发授权（§2）；意图识别「本地优先、判不出才外发」，判据是既有解析器能否解析成功（`docs/authorizations/llm-intent-authorization.md`）；三个业务口径已定（**不接合同台账** / **Xenium 单列** / **模块通用-特异不做人工清单、交 LLM 裁**）。
 
-**文档债（下一动作，均未做）**：
-1. `docs/specs/api.md` **未同步**新增响应字段：`/api/ask` 的 `recognition`、`/api/material-facts` 与 `/api/three-modules` 的 `files`/`file_count`；且 `POST /api/tender-check` 在 api.md 里**完全没有条目**（端点在线但功能暂停）。计划 §10 明确要求「`docs/specs/api.md` 同步」。
-2. 计划与一页纸里的测试数字**过时**：`§9/§10/§12` 与 `demo-feedback-open-questions.md` 写的是 **245/256 passed**，实测 **267**。
-3. ~~`docs/index.md` 的 Agent 指令指针悬空（本仓库无 `CLAUDE.md`/`AGENTS.md`）~~ → **已修**（2026-09-16：新建仓库根 `AGENTS.md` + `CLAUDE.md` 指针；工作区根 `CLAUDE.md` 瘦身为纯拓扑）。
-4. 仓库拓扑与凭据处理此前只存在于对话里 → 已写入 README、本文件 §12 与归档目录 `README.md`。
+**文档债（2026-09-16 下午已全部清偿）**：
+1. ~~`docs/specs/api.md` 未同步新增响应字段~~ → **已补**：§1A 的 `recognition`（含 `kind` vs `intent` 的区别、本地优先与外发边界）、§4/§4A 的 `files`/`file_count`（并写明「几份文件 ≠ 几条记录」）、新增 §8 `POST /api/tender-check`（含「功能已暂停」标记与 `verdict` 三态语义）。
+   ⚠️ **顺带修了同一文件里两处契约与现实不符**：§0 原写「所有端点均不外发」（实际意图识别兜底会外发**那一句查询**）、§1 的 `/api/status` 示例数字仍是 95 份/127 合同（实测 136/165）。**契约文档与现实不符，与缺字段是同一类缺陷。**
+2. ~~计划与一页纸里的测试数字过时（245/256）~~ → **已改为实测 267**（只改「当前基线」类陈述；§11 的逐轮历史数字保留原值，那是当时的真实测量）。
+3. ~~`docs/index.md` 的 Agent 指令指针悬空~~ → **已修**（新建 `AGENTS.md` + `CLAUDE.md` 指针）。
+4. ~~仓库拓扑与凭据只存在于对话里~~ → 已写入 README、本文件 §12 与归档目录 `README.md`。
+5. **新增（低优先）**：`CHANGELOG.md` 尚不存在，而已有发布点（tag `v1.0.0` = `deda794`）—— 按 `AGENTS.md`/docs-first 约定，CHANGELOG 只记已发布变更，需要时补建。
 
 ## 6. Contracts and Constraints
 
@@ -141,11 +145,10 @@ BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api   # → http://12
    cd "C:/Users/hao.guo/Desktop/标书文库/bid-ai-clean"
    git push origin main && git push github main
    ```
-3. **同步 `docs/specs/api.md`**：补 `/api/ask` 的 `recognition`、`/api/material-facts`+`/api/three-modules` 的 `files`/`file_count`，并为 `POST /api/tender-check` 加一条「已实现但**功能暂停，接入方勿依赖**」的条目（计划 §10 的未完成项）。
-4. **统一测试数字**：把 `docs/plans/active/PLAN-20260915-demo-feedback-issues.md` §9/§10/§12 与 `docs/business/demo-feedback-open-questions.md` 里的 `245/256 passed` 改成实测 **267**，并把两处「遗留」（`华大` 平台名语义、泛问「找仪器」）写成终态。
-5. **演示前重启服务并复核**：`netstat -ano | grep :8000` 记下 PID → 结束旧进程 → `BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api` → `GET /api/status` 应返回 `queryable_contracts=136`。
-6. **把 `docs/business/demo-feedback-open-questions.md` 带给需求方复核**五条修复（**必须由用户/业务发起**）。
-7. **等用户点头再动**：`refresh_catalog.bat` 挂计划任务（需定时间与运行账号）；GitLab 令牌轮换；删掉已无独立价值的 `feat/info-architecture-rework` 分支；方案质量业务评审；OCR 按页归属拆分。
+3. ~~同步 `docs/specs/api.md`；统一计划里的测试数字；补 AGENTS.md 两处恢复指针~~ → **已于本轮完成**（见 §5）。
+4. **演示前重启服务并复核**：`netstat -ano | grep :8000` 记下 PID → 结束旧进程 → `BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api` → `GET /api/status` 应返回 `queryable_contracts=136`。
+5. **把 `docs/business/demo-feedback-open-questions.md` 带给需求方复核**五条修复（**必须由用户/业务发起**）。
+6. **等用户点头再动**：`refresh_catalog.bat` 挂计划任务（需定时间与运行账号）；GitLab 令牌轮换；删掉已无独立价值的 `feat/info-architecture-rework` 分支；补 `CHANGELOG.md`；方案质量业务评审；OCR 按页归属拆分。
 
 ## 10. Do Not Repeat / Do Not Change
 
@@ -173,8 +176,8 @@ BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api   # → http://12
 ## 12. Git State
 
 - **分支**：本轮提交在 **`main`**（此前工作分支 `feat/info-architecture-rework` 停在 `deda794`，已无独立价值，可删可留）。
-- **上一发布点**：`deda794`（`feat: 需求方试用反馈五条整改 + 查询意图识别层`，2026-09-16 10:15:15）= tag `v1.0.0`，两远端一致；其后是本轮 **docs 重组提交**（`AGENTS.md` 新建 + docs/ 类型分目录 + 引用同步 + README/index/handoff 更新，见 `git log -1`）。
-- **提交数 11**；根提交 `cc28082`（R1 骨架）。
+- **上一发布点**：`deda794`（`feat: 需求方试用反馈五条整改 + 查询意图识别层`，2026-09-16 10:15:15）= tag `v1.0.0`，两远端一致；其后是本轮两个提交：`19213cb`（AGENTS.md 落仓 + docs/ 重组）与**文档债清偿提交**（`docs: 同步 api.md 契约并清理文档债`，见 `git log -1`）。
+- **提交数 12**；根提交 `cc28082`（R1 骨架）。
 - **tag**：`v1.0.0`（→`deda794`）、`minimal-rebuild-r1-20260907`。
 - `git status --short`：**0 行**（本轮改动已全部入提交；**尚未推送**，见 §9 第 2 条）。
 - **工作区根（`标书文库\`，不在任何 git 仓库内）**：`CLAUDE.md`（已改写为新系统）、三份设计文档 + `任务分析.docx`、

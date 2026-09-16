@@ -1,6 +1,7 @@
 # bid-ai-clean HTTP 接口契约
 
-> 2026-09-13 起，**最近更新 2026-09-14**（新增 §4B `GET /api/modules`）。
+> 2026-09-13 起，**最近更新 2026-09-16**（新增 §1A 的 `recognition` 回显、§4/§4A 的 `files`/`file_count`、
+> §8 `POST /api/tender-check`；§0 外发声明与 §1 计数字段同步实测）。
 > **只读预览服务**（`readonly: true`）——所有端点都不写库、不改动任何原始文件。
 > 供外部系统接入与联调使用。启动：
 
@@ -17,7 +18,7 @@ BID_AI_CLEAN_DB=<测试库路径> python -m app.api      # → http://127.0.0.1:
 | 字符编码 | **全部 UTF-8**。请求体必须声明 `Content-Type: application/json; charset=utf-8` |
 | 中文查询参数 | 走 GET 的 `q`/`modules` 时必须 **UTF-8 percent-encode** |
 | 错误格式 | FastAPI 标准 `{"detail": "..."}`；`detail` 是**中文业务说明**，可直接展示给用户 |
-| 外发 | **本文档所有端点均不外发**。模型生成（会外发）默认关闭，见 §5 |
+| 外发 | **仅两处会外发，其余端点零外发**：① §5 方案生成（外发我方响应正文）；② §1A 的**意图识别兜底**（只外发**用户自己敲的那一句查询**，且**本地优先、判不出才发**，默认关闭）。两处均有独立授权记录（`docs/authorizations/`），**范围不可自行扩大** |
 | 只读 | **无任何写接口**：数据变更走离线脚本，不经 HTTP。⚠️ 唯一的例外是 §7 `POST /api/open` —— 它**不改任何数据**，但会在**服务端所在机器上**启动外部程序（资源管理器／默认程序），默认关闭 |
 
 ### ⚠️ 实测踩过的坑（别重犯）
@@ -42,12 +43,16 @@ BID_AI_CLEAN_DB=<测试库路径> python -m app.api      # → http://127.0.0.1:
 {
   "mode": "只读预览",
   "readonly": true,
-  "counts": {"documents": 5913, "contracts": 127, "contract_items": 597, "parse_artifacts": 1166},
-  "scope": {"total_contracts": 127, "queryable_contracts": 95, "approved_documents": 95},
-  "boundary": "合同定位覆盖 95 份已核合同；方案生成取材于已入库的我方响应文件。",
+  "counts": {"documents": 6043, "contracts": 165, "contract_items": 649, "parse_artifacts": 2810},
+  "scope": {"total_contracts": 165, "queryable_contracts": 136, "approved_documents": 136},
+  "boundary": "合同定位覆盖 136 份已核合同；方案生成取材于已入库的我方响应文件。",
   "limits": "..."
 }
 ```
+
+> ⚠️ **上例是 2026-09-16 实测值，仅示意形状** —— 计数随增量登记变化，**接入方必须实时读此端点，不得写死**。
+> ⚠️ **`queryable_contracts` 可能小于 `total_contracts`**：合同定位的第一道闸是**人工核准白名单**
+> （`data/approved_documents.json`，**import 期载入 → 改它必须重启服务**）。拿 `total` 当"可查数"会误导用户。
 
 > **2026-09-13：`demo_source` 与 `GET /api/scheme-preview` 已删除。** 那是试读阶段的
 > **冻结示范稿**（读 `bid-ai-r0-snapshot` 里的固定文件，`dynamic_generation: false`），
@@ -76,7 +81,25 @@ GET /api/ask?q=2024年12月之后，代谢组服务金额4万元以上的合同
 **为什么材料优先于合同**：「**仪器采购合同**」含「合同」二字，但用户问的是
 「有没有采购合同这份材料」；而「**代谢组合同**」不含材料词，落回合同查询。
 
-**响应**统一为对应端点的响应体 + `kind` + `query` 两个字段，调用方据此渲染。
+**响应**统一为对应端点的响应体 + `kind` + `query` + **`recognition`** 三个字段，调用方据此渲染。
+
+**`recognition`（2026-09-16 新增）—— 「系统理解成了什么」的原样回显，接入方应展示它**
+
+| 字段 | 取值 | 含义 |
+|---|---|---|
+| `intent` | `contract` / `material` / `instrument` / `scheme` / `unknown` | 意图层判定出的类别 |
+| `confidence` | 0.0–1.0 | 置信度 |
+| `reason` | 字符串 | 判定理由（本地规则或模型给出） |
+| `source` | `local` / `llm` / `local_fallback` | 走了哪条路：本地判定 / 模型兜底 / **外发失败回落本地** |
+| `decided` | 布尔 | 本地是否**判得出**（`false` = 本地认不出，已/将问模型） |
+
+⚠️ **`kind` 与 `intent` 不是同一个东西**：`kind` 是**实际转发**去的那条路（`fact`/`scheme`/`contract`），
+`intent` 是意图层判定（多一个 `instrument`，且可能为 `unknown`）。**不要用 `kind` 反推 `intent`**。
+⚠️ **`source=llm` 时实体（产品/金额/日期/厂商）由模型抽出后直接进检索**，不再二次解析原句 ——
+二次解析会把已识别实体丢掉（实测「…三十万往上的合同」被中文数字卡住 → 400，而意图层已认出 300000）。
+⚠️ **本地优先**：只有本地判不出且 `INTENT_LLM_ENABLED=true` 才会外发，且**只发这一句查询**
+（授权见 `docs/authorizations/llm-intent-authorization.md`，不含任何文档正文）；外发失败回落
+`local_fallback`，**不静默外发、不因外发失败返回 5xx**。
 
 ⚠️ `kind=contract` 时，条件不支持（如「不要宏基因组」里的产品名不在已知别名内、
 或只给机构不给金额）会返回 **400 + 中文原因**——这是**故意拒绝**，不是故障：
@@ -149,9 +172,14 @@ GET /api/ask?q=2024年12月之后，代谢组服务金额4万元以上的合同
 
 `?q=找2023年的财务报告` 或 `?fact_type=finance_period&fact_value=2023&limit=50`
 
-返回 `{count, facts[], total_available, truncated, related_count, related[], scope_note}`。
+返回 `{count, facts[], total_available, truncated, related_count, related[], files[], file_count, scope_note}`。
 
 **必读语义**
+- **`files` / `file_count`（2026-09-16 新增）是「按文件折叠」的展示口径**：材料事实是**一条期间一行**
+  （一份社保缴费记录表有 4 个月 ⇒ 4 条），直接用 `facts` 渲染会把**同一份文件显示多次**。
+  `files` 每条 = 原行字段 + `fact_values`（该文件全部期间，按时间序、`null` 排最后）+ `record_count`。
+  **`facts` 保留不变**（向后兼容）；新接入方**应渲染 `files`**：`file_count` 说「**几份文件**」、
+  `count` 说「**几条记录**」—— 两者**不是一回事**，不得混用（业务问的是「哪几份文件能用」）。
 - **`truncated` 必须展示**：`limit` 默认 50、上限 500，超出会**静默截断**。
   实测「社保」库内 1,182 条 —— 不显示 `total_available` 的话，页面看起来就是「只有 50 条」。
 - `related` 是**期间语义为「起始」**的条目（如 `'2021~'`，未记终期）。
@@ -201,6 +229,9 @@ GET /api/three-modules?module=财务社保数据&limit=300
   （2026-09-13 修复后，98 份 CTL 合同里精确签署日已由 **15 → 47** 份；根因是 OCR 把签署页日期
   渲染成 `2024.9.20` 这类**点分隔**格式而抽取器只认「年月日」，日期一直在正文里。）
 - `fact_value` 对 `instrument_name` 是**仪器名**，对其余材料类是**期间**；提不到时为空，**不是 0**。
+- **`files` / `file_count` 与 `/api/material-facts` 同口径**（按文件折叠）：`财务社保数据` 与
+  `仪器设备清单` 的明细按文件折叠，`fact_values` 列出该文件的全部期间。`records` 保留不变。
+  ⚠️ 展示「几份文件」用 `file_count`，「几条记录」用原有计数 —— 混用会把一份文件的 4 个月说成 4 份文件。
 
 ---
 
@@ -354,3 +385,41 @@ POST /api/open
 
 **回退**：`.env` 置 `OPEN_EXTERNAL_ENABLED=false` 即整功能下线；
 代码级回退 = 删掉 `app/api.py` 底部 `include_router(_open_router)` 一行。
+
+---
+
+## 8. `POST /api/tender-check` — 招标要求核对（2026-09-14 实现，⚠️ **功能已暂停，接入方勿依赖**）
+
+把**新**招标文件里的实质性条款（★/▲）与服务时限要求逐条抽出来，对照历史响应文件标出
+「有先例 / 比历史都严 / 历史没覆盖」。**产物是核对清单，不是自动应答**。
+
+**请求**（两种都收；手动读 body，不用 FastAPI 的 `File`/`Form` 声明 —— 那会强制 multipart，纯 JSON 调用方直接 400）
+- `multipart/form-data`：`file`（`.docx` / `.pdf` / `.xlsx` / `.txt`）或 `text`
+- `application/json`：`{"text": "…"}`
+
+⚠️ **上传的文件不落库、不写 NAS**：读进内存解析一次即弃，解析全程本地（**零外发**）。
+
+**响应**
+
+| 字段 | 内容 |
+|---|---|
+| `source` | 输入来源名（文件名；粘贴文本时为「（粘贴的文本）」） |
+| `checklist[]` | **全部** ★/▲ 实质性条款：`{seq, name, text, category, severity:"hard", pool_key, pool_note}` |
+| `by_category` | 条款按类别计数 |
+| `checklist_total` | 条款总数 |
+| `requirements[]` | 服务时限要求：`{slot, slot_label, value, minutes, clause, mandatory, verdict, note, history[]}` |
+| `summary` | `{total, mandatory, covered, stricter, uncovered}` |
+| `scope_note` | 一句话结论（含上述计数 + 「材料池 ≠ 已满足」的提醒） |
+
+**必读语义**
+- **`pool_note` 是粗粒度线索**：「我司库里有 N 份这类材料可作响应依据」**不等于某一条要求已满足** ——
+  具体某条（如「具备 CNAS 认证」）仍须人工打开文件核对。
+- **`verdict` 三态只并列、不择一**：`covered`=有同等或更严的先例；`stricter`=**比历史任何一次都严**；
+  `uncovered`=历史材料里没有对应承诺。后两种**必须人工确认能否做到**。
+- ⚠️ **时限的依据是该项目的招标文件，不是历史响应文件**（2026-09-14 逐项目实测 43 个项目 / 111 条）：
+  招标文件写了时限的 **56% 被逐字照抄**进响应文件、38% 同类改写。历史材料只是**模板与底账**
+  （我们最多承诺过什么）—— **拿 A 项目的 48h 填 B 项目，若 B 要求 24h 就是废标风险**。
+- **错误码**：`400` = 请求体为空（既无文件也无文本）／文件格式不支持（`detail` 给出后缀）。
+
+> ⚠️ **状态：用户 2026-09-14 明确暂停该功能开发**，页面入口已移除，代码完整保留。
+> 重启开发时从 `app/tender.py` 接着做（时限抽取 + ★/▲ 两种排版 + 条款归类 + 材料池），别重写。

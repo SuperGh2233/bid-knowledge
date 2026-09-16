@@ -98,6 +98,8 @@ tests/                 # pytest 回归（含前端渲染冒烟）
 | 要做什么 | 读什么 |
 |---|---|
 | 恢复上次会话 / 看当前进度与下一步 | `docs/agent-handoff.md`（可替换检查点，固定路径） |
+| 看**已知问题与风险** | `docs/agent-handoff.md` 的「Problems and Risks」；各计划自己的 Risks/遗留段 |
+| 看**持久决策**（为什么这么做） | `docs/plans/legacy/MINIMAL_REBUILD_PLAN-DECISIONS.md`（D1–D15）与各计划文档；本仓库暂无 ADR 目录，**新决策写进对应计划文档** |
 | 查接口契约 | `docs/specs/api.md` |
 | 查需求与验收口径 | `docs/plans/active/`（活跃计划）；`docs/plans/legacy/`（旧系统路线，已冻结） |
 | 确认某类外发是否已授权 | `docs/authorizations/`（5 份，范围不可扩大） |
