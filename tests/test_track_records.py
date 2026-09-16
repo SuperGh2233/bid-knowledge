@@ -60,25 +60,25 @@ def _con(tmp_path: Path) -> sqlite3.Connection:
 
 # —— 红线 1：不参与金额过滤（结构 + 行为双重钉住）——
 
-def test_signature_has_no_amount_parameter():
-    """签名里没有金额参数 —— 没有参数就没有「用业绩金额过滤」这条路径。"""
-    params = set(inspect.signature(locate_track_records).parameters)
-    assert not any("amount" in p or "minimum" in p or "min_" == p[:4] for p in params), params
+def test_amount_threshold_filters_but_surfaces_exclusions(tmp_path):
+    """金额门槛**已下沉到业绩行**（2026-09-16 用户改判：非 PDF 的合同金额也要参与金额条件）。
 
-
-def test_ledger_returned_even_with_amount_condition_but_marked(tmp_path):
-    """有金额条件 → 业绩段**仍返回**，但必须标注「未参与金额筛选」。
-
-    口径修正（2026-09-16 用户反馈「召回的合同还是只有 pdf；用户可以去 word 文档里找，
-    我方响应文档里包含合同就行」）：原先"有金额条件就整段不返回"**过严** ——
-    要守的是「不拿业绩金额比大小」，不是「金额查询里看不到这些响应文件」。
-    硬约束改为：业绩行**永不进 hits**、**不参与任何过滤**（见下面两条测试）。
+    改判依据见 `locate_track_records` docstring（实测误返 0 份）。**必守的两条诚实性**：
+      ① 未达门槛的**只报数**（不静默丢）；
+      ② 金额未记载的**单列给出文件**（业务能自己核对），而不是消失。
     """
     con = _con(tmp_path)
-    d = _ledger_for(con, minimum=50000.0, keywords=())
-    assert d is not None and d["amount_condition"] is True
-    d2 = _ledger_for(con, minimum=0.0, keywords=())
-    assert d2["amount_condition"] is False
+    con.execute("INSERT INTO contracts VALUES ('LEDGER-d1-3','d1',3,NULL,'天津某院',1000.0,"
+                "'[业绩清单] x | 行3: y | 项目:小额项目 采购人:天津某院 金额:1,000元')")
+    con.commit()
+    allrows = locate_track_records(con)
+    assert allrows["count"] == 3 and allrows["excluded_below_amount"] == 0
+    d = locate_track_records(con, min_amount=50000.0)
+    assert {r["contract_id"] for r in d["records"]} == {"LEDGER-d1-1"}      # 只留 ≥5万 的
+    assert d["excluded_below_amount"] == 1                                  # 1,000 元那条：**报数**
+    assert d["excluded_no_amount_count"] == 1                               # 无金额那条：**单列**
+    assert d["excluded_no_amount"][0]["party_a"] == "北京某大学"
+    assert "已按金额门槛筛选" in d["scope_note"] and "合同总额" in d["scope_note"]
 
 
 # —— 红线 2：独立闸（角色）——
@@ -109,7 +109,8 @@ def test_every_record_carries_source_label_and_amount_note(tmp_path):
     for r in d["records"]:
         assert r["source_label"] == TRACK_SOURCE_LABEL
         assert "不参与金额筛选" in r["amount_note"]
-    assert "不参与金额筛选" in d["scope_note"]
+    # 口径改判后：说明里**必须**仍写明金额是"合同总额、非产品明细金额"（诚实性不随口径变）
+    assert "合同总额" in d["scope_note"] and "非产品明细金额" in d["scope_note"]
 
 
 def test_project_name_extracted_from_evidence(tmp_path):

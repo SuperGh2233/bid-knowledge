@@ -320,13 +320,14 @@ function ledgerCardOf(r, amountCondition) {
     <span class="tag tag-ledger">业绩声明</span>
     <span class="tag">采购人：${esc(r.party_a || "未识别")}</span>
     <span class="tag">${esc(formatLabel(r.content_format))}</span>
-    ${amountCondition ? "<span class='tag tag-warn'>金额未参与核验</span>" : ""}
+    ${amountCondition ? "<span class='tag'>金额为合同总额</span>" : ""}
     ${r.also_in && r.also_in.length ? `<div class="boundary-note">同一份业绩声明另存于 ${r.also_in.length} 处`
       + `（共 ${r.copy_count} 份副本，多为同一标的不同批次/项目文件夹各存一份）—— `
       + `**只展示一次**，不重复计入结果。</div>` : ""}
     <dl class="metadata">
       <dt>项目</dt><dd>${esc(r.project || "（项目名未识别）")}</dd>
-      <dt>来源</dt><dd>我方响应文件里的业绩清单 —— <b>不是合同原件</b>；金额为合同总额，不参与金额筛选</dd>
+      <dt>来源</dt><dd>我方响应文件里的业绩清单 —— <b>不是合同原件</b>；金额是<b>业绩表所列合同总额</b>
+        （非产品明细金额）${amountCondition ? "，已按你给的金额门槛筛选" : ""}</dd>
       <dt>原文</dt><dd class="ledger-evidence">${esc(clip(r.evidence_text, 160))}</dd>
       <dt>打开文件</dt><dd>${fileActions(r)}</dd>
     </dl>
@@ -340,7 +341,22 @@ function ledgerCards(data) {
     : null));
   if (!l || !l.records || !l.records.length) return "";
   const CAP = 20;
-  return l.records.slice(0, CAP).map(r => ledgerCardOf(r, !!l.amount_condition)).join("");
+  const cards = l.records.slice(0, CAP).map(r => ledgerCardOf(r, !!l.amount_condition)).join("");
+  // **未入选的两个去向都要说出来**（否则用户以为"就这么多"）：未达门槛的只报数，
+  // 金额未记载的给出可打开的文件（业务能自己核对）—— 与全站"不静默丢结果"一致。
+  const below = Number(l.excluded_below_amount || 0);
+  const naCount = Number(l.excluded_no_amount_count || 0);
+  const notes = [];
+  if (below) notes.push(`另有 ${below} 条业绩声明的合同总额**未达你给的门槛**，已排除`);
+  if (naCount) notes.push(`另有 ${naCount} 条**金额未记载**（业绩表未列金额），无法参与金额筛选 —— 见下方折叠，可打开文件自行核对`);
+  const noteHtml = notes.length ? `<div class="boundary-note">${notes.join("；")}。</div>` : "";
+  const naList = (l.excluded_no_amount || []).slice(0, 10).map(r =>
+    `<li>${esc(r.party_a || "（采购人未识别）")} · ${esc((r.relative_path || "").split("/").pop())}
+       ${fileActions(r)}</li>`).join("");
+  const naBlock = naList
+    ? `<details class="excluded-block"><summary>金额未记载的 ${naCount} 条，查看文件</summary><ul class="ledger-list">${naList}</ul></details>`
+    : "";
+  return cards + noteHtml + naBlock;
 }
 
 function renderContractAnswer(data, target) {

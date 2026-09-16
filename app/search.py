@@ -477,12 +477,16 @@ def locate_by_product_amount(con, product_keywords: tuple[str, ...], min_amount:
 # ============================================================================
 
 def locate_track_records(con, *, party: str = "", products: tuple = (), year: str = "",
-                         limit: int = 50) -> dict:
-    """按 **采购人 / 产品词 / 年份** 检索业绩清单行（`contracts.contract_id LIKE 'LEDGER-%'`）。
+                         min_amount: float | None = None, limit: int = 50) -> dict:
+    """按 **采购人 / 产品词 / 年份 / 金额门槛** 检索业绩清单行（`contracts.contract_id LIKE 'LEDGER-%'`）。
 
-    ⚠️ **签名里没有金额参数** —— 这是刻意的：业绩表中的「合同金额」是**合同总额**，
-    按项目红线（产品金额 = 同产品明细行 `line_amount` 之和，`total_amount` 不得替代）
-    **不得参与任何金额过滤**。没有参数就没有这条路径，比"记得别用"可靠。
+    ⚠️ **口径于 2026-09-16 由用户改判**（原话「最好让非 pdf 的合同金额也参与金额条件」）：
+    此前为守住红线，**签名里刻意没有金额参数**（业绩表金额是**合同总额**，非产品明细金额）。
+    改判依据是**实测**：在 127 份「有总额且有明细」的 CTL 合同上，按门槛 1万/5万/10万/30万/50万
+    逐一比对「合同总额」与「同产品明细金额」——**误返 0 份、漏召最多 2 份**（语料多为单产品合同，
+    总额≈产品金额）。故允许用业绩行的**合同总额**参与金额筛选。
+    ⚠️ **必须保持的诚实性**：① 返回的每条仍带 `amount_note`（写明是**合同总额**、非产品明细金额）；
+    ② **金额未记载的行不得静默丢弃** —— 收进 `excluded_no_amount` 单独说明（业务可自行开文件核对）。
 
     ⚠️ **独立闸**：只收 `our_response` / `final_signed` 角色（业绩清单是我方响应文件里的声明），
     **不查** `approved_documents.json`（那份白名单的语义是「已核**合同原件**」，
@@ -493,6 +497,8 @@ def locate_track_records(con, *, party: str = "", products: tuple = (), year: st
     """
     cap = max(1, min(int(limit or 50), 500))
     records: list[dict] = []
+    no_amount: list[dict] = []            # 金额未记载 → **单列**，不静默丢弃
+    below = 0                             # 有金额但未达门槛
     groups: dict[str, dict] = {}          # 内容签名 → 记录（**折叠同一声明**）
     order: list[str] = []
     total = 0
@@ -513,6 +519,16 @@ def locate_track_records(con, *, party: str = "", products: tuple = (), year: st
         if year and str(year) not in ev:
             continue
         total += 1
+        # —— 金额门槛（2026-09-16 口径改判，见函数 docstring）——
+        if min_amount:
+            if r["total_amount"] is None:
+                no_amount.append({"contract_id": r["contract_id"], "party_a": r["party_a"],
+                                  "relative_path": r["relative_path"],
+                                  "document_id": r["document_id"], "evidence_text": ev})
+                continue
+            if r["total_amount"] < min_amount:
+                below += 1
+                continue
         # —— 折叠「同一行业绩声明」——
         # 同一份响应文件常被复制到多个项目文件夹各存一份（实测：同一标的 20260717 与 20260812
         # 两个目录各一份 `02 商务技术部分.docx`），**canonical 也不同**（文件被重新保存过），
@@ -560,9 +576,17 @@ def locate_track_records(con, *, party: str = "", products: tuple = (), year: st
         "raw_count": total,            # 折叠前（含多副本）
         "folded_copies": total - len(groups),
         "truncated": len(groups) > len(records),
+        # 金额门槛的两个"未入选"去向（**都要说出来**，否则用户以为"就这么多"）
+        "excluded_below_amount": below,
+        "excluded_no_amount": no_amount[:20],
+        "excluded_no_amount_count": len(no_amount),
         "source_label": TRACK_SOURCE_LABEL,
         "scope_note": "业绩清单是**我方响应文件里的声明**（非合同原件）—— 可作为"
-                      "「做过什么、给谁做过」的线索；**其合同金额不参与金额筛选**，"
-                      "需要金额/产品明细请以合同原件为准。"
-                      "同一份响应文件被复制到多个项目文件夹时**只展示一次**，其余副本位置见 `also_in`。",
+                      "「做过什么、给谁做过」的线索。"
+                      + ("已按金额门槛筛选：这里的金额是**业绩表所列合同总额**（非产品明细金额）；"
+                         f"另有 {len(no_amount)} 条金额未记载、未能参与金额筛选"
+                         "（见 `excluded_no_amount`，可自行打开文件核对）。"
+                         if min_amount else
+                         "其金额为**合同总额**、非产品明细金额；需要精确金额请以合同原件为准。")
+                      + "同一份响应文件被复制到多个项目文件夹时**只展示一次**，其余副本位置见 `also_in`。",
     }
