@@ -91,10 +91,44 @@ _ORG_MARKERS = ("公司", "大学", "医院", "研究院", "研究所", "学院"
 
 def _looks_like_ledger_row(r: dict) -> bool:
     """一行是否**像**业绩行：有金额，或采购人像机构名。两者皆无 → 不是业绩行。"""
+    if r.get("amount_source"):
+        parts.append(f"金额来源:{r['amount_source']}")
+        if r.get("amount_source_line"):
+            parts.append(f"依据:{r['amount_source_line']}")
     if r.get("total_amount") is not None:
         return True
     party = r.get("party_a_raw") or ""
     return any(m in party for m in _ORG_MARKERS)
+
+
+def _cross_ref_amount(text: str, project: str, party: str) -> tuple[float | None, str]:
+    """业绩行**没有金额**时，去同一份文档的**其它小节**找它的金额（实测来源：合同附件清单）。
+
+    实锤（2026-09-16 用户案例）：
+        `6.9 血清样本全谱代谢组学项目项目合同（山西医科大学第一医院，4.75万）`
+        `6.7 超微量蛋白质组学项目合同（中国科学院昆明动物研究所，14.4万）`
+
+    **严格条件**（差一条就不用，宁缺毋滥）：
+      ① 同一行里**同时**出现该业绩行的**项目名**与**采购人**；
+      ② 该行有**括号金额**（`（…，4.75万）`）。
+    为什么严：报价表里"项目名恰好共现"会给出**属于别的条目**的金额 —— 取错比取不到更糟。
+    项目名做前缀匹配（清单里常带后缀「项目合同」），采购人取前 6 字（全称/简称混用）。
+
+    返回 (元, 说明)；取不到 → (None, "")。
+    """
+    proj_key = re.sub(r"[（(].*?[）)]", "", project or "").strip()[:10]
+    party_key = (party or "").strip()[:6]
+    if len(proj_key) < 5 or len(party_key) < 4:
+        return None, ""
+    for ln in (text or "").splitlines():
+        if proj_key not in ln or party_key not in ln:
+            continue
+        m = re.search(r"[（(][^）)]*?[，,]\s*(\d+(?:\.\d+)?)\s*万", ln)
+        if m:
+            val = float(m.group(1)) * 10000
+            if val <= 100_000_000.0:
+                return round(val, 2), ln.strip()[:120]     # 连**依据原文**一起回，供证据引用
+    return None, ""
 
 
 def _column_index(header_line: str) -> dict:
@@ -501,6 +535,15 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
     #   full_result 仅在「表头存在 + 无解析失败行 + 有明确闭合锚点」时成立；
     #   文本自然到末尾但没有闭合锚点（直接 EOF）不算完整 —— 可能是被截断；
     #   仅有表头（无数据行/无空清单证据/无闭合）→ 不完整，不清空。
+    # —— 交叉引用补数：业绩表本身没有金额时，去同文档其它小节找（严格条件，见 `_cross_ref_amount`）——
+    for r in records:
+        if r.get("total_amount") is None and r.get("project_raw") and r.get("party_a_raw"):
+            amt, src_line = _cross_ref_amount(text, r["project_raw"], r["party_a_raw"])
+            if amt is not None:
+                r["total_amount"] = amt
+                r["unit"] = "万元"
+                r["amount_source"] = "同文档合同清单"
+                r["amount_source_line"] = src_line      # 可审计：金额出自哪一行原文
     if records:
         full_result = unparsed == 0 and closed
     else:
@@ -543,6 +586,10 @@ def _evidence(r: dict, ord_: int) -> str:
         parts.append(f"项目:{r['project_raw'][:60]}")
     if r.get("party_a_raw"):
         parts.append(f"采购人:{r['party_a_raw'][:40]}")
+    if r.get("amount_source"):
+        parts.append(f"金额来源:{r['amount_source']}")
+        if r.get("amount_source_line"):
+            parts.append(f"依据:{r['amount_source_line']}")
     if r.get("total_amount") is not None:
         amt = r["total_amount"]
         parts.append(f"金额:{amt:,.0f}元" if float(amt).is_integer() else f"金额:{amt:,.2f}元")
