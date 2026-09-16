@@ -30,7 +30,7 @@
 ## 4. Non-goals
 
 - **不扩表头锚点**（当前命中率 7%；扩到其余 211 份需格式研究 + 逐类校对，留作第二步）；
-- **不参与金额过滤**（红线：产品金额 = 同产品明细行之和；业绩行只有**合同总额**且仅 20% 有值）；
+- ~~不参与金额过滤~~ → **2026-09-16 改判：参与**，用**合同总额**（依据见 §8-2 实测：误返 0 份）；
 - **不并入 `data/approved_documents.json`** —— 那份白名单的语义是「**已核合同**」，混入响应文件会污染 `/api/status` 的 `queryable_contracts` 计数与"已核"含义。业绩行走**独立闸**（角色 + 结构完整）；
 - 不新增表、不调 LLM/OCR、零外发（只用既有解析产物）。
 
@@ -134,17 +134,17 @@ empty_not_confirmed 6 / no_native_text 6 / no_ledger_confirmed 993`。
 ## 6. Requirements
 
 - **R1 重跑抽取**：对全部已解析的 `our_response`/`final_signed` 文档执行 `extract_and_sync`，幂等、可重放、打印逐状态统计。
-- **R2 检索**：按**采购人 / 产品词 / 年份**匹配业绩行；响应里**单列**返回（`ledger_records`），每条带 `source_label = "业绩清单声明（我方响应文件）"`；**不接受金额参数**。
+- **R2 检索**：按**采购人 / 产品词 / 年份 / 金额门槛**匹配业绩行；响应里**单列**返回（`ledger_records`），每条带 `source_label` 与 `amount_note`（写明**合同总额**）；未达门槛只报数、金额未记载单列给出文件。
 - **R3 展示**：前端单列区块 + 「打开文件/文件夹」；**与合同原件不混排**。
 - **R4 计数**：`/api/status` 的 `queryable_contracts` **不含**业绩行；另给 `ledger_documents` / `ledger_records` 计数。
-- **R5 护栏（红线）**：任何**金额类查询**的返回里，业绩行必须为 **0**（测试钉住）。
+- **R5 护栏（2026-09-16 改判）**：业绩行**可以**出现在金额查询结果里（用合同总额筛选），但**永不进 `hits`**、**不进白名单**；未记载金额的行**不得静默丢弃**（测试钉住这两条）。
 
 ## 7. Data/API/state contracts
 
 - **表**：复用 `contracts`（`LEDGER-*`）+ `documents`；不新增表、不改 schema。
 - **API（additive）**：
   - `GET /api/three-modules?module=项目业绩` → 新增 `ledger_records[]`（业绩行）+ `ledger_count`；
-  - `GET /api/ask`（意图=contract 且**无金额条件**时）→ 新增 `ledger` 段；**有金额条件时不返回**（R5）。
+  - `GET /api/ask`（意图=contract）→ 新增 `ledger` 段（**有金额条件时同样返回**，且该段**已按门槛筛选**：`excluded_below_amount` 计数 + `excluded_no_amount` 单列文件）。
   - 字段：`{contract_id, party_a, project_text, amount, year, evidence_text, relative_path, document_id, source_label}`
 - **契约文档**：完成时同步 `docs/specs/api.md`（本仓库规矩：契约文档与现实不符=缺陷）。
 
