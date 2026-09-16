@@ -24,6 +24,13 @@ const REASON_RULES = [
   [/无服务明细/, "这份合同里没有可识别的产品明细"],
 ];
 const formatLabel = (value) => FORMAT_LABELS[value] || "格式未登记";
+/** 文案限长：卡片上只给**够定位的片段**（完整原文在 CSV 导出与接口响应里）。
+ *  2026-09-16 用户反馈「前端显示的字段太多了」—— 那条原文曾把整张后续表格吞进来（抽取 bug，
+ *  已另行修复），但**展示层必须自带限长**：不能指望上游永远不长。 */
+const clip = (text, n = 160) => {
+  const s = String(text ?? "");
+  return s.length > n ? s.slice(0, n) + "…" : s;
+};
 /** 取路径末段（文件名）。**必须用 JS 写法** —— 我在 2026-09-14 这里写成过 Python 的
  *  `str.rsplit`，JS 的 String 没有这个方法 → `TypeError` 抛在 map 里 →
  *  「项目业绩」整块（98 条合同）渲染不出来，屏上只有一句英文异常（B2B 评审 P0）。 */
@@ -245,8 +252,10 @@ request("/api/status").then(data => {
   const scope = data.scope || {};
   const c = data.counts || {};
   const q = scope.queryable_contracts ?? c.contracts ?? 0;
+  const lg = Number(scope.ledger_records ?? 0);
   $("#footer-stats").textContent =
     `${Number(q).toLocaleString()} 份合同已完成核对、可以查询 · `
+    + (lg ? `${lg.toLocaleString()} 条业绩清单声明（来自我方响应文件）· ` : "")
     + `${Number(c.parse_artifacts ?? 0).toLocaleString()} 份文件已读出正文 · `
     + `${Number(c.documents ?? 0).toLocaleString()} 份文件已登记`;
   $("#footer-note").textContent =
@@ -317,7 +326,7 @@ function ledgerCardOf(r, amountCondition) {
     <dl class="metadata">
       <dt>项目</dt><dd>${esc(r.project || "（项目名未识别）")}</dd>
       <dt>来源</dt><dd>我方响应文件里的业绩清单 —— <b>不是合同原件</b>；金额为合同总额，不参与金额筛选</dd>
-      <dt>原文</dt><dd class="ledger-evidence">${esc(r.evidence_text || "")}</dd>
+      <dt>原文</dt><dd class="ledger-evidence">${esc(clip(r.evidence_text, 160))}</dd>
       <dt>打开文件</dt><dd>${fileActions(r)}</dd>
     </dl>
   </article>`;

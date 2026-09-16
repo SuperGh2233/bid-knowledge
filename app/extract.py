@@ -32,6 +32,8 @@ import re
 import app.config as config
 
 _ORD = re.compile(r"^\d{1,3}(?:\s*\||\s)")
+# 章节标题：`十三、《…》` / `十四、类似项目业绩一览表` / `一、…`（业绩数据行不会这样开头）
+_SECTION_HEAD = re.compile(r"^[一二三四五六七八九十百]{1,3}\s*[、.．]")
 _PURE_NUM = re.compile(r"^\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?$")
 _YEAR_FULL = re.compile(r"^(?:20\d{2})(?:\s*年)?$")
 
@@ -423,8 +425,25 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
             closed = True
             break
         if "序号" in ln and any(k in ln for k in _PARTY_KEYS):
+            # ⚠️ **必须先判这一条**（认得的数据表头**重复出现** → 跳过该行，继续读下面的数据行）。
+            # 第一版把下面「新表头即收尾」放在前面 → 表中间的重复表头把表**提前截断**，
+            # 实测业绩行 402 → 338（丢的正是重复表头之后的那些行）。
             cur += 1
             continue
+        if "序号" in ln and "|" in ln:
+            # **认不得的表头 = 这张表结束了** → 收尾并停止。
+            # 2026-09-16 实测踩到：不认得的表头（如《技术和服务要求响应表》）会被当成数据行，
+            # 把**后面整张表的几千字**都吞进上一条业绩行的 `row_text` 里，
+            # 卡片「原文」被撑满屏，金额也因列被撑歪而丢失。
+            flush()
+            closed = True
+            break
+        if _SECTION_HEAD.match(ln) and len(ln) <= 40:
+            # 章节标题（`十三、《技术和服务要求响应表》` / `十四、类似项目业绩一览表`）同样表示
+            # 本表已结束 —— 业绩数据行不会以「中文序号、」开头（那是**章节**编号）。
+            flush()
+            closed = True
+            break
         if _ORD.match(ln):
             flush()
             buf_start = cur
@@ -471,7 +490,9 @@ def _evidence(r: dict, ord_: int) -> str:
     只留 row_text 会丢掉本行的实际内容——故把 project_raw / party_a_raw 一并写入。
     """
     header = (r.get("header_line") or "").split("\n")[0][:60]
-    row = r.get("row_text") or ""
+    # ⚠️ 限长 300 字：业绩行是**一行表格数据**，不该有几千字（实测曾出现 6836 字的证据，
+    # 表后整张《技术和服务要求响应表》被吞进行缓冲 → 卡片被撑满屏）。
+    row = (r.get("row_text") or "")[:300]
     parts = []
     if r.get("project_raw"):
         parts.append(f"项目:{r['project_raw'][:60]}")

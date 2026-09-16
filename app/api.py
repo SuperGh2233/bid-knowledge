@@ -434,10 +434,18 @@ def live_scope(con) -> dict:
     数字是实时的、说明文字是死的，二者脱节。改为实时计算。
     """
     approved = list(APPROVED_DOCUMENT_IDS)
-    total_contracts = con.execute("SELECT COUNT(*) FROM contracts").fetchone()[0]
+    # ⚠️ **「合同」只能数合同**（2026-09-16 修正）：`contracts` 表同时存放业绩清单声明
+    # （`LEDGER-*`，来自我方响应文件，**不是合同原件**）。原先整表计数 → 页脚出现
+    # 「538 份合同里 136 份已完成核对」（538 里 402 条是业绩行），与页面别处的 136 自相矛盾。
+    # 现：合同只数 `CTL-*`；业绩行单独给 `ledger_records`，口径互不污染。
+    total_contracts = con.execute(
+        "SELECT COUNT(*) FROM contracts WHERE contract_id LIKE 'CTL-%'").fetchone()[0]
+    ledger_records = con.execute(
+        "SELECT COUNT(*) FROM contracts WHERE contract_id LIKE 'LEDGER-%'").fetchone()[0]
     return {"total_contracts": total_contracts,
             "queryable_contracts": len(_approved_contract_ids(con)),
-            "approved_documents": len(approved)}
+            "approved_documents": len(approved),
+            "ledger_records": ledger_records}
 
 
 
