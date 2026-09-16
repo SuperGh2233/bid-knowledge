@@ -1,6 +1,6 @@
 """候选行语义分类（LLM，已授权）→ 只把「我方已附材料」写入 material_facts。
 
-授权依据：docs/llm-classification-authorization.md
+授权依据：docs/authorizations/llm-classification-authorization.md
   - 只发**候选行短文本**，不整篇发送；
   - 发送前对手机号/身份证号打码；
   - 不发文件路径与文档名。

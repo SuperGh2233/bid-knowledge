@@ -629,7 +629,7 @@ def _guard() -> None:
         raise ProposalGenNotAuthorized(
             "方案生成未授权/未开启（config.PROPOSAL_GEN_ENABLED=false）。"
             "该步骤会把我方响应正文外发；启用前须有书面授权记录"
-            "（见 docs/llm-generation-authorization.md）。"
+            "（见 docs/authorizations/llm-generation-authorization.md）。"
             "本地机械件（召回/聚类/证据包）无需此开关。")
 
 
@@ -1057,7 +1057,7 @@ def generate_proposal(payload: dict, constraints: str = "", kb: list[dict] | Non
     本函数不持有数据库连接，且整理是**零外发**的本地步骤，与生成分开。
 
     ⚠️ 这一步会把我方响应文件正文送往外发网关。授权记录见
-    `docs/llm-generation-authorization.md`；未开启 `config.PROPOSAL_GEN_ENABLED` 时直接抛错。
+    `docs/authorizations/llm-generation-authorization.md`；未开启 `config.PROPOSAL_GEN_ENABLED` 时直接抛错。
     """
     _guard()
     client, model = _gen_client()

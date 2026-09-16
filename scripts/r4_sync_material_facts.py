@@ -4,7 +4,7 @@
 本切片**只做确定性部分，不判 source**——不知道一条声明是"我方已附材料"还是
 "采购人要求/模板"。对抗复核查明：区分二者需要语义判断，未获 LLM 授权前不做。
 故本表数据**不得当作"已核实附件"使用**。
-详见 docs/material-facts-feasibility.md。
+详见 docs/business/material-facts-feasibility.md。
 """
 from __future__ import annotations
 

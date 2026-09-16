@@ -35,7 +35,7 @@ DEFAULT_ROOTS = {
 }
 
 # 已核准文件白名单；查询只在这些文件范围内。
-# 可审计清单优先：`data/approved_documents.json`（由 docs/ocr-authorization.md 授权范围内的
+# 可审计清单优先：`data/approved_documents.json`（由 docs/authorizations/ocr-authorization.md 授权范围内的
 # 人工核准件 + OCR 批量件生成）。文件缺失时退回内置的两份人工核准件，**不会静默放宽范围**。
 _FALLBACK_APPROVED = {
     "b2bbb5507121",  # 单细胞-欧易19.98万
@@ -89,7 +89,7 @@ class LocateResult:
     # 计划 R6-05 原文：「结果按**我方响应/最终版、原生文字、混合、扫描 OCR、相关性**排序」。
     # 原实现**没有排序层** —— 结果按 `contract_id` 字典序返回，`_FORMAT_RANK` 只用于方案证据的
     # 同簇择优，**未作用于定位结果集**。缺它 `Success@5/Precision@10` 无定义（见
-    # `docs/success5-precision10-clarification.md`）。
+    # `docs/evals/success5-precision10-clarification.md`）。
     content_format: str | None = None
     document_role: str | None = None
 
@@ -366,7 +366,8 @@ def locate_by_product_amount(con, product_keywords: tuple[str, ...], min_amount:
         # 产品匹配：`product_raw` = 「类别/服务名」，**两段都参与匹配**。
         # 只匹配类别会让「类别通用」的合同（如 `多组学检测（非范本合同）`，实测 98 份里有 30 份）
         # 任何产品查询都查不到 —— 尽管其服务名里有 `LC-MS/MS 精准靶向代谢`。
-        # 这是金标准实测漏检的主要来源（见 docs/agent-handoff.md §7.1）。
+        # 这是金标准实测漏检的主要来源（R6 轮实测教训，原因即上面两行所述；
+        # 不引交接文档节号——handoff 是可替换检查点，节号会变）。
         #
         # **两条路径分开走，保证零回归**：
         #   按**类别**命中 → 沿用 `product_amount_status`（保留其 conflict 检测，行为与改前完全一致）

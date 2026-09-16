@@ -1,6 +1,6 @@
 # LLM 查询意图识别 授权记录（2026-09-16）
 
-> 本文件在**执行任何 LLM 意图识别调用之前**写入（与 `docs/ocr-authorization.md`
+> 本文件在**执行任何 LLM 意图识别调用之前**写入（与 `docs/authorizations/ocr-authorization.md`
 > 「在执行任何 OCR 调用之前写入」同一惯例）。
 
 ## 一、授权语句
@@ -64,6 +64,6 @@
 
 ## 六、本记录不覆盖
 
-- 不覆盖**材料事实抽取**（那是 `docs/llm-classification-authorization.md` 的范围）。
-- 不覆盖**方案正文生成**（`docs/llm-generation-authorization.md`）。
+- 不覆盖**材料事实抽取**（那是 `docs/authorizations/llm-classification-authorization.md` 的范围）。
+- 不覆盖**方案正文生成**（`docs/authorizations/llm-generation-authorization.md`）。
 - 不覆盖**把文档正文用于意图识别** —— 本项**只发用户查询句**，不得扩大。

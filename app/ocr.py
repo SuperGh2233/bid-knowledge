@@ -1,6 +1,6 @@
 """扫描件 OCR（**外发操作，须单独授权**）。
 
-授权依据：`docs/ocr-authorization.md`（2026-09-10 用户选择方案 A）。
+授权依据：`docs/authorizations/ocr-authorization.md`（2026-09-10 用户选择方案 A）。
   - 主体范围：`document_role='contract_evidence'` 的扫描 PDF / 图片；
   - 主通道：`.env` 的 OCR/LLM 网关（`https://newapi.oebiotech.com/v1`，qwen）；
   - 兜底：`https://mineru.net`（**公网第三方**，仅在 qwen 失败且显式开启时使用）。
@@ -55,7 +55,7 @@ def _guard() -> None:
     if not config.OCR_ENABLED:
         raise OCRNotAuthorized(
             "OCR 未授权/未开启（config.OCR_ENABLED=false）。"
-            "启用前须有书面授权，见 docs/ocr-authorization.md。")
+            "启用前须有书面授权，见 docs/authorizations/ocr-authorization.md。")
 
 
 def _qwen_config() -> tuple[str, str, str]:

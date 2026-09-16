@@ -1,436 +1,203 @@
 # Agent Handoff — bid-ai-clean
 
-> 更新 2026-09-14（**全面重写**：旧版累积到 696 行/64KB，已按本技能结构压缩并剔除过时内容；
-> 同日晚些时候补：`app/tender.py` 实装内容、§4.11–4.14 四条实测教训。
-> **再补（本轮）**：§8.1 第 2 条「条数口径」已做完（§4.15）、第 5 条已入表；
-> **需求二只保留模型生成（2026-09-14 用户指令）** —— local 已从 API 下线，见 §1/§2/§7。
-> **并更正上一版的两处错判** —— ① 旧版说「B2B 轮未入计划 §10」**是错的**（§10 早有该行），
-> 真正漏的是**前端 P0 `rsplit` 修复那一轮**，现已补记；② 旧版 §7 的「同一屏数字自相矛盾」已修。）
-> 权威路线见 `../bid-ai/MINIMAL_REBUILD_PLAN.md`（§2 需求定义与金额口径修订 / §10 执行记录 / §11A 门槛）。
-> **冲突时以仓库与实测为准**；本文件只装「代码看不出来的东西」，不是进度流水账。
-> ⚠️ **本文件 2026-09-14 一天内被多次修订**，「Next Actions」可能已被同日后续工作消化 ——
-> 照它执行前先核 mtime、`git status` 与实测数字。**本版已把已完成的条目直接划掉，别照旧版重做。**
+> 更新 2026-09-16 13:20（**按本技能 §1–§13 结构重写**）。旧版 458 行中随工作完成而失效的部分已收敛，
+> 旧内容仍可取回：`git show HEAD:docs/agent-handoff.md`。
+> 权威：仓库根 `AGENTS.md`（命令与红线，**随仓库分发**）、工作区级 `../CLAUDE.md`（两版本拓扑）、`docs/index.md`、
+> §2 列出的文档。**冲突时以仓库与实测为准**；本文件只是可替换的检查点，不是规格。
 
 ## 1. Current Goal
 
-交付两个能力（**只有这两个**，不得扩第三条主链路）：
+交付两个能力（**只有这两个**，不得扩第三条主链路）：**需求一** 历史材料定位（自然语言条件 → 我方响应文件 + 内部业务记录）；**需求二** 模块级方案生成（方案名 + 必须包含内容 → 带出处草稿）。
 
-- **需求一 · 历史材料定位**：自然语言条件 → 满足条件的历史**我方响应文件**（业务记录 + 所在文件）。
-- **需求二 · 模块级方案生成**：方案名 + 必须包含的内容 → 带出处的方案草稿。
+**当前没有进行中的开发任务。** 最近一轮是需求方试用反馈 5 条的六轮整改（2026-09-15/16，已全部实施+验证）与仓库发布/工作区清理（2026-09-16）。
+⚠️ **唯一未完成项**：把旧系统目录搬出工作区（被一个残留 `tail` 进程锁住 → 见 §8/§9 第 1 条）。
 
-**退出门槛 vs 实测**：
+退出门槛 vs 实测（未回退）：
 
-| 门槛 | 实测 | 判定 |
-|---|---|---|
-| 一 · 应召回文件 Recall ≥90% | **92.3%**（26 条可判定 → 24） | ✓ |
-| 一 · 真实路径正确率 100% | **100%**（98/98、1000/1000、626/626 逐条 Test-Path） | ✓ |
-| 一 · 金额条件准确率 100% | **100%**（53/53 命中均 ≥ 门槛） | ✓ |
-| 一 · Success@5 ≥95% | **100%**（3/3） | ✓ 样本少 |
-| 一 · Precision@10 ≥95% | **93.3% 下界 / 100% 上界** | ⚠️ 仅 3 个可判定查询，口径见 `docs/success5-precision10-clarification.md` |
-| 一 · 不放宽条件造命中 | 误返 **0** | ✓ |
-| 二 · 必要小节覆盖率 100% | **8/8 = 100%**（2026-09-14 复测；模块数由 9 改 8 见 §4.17） | ✓ |
-| 二 · 引用覆盖率 100% / 竞品 0 / 不可追溯数字 0 | **100% / 0 / 0**（`validation` 空） | ✓ |
-
-**当前任务范围**：B2B 四维评审已完成并修掉 P0/P1（§7）；**招标要求核对功能用户已明确暂停开发**。
-**§8.1 五条全部完成**；**方案质量业务人工评审的前置已做掉**（样本包 + 指引就绪，见 §2「Not started」），
-**下一步是让业务同事照 `docs/proposal-quality-review.md` 评审** —— 这一步必须用户/业务发起。候选见 §12。
-
-## 2. Current Progress
-
-### Completed + Verified
-- 需求一四场景可用：合同定位（产品/金额/日期/机构/排除）、材料存在性、三类定位、方案章节。
-- 需求二**方案模块 8 个**全部 `ok`，覆盖率 **8/8 = 100%**（2026-09-14 用户裁定：只保留"方案"类模块，
-  已摘除「对项目的理解与需求分析」——它不是方案，见 §4.17）；**只保留模型生成一条路**
-  （`local` 已从 API 下线，`assemble_proposal` 实现与其单元测试保留待命，见 §2/§7）。
-- `pytest tests -q` → **200 passed**（必须用 conda `langchain-dev` 解释器，见 §6）。
-- **「条数 vs 文件数」口径已统一**（§4.15）：卡上数字与点进去的条数同源，HTTP 实测
-  **95 / 1564 / 722**，项目业绩卡 == 侧栏可查数 == 95。
-- 库规模（实测复核）：`documents 6,043 / contracts 127`（其中 CTL 98、**已核对可查 95**）
-  `/ parse_artifacts 2,807（scanned_ocr 549） / contract_items 597 / material_facts 2,373`。
-  **ES `bid_scheme_sections_v1`：11,672 条章节 / 641 份文档**（2026-09-15 白名单索引 +930 条 / +10 份）。
-  **2026-09-15 增量登记 +130**（`scripts/refresh_catalog.py`，新交付）：2026 年 9 月上旬
-  新项目目录（孟令莹/赵玲云/穆志国等 130 文件）入库；非标书仍跳过（口径延续）、系统文件跳过；
-  改名目录按新路径重新登记、旧行保留（只登记不删，见 §4.18）。
-  **同日白名单 OCR + 索引**：16 份新登记的响应扫描件 OCR（外发，已授权，238 万字，
-  `scripts/refresh_ocr_whitelist.py`）→ 930 条章节入库（`scripts/refresh_index_whitelist.py`，零外发）。
-- 语料零外发扩容已完成两轮（+631、+828 份），**尚未耗尽**（还能再挖，见 §9）。
-
-### In progress
-- 无。B2B 评审 P2 项**已全部处理**（页签 02 模块入口已做 → 见 §7；`requirements.txt` 已钉版本）。
-
-### Not started
-- R9（切换与旧 ES `bid_chunks_v2` 清理）；Success@5/Precision@10 口径澄清（需求方未回）。
-- ~~方案质量的业务人工评审~~ → **前置已完成，只差业务照做**（2026-09-14：`docs/proposal-quality-review.md`
-  指引 + `outputs/proposal-quality-review-<ts>/` 样本包 + `scripts/make_quality_review_samples.py`；
-  样本覆盖单模块 / 必须包含 / 时限冲突 / 未识别告警 / 大方案，6 项判定标准含一项机器保证不了的「成文质量」）。
-  ⚠️ **评审必须用户/业务发起**（读草稿、填 `review_record.md`）。**样本全部为 llm 模型起草产物**
-  （2026-09-14 后 local 已下线，取样默认外发，运行前用 `--dry-run` 确认；评审指引已更新）。
-
-### Rejected / abandoned（勿重开）
-- 用**确定性规则**替代 LLM 语义分类材料来源（实测精确率 100%、**召回仅 7.4%**）。
-- 给「收款凭证」再开「文件名含合同号+付款词」「正文合同号±120字含付款语义」两条通道（实测只覆盖 **1/93**）。
-- 拿 OCR 去凑「项目风险识别与措施」（已证 OCR 命中 0 条）。
-
-## 3. Changes Made
-
-全部**未提交**（35 `??` + 4 `M`，见 §11）。按用途：
-
-| 区域 | 文件与关键改动 |
+| 门槛 | 实测 |
 |---|---|
-| 接口 | `app/api.py`（组装 + 共享辅助）+ `app/routes_search.py` / `app/routes_proposal.py` / `app/routes_status.py`（APIRouter 拆分，2026-09-14）—— 11 个端点；`PRODUCT_ALIASES`(14 类)、`PRODUCT_MATCH_EXCLUDE`、`_fold_by_contract`(R6-06 折叠)、`_annotate_fact_role`(角色分层)、`/api/ask`(需求一唯一入口)；`_FINANCE_FACT_TYPES`/`_INSTRUMENT_FACT_TYPES`/`_count_material_facts`/`_approved_contract_ids`（三处共用的唯一口径，§4.15）、`GET /api/modules`（**方案模块**词表，8 个，不碰 ES） |
-| 检索 | `app/search.py` —— 资格门槛、`locate_sort_key`(R6-05 排序)、`match_exclude`(行级负向过滤) |
-| 抽取 | `app/extract.py`(合同头/金额/材料事实)、`app/parser.py`(解析、`PARSE_SET_ROLES` 7 类) |
-| 需求二 | `app/proposal.py` —— 证据包、`build_module_kb`(模块化经验)、`_slot_of`/`_time_mentions`、冲突检测、生成 |
-| 前端 | `static/{index.html,app.js,style.css}` —— 2 个页签；`baseName()`、`copyText()`、`renderInnerRecords()`；**本轮新增** `fillProposalQuery()` + `loadProposalPicker()`（**方案模块**入口，词表从 `/api/modules` 取，前端不另抄）；**本轮前端整理**（2026-09-14）：`renderMarkdown` 重写（证据多行**归并成一段**、出处行降为小注 `draft-cite`、引用上标 `cite-ref`、`引用来源`收进 `<details>` 折叠）；`generateDraft` 警示合成一张卡、`scope_note` 收进「用稿须知」折叠、新增「复制草稿全文」按钮；**修复 `done()` 从未被调用的真 bug**（见下）；index.html 把 23 条检索示例、页签 02 的招标核对/模块化经验收进 `details`（功能未动） |
-| **暂停** | `app/tender.py`（招标要求核对）—— **代码完整保留，用户 2026-09-14 明确暂停开发**。里面已实现：`extract_time_requirements`（时限类要求 + 历史同类承诺对照，三态 `covered`/`stricter`/`uncovered`）、`extract_hard_requirements`（**★/▲ 实质性条款**，两种排版：表格式 `1 \| ★ \| 交货时间 \| 值` 与小节式 `★服务内容`——后者**正文在下面几行**）、`classify_clause`（8 类归类）、`material_pools`（指向我司材料池）、`build_check_table`；端点 `POST /api/tender-check`（收 multipart 文件或 JSON 文本，**文件不落库**）。**要重启时从这里接着做，别重写。** |
-| 测试 | `tests/*.py` 19 个文件；**新增** `tests/test_frontend_syntax.py`（前端护栏）、`tests/test_module_counts.py`（本轮，口径一致性护栏，含**变异验证**：类型表改窄即失败） |
-| 文档 | `docs/{api.md,agent-handoff.md,llm-generation-authorization.md}` |
+| 一 · Recall ≥90% | **92.3%**（26 条可判定 → 24） |
+| 一 · 真实路径正确率 100% | **100%**（逐条 Test-Path） |
+| 一 · 金额条件准确率 100% / 误返 0 | **100%** / **0** |
+| 一 · Success@5 100% / Precision@10 | 100%（3/3，样本少）/ **93.3% 下界**（口径见 `docs/evals/success5-precision10-clarification.md`） |
+| 二 · 必要小节覆盖 8/8 | **100%**（模块数 9→8，见计划 §9） |
+| 二 · 引用覆盖 100% / 竞品 0 / 不可追溯数字 0 | **100% / 0 / 0** |
 
-**已删除**（清理轮，用户确认）：`scheme-preview`/`proposal-evidence` 端点、冻结示范稿常量、4 个死函数、6 个悬空常量、2 个一次性脚本、3 个一次性数据产物、11 处死 CSS、空目录 `prompts/`。
+## 2. Linked Authoritative Documents
 
-## 4. Technical Decisions（**最容易被我重犯的**）
+| 文档 | 控制什么 |
+|---|---|
+| `AGENTS.md`（仓库根） | **随仓库分发的稳定指令**：环境、命令、红线、代码地图、文档导航（2026-09-16 新建；`CLAUDE.md` 是指向它的一行指针） |
+| `../CLAUDE.md`（工作区根） | 两版本拓扑（现役 `bid-ai-clean/` vs 归档）、三份历史设计文档的地位。**不再含命令与红线**（已移交 `AGENTS.md`） |
+| `docs/index.md` | 文档地图与权威来源登记（2026-09-16 重组后含**状态列**与「新文档纪律」） |
+| `docs/plans/active/PLAN-20260915-demo-feedback-issues.md` | **active**。需求方 5 条反馈的权威记录：§6 需求 / §8 已定口径 / §9 实现与遗留 / §10 验收 / §11 验证证据 / §12 状态 |
+| `docs/business/demo-feedback-open-questions.md` | 上述计划的一页纸（会前对齐用；三个口径已全部拍板） |
+| `docs/specs/api.md` | HTTP 契约（端点、字段、错误语义、踩坑） |
+| `docs/authorizations/llm-intent-authorization.md` | **意图识别层**的外发授权（只发用户那一句话） |
+| `docs/authorizations/ocr-authorization.md` / `ocr-authorization-response-docs.md` / `llm-generation-authorization.md` / `llm-classification-authorization.md` | 另四条外发授权，**范围不可自行扩大** |
+| `docs/plans/legacy/MINIMAL_REBUILD_PLAN.md`（+ `-DECISIONS.md`） | 旧系统路线（§2 需求与金额口径修订 / §10 执行记录 / §11A 门槛）。2026-09-16 自旧系统仓库复制入本仓库，**旧代码已移出工作区归档** |
 
-1. **合同金额口径**：产品金额 = 该合同**同产品 detail 行 `line_amount` 之和**；`contracts.total_amount` **不得**参与产品金额判断（D9）。`数量×单价` 推导**仅在整表每条明细都有非零数量与单价**时启用（防串列：`数量=500 单价=80000` → 4000 万，而合同总额 14.4 万）。
-2. **产品别名是子串关键词、首个命中即返回** → **窄产品必须写在宽的前面**（否则「空间代谢组」被「代谢组」抢走）；每个条目的别名里**要含自己的规范名**（否则 `不要X` 归不了类）。`PRODUCT_MATCH_EXCLUDE` 是**行级**负向过滤——「转录组」会吞「单细胞转录组」、「靶向」会命中反义词「**非**靶向」。
-3. **R6-05 排序层**：角色 → 格式 → 命中 → 金额大 → 签订日新 → 合同号。**日期排序不能对字符串按位取补**（`YYYY-MM` 与 `YYYY-MM-DD` 长度不同会排错），必须换算整数。
-4. **R6-06 折叠**：同一合同多条命中折成一条文件结果，内部业务记录进 `records`；**保序**（按输入顺序取首次出现建组，不打乱排序层）。
-5. **冲突只并列不择一**（需求二原文：「多份材料冲突时明确提示，**不能自动选择一个数字**」）。槽位判定的坑：**后向优先**，且距离要用**真实距离**（首版把方向编码成负数 → 任意靠后的槽位都赢过最近的）。
-6. **`build_module_kb` 零外发**：归纳只用确定性能力（聚簇/时限抽取），不调模型。它进提示词时**必须显式禁止被引用**，否则模型把归纳句当原文引用。
-7. **`app/config.py` 要 `load_dotenv(override=False)`**（真实环境变量优先）。**原先不加载** → README 说的「从 `.env.example` 复制」完全不生效。
-8. **前端不得出现 Python 专有方法**（`rsplit`/`startswith`…）—— `node --check` 抓不到（语法合法），必须靠 `tests/test_frontend_syntax.py` 的渲染冒烟。
-9. **时限槽位 `解决` 归一为 `完成`**，且归一要放在 `_slot_of` 的**两个返回点**（早返回分支曾绕过它）。
-10. **`material_facts.fact_value` 装的是「期间」不是材料名**（对 `instrument` 类曾因此在库里查不到任何仪器名）。仪器名另存 `instrument_name`。
-11. **服务时限的「依据」是招标文件，不是历史响应文件**（2026-09-14 逐项目实测 43 个项目 / 111 条招标时限句得出）：
-   招标文件写了时限的，响应文件里 **56% 逐字照抄**、38% 同类改写、6% 未覆盖。
-   → **对一份新标书，时限该从新招标文件取**；历史材料只当模板（「响应/到场/解决」的结构）
-   与底账（我们最多承诺过什么）。**拿 A 项目的 48h 填 B 项目，若 B 要求 24h 就是废标风险。**
-   另：同一份响应文件里的多个时限值**大多是同一套体系的不同环节**（响应/到场/解决），
-   以及**文档自己的分级设计**（Ⅰ/Ⅱ/Ⅲ级各不同），**不是互相矛盾** —— 冲突检测的假阳性多出于此。
-12. **冲突检测的槽位必须"后向优先 + 真实距离"**：`1小时内响应，4小时内到场` 里 4 小时与前后两个槽位**等距**，
-   首版用严格小于保留先找到的 → 归成「响应」，与紧跟的「到场」打架。**距离必须用真实值比较**：
-   首版把方向编码成负数，结果**任意靠后的槽位都赢过最近的**（曾有测试当场抓住）。
-13. **`_NUM_UNIT` 单位要齐**：漏 `h` 会让 `48h内响应` vs `24h内响应` 这条**真冲突一直不报**（模型读原文发现了、系统漏了）；
-   漏 `日` 会让招标文件的 **★硬性条款**「自合同签订之日起60日内交付」整条漏掉。`日` 需加**日期防误判**（`2020年1月1日` 的 `1日` 不是时限）。
-14. **槽位词的假朋友**：招标文件里「响应」绝大多数是「**响应文件**」「响应截止时间」——
-   「首次**响应文件**递交截止前**六个月**内税收凭据」会被抽成「响应 六个月」（那是**资格要求**）。已加 `_SLOT_BLOCK_AFTER`。
-15. **「有多少」的数字必须同源**（本轮实测）：概览卡与明细页各写一份筛选条件 → 卡上 546、点进去 722；
-   概览按 `LIKE 'CTL-%'`（98）而侧栏/查询按白名单（95）→ 浏览与查询落在**不同批文件**上。
-   现收敛为**唯一常量/函数**：`_FINANCE_FACT_TYPES` / `_INSTRUMENT_FACT_TYPES`（概览与明细共用）、
-   `_approved_contract_ids()`（概览卡、`live_scope`、项目业绩明细共用）。
-   ⚠️ **白名单过滤必须在 `LIMIT` 之前** —— 原写法先 `LIMIT n` 再过滤，库里合同一超 n 就原样复发。
-   ⚠️ 概览卡「财务社保 1564」vs 明细页显示 1000 是**显式截断**（页面写明「库内共 1564 条」），**不是矛盾**，
-   别把它当 bug 一起「修」掉。
-16. **增量登记脚本的语义**（`scripts/refresh_catalog.py`，2026-09-15 交付）：
-   - **只读与只登记**：脚本只 `os.walk`+`stat` Z 盘，不解析/不触 ES/不外发/不算 sha256；
-     任一根目录**遍历前**不可访问 → 整轮 `_AbortError` 中止且一行不写（`main` 的 `--dry-run` 也先过此闸）。
-   - **登记口径 = 现库既有一致行为**：一级目录名含「非标书」→ 整目录跳过；`classify_path` 判
-     `system_or_temp`（thumbs.db/~$/.db/.exe）→ 跳过；其余（标书/比选/调研/询价/报名）都登记。
-   - **幂等**：身份 = `deterministic_document_id(source_root_id, relative_path)`，与现库同算法；
-     `UNIQUE(source_root_id, relative_path)` 兜底，重复跑「新增 0」。
-   - **不删除任何行**（红线刻意不带 `--apply-deletes`）：Z 上消失/改名的旧路径行保留，
-     改名目录按新路径重新登记 —— 两者并存是**预期行为**。
-   - **正式库禁写**：默认 reg 演示库（`BID_AI_CLEAN_DB` → 再默认 reg）；`--db bid_ai_clean.db`
-     一律退出码 2，即使显式传也拒绝。
-16. **前端整理后的三条（页面只留重要信息，2026-09-14）**：
-   ① **`renderMarkdown` 必须把证据的多行文本归并成一段** —— 证据原文本身带换行（一段长文被拆成
-   `- ` 首行 + 若干无前缀续行，`[E1]` 落在靠后行）。旧实现逐行渲染 → 一段证据碎成一串 `<p>`/`<li>`。
-   现用 `evBlock` 收集 + `flush()` 归并；**续行识别必须限定在「上一个证据块之后」**，否则正文里的
-   普通首列文本也会被误并。护栏（`test_frontend_syntax.py` 渲染冒烟）用**真实生成产物**钉住。
-   ② **警示/冲突/缺节是「必须一眼看见」的信息，绝不能折叠**；折叠只用于「演示道具」（示例按钮、
-   招标核对、模块化经验、用稿须知、引用清单）。**这是整理的红线**：只收敛版面，不藏诚实性提示。
-   ⚠️ **该红线的例外（2026-09-14 用户要求，见 §4.18）**：**外发类事前告知文案**已按用户要求
-   从页面上撤除（安全网在服务端 403，未授权不外发）。红线仍适用于结果里的冲突/缺口/校验提示。
-   ③ **`generateDraft` 的 `done()` 必须真被调用**（`try/catch/finally`）—— 旧代码 `done` 定义了但从没跑：
-   `_draftInFlight` 永不复位、`setInterval` 永不清理 → **第一次生成后按钮永远禁用、后续生成全部被静默吞掉**。
-   这是评审工作结束后仍在线上的真 bug，被渲染冒烟（node 60s 超时）当场抓到。
-17. **需求二只保留"方案"类模块**（2026-09-14 用户裁定）：`对项目的理解与需求分析`（关键词
-   项目理解／对项目的理解／需求分析／项目背景／需求理解／项目概况）**不是方案**，已从
-   `app/module_keywords.json` 摘除 → **9 个模块变 8 个**（项目管理与实施方案、售后方案、
-   质量控制方案、应急预案、保密方案、项目风险识别与措施、样本接收及物流方案、培训方案）。
-   **依据**：用户原话「需求2 你做的有点跑偏了 我的目标只需要生成方案 对项目的理解 和需求分析
-   你是弄来干嘛的」。**影响面**：`/api/modules`（词表入口）、`/api/module-kb`（跨项目归纳）、
-   `extract_required_sections`（从 query 认小节）三处同源生效。**改后必做且已做**：重跑
-   `tmp/check_coverage.py` 复测 → **8/8 = 100%**（各模块标题命中 5、召回池 25），pytest 200 passed。
-   ⚠️ **仍保留的**：需求一的"查方案章节"（`/api/ask` 走 `_ASK_SCHEME_KW`，含「对项目的理解／需求分析」）
-   是**有意保留**的 —— 那是 R1「以前哪个文件写过某小节」的合法问法，与 R2 的模块词表是两件事，
-   别一起删。⚠️ 若还想再摘（如「项目风险识别与措施」也嫌不像方案），改词表 + 复测即可，成本很低。
-18. **需求二页面上不显示外发提示**（2026-09-14 用户要求，**推翻 §4.16 的旧红线**）：
-   用户原话「会外发 · 需授权 …… 这个需求2页面的消息不展示」，补一句「都去掉」。
-   **已撤三处**：① `index.html` 常驻的 `.scheme-note` 块（"会外发 · 需授权 / 生成会把历史我司响应正文
-   发往公司网关由模型成文；未授权会明确报错，不外发。"）+ 随之成死样式的 `.scheme-note`/`.status-pill`；
-   ② `app.js` 生成中的进度提示（原"正在把证据交给模型起草（会外发，需已授权）…" → "正在起草方案…"）；
-   ③ 结果区产物标注（原"模型起草（正文已发往公司网关）" → "模型起草"）。
-   ⚠️ **安全网一字未动、且在服务端**：未授权时 `app/proposal.py::_guard()` 抛 `ProposalGenNotAuthorized`
-   → HTTP **403、不会有任何外发**（有测试钉住）。**撤的只是"事前告知文案"，不是授权控制**。
-   ⚠️ **别再"好心"加回来** —— 这是用户明确的产品决策；若将来要恢复披露，先问。
-   ⚠️ **§4.16 ② 的红线据此收窄**：那条「不藏诚实性提示」仍适用于**冲突/缺节/证据不足**（结果里的
-   `warnings`/`gaps`/`validation`，仍在首屏醒目显示），但**外发类事前文案不在此列**。
-   ⚠️ **保留未动的**：`/api` 未授权时的 403 `detail` 文案（只在**失败时**出现，是功能反馈，不是常驻告知）、
-   `docs/api.md` 的外发声明（接入方契约，该记就记）。
-19. **信息层级重做 P0（2026-09-14 业务评审后）**：评审结论「问题不在配色，在于页面像技术验证台 ——
-   展示"系统里有什么"，没围绕用户动作组织」（后端 75% / 界面 50%）。用户裁定**分两步**：P0 先落、再 P1。
-   **P0-1 文件优先卡片**：卡主标题从 `row.product` 改成 **`row.file_name`**，项目名升为标题上方一行，
-   产品降为标签；新增「为什么符合条件」一行（自证：命中产品 + 金额 ≥ 门槛）；`CONTRACT_CSV` 列序同步。
-   ⚠️ **后端响应一字未改** —— 实测 CTL 合同与 document **严格 1:1**（98→98，多合同文件 0），
-   所以"文件优先"**只是渲染层**的事，改后端是纯风险无收益（`/api/ask` 同进程展开同一 dict）。
-   ⚠️ 已加防御：若将来真出现"一文件多合同"，卡片自检 `records[].document_id` 数 >1 时**自己说出来**，
-   而不是静默给错标题。
-   **P0-2 `POST /api/open`**：新增 `app/routes_open.py`（独立文件 = 删一行 include 即下线）。
-   **安全五道**：只收 `document_id`（不收路径）/ 未知 root **抛错**（抄 `parser.py::_doc_path`，
-   不沿用全仓 `roots.get(id, Path(""))` 的静默降级）/ 路径**按 component** 体检（库里 2 个合法文件名
-   含 `..`，子串判会误拒）/ 词法包含性断言（**不用 `resolve()`** —— 不可达 UNC 上会挂住）/
-   后缀黑名单先判 + `target=file` 白名单（**排除宏格式**）。可达性(`503`)与存在性(`404`)**刻意分开**。
-   **实测**：库里 6 个 `.exe`（投标客户端安装包），`os.startfile` 对 `.exe` 是**执行** —— 故黑名单是硬要求。
-20. **方案生成证据带「文件身份说明」**（2026-09-15）：证据原本只有章节 heading+正文，LLM 召回后
-   不知道这份文件属于什么项目、是什么角色 → 可能误把报价单内容当承诺引。已加两个**纯确定性字段**：
-   `project_summary`（一级目录名去日期前缀 = 项目简介）、`doc_purpose`（`document_role` 中文标签
-   + 文件名主干，含厂商段剥离）。
-   **落点**：`build_evidence_packs`（`proposal.py` item 构造处）附加 → `packs_to_payload` **白名单**
-   显式补两行 → `build_gen_prompt` 模板补「｜项目简介：…｜文件用途：…」（**绝不含 source_path**，
-   红线有测试钉住）→ `GEN_SYSTEM` 加规则 8「项目简介/文件用途只用于判断适用性，不得当原文引用」。
-   **关键实现教训**：① `_document_role` 的 SELECT 不能动（测试 fixture 只有 6 列）；新增字段数据源
-   只用已 SELECT 的 `project_folder` / `relative_path` / `document_role` → fixture 一行不改。
-   ② **`str.endswith(多字节串)` 不等于「末尾任一分隔符」**—— `endswith("+·-｜_（(/ ")` 是问结尾
-   是否以**整串**结束，不是任一字符；必须逐字 `while s and s[-1] in seps`（踩到一次）。
-   ③ 半角 `+` 勿打成全角 `＋`（U+FF0B），分隔符集合里混入全角会静默失效。
-   ④ 厂商剥除规则是「独立段」语义：末尾段 `endswith` 剥；中段只剥**前后都有分隔符**（或到串首）的；
-   抬头独立段/嵌入词不剥（`欧易生物报名文件` → 保留，`(加密)上海欧易生物…` → 保留）。
-   ⚠️ **残留 4% 厂商字样**（266/6043）属「不误剥」成本（厂商嵌项目名无分隔或前随字），可接受不追。
-   ⚠️ 前端**未显示**这两个字段（只进 LLM 提示词）—— 若要在引用来源上屏需另开小步。
-   **第二步（未做、需授权）**：用 LLM 概括项目/文件用途（会外发正文），质量更高但需单独授权。
-21. **白名单 OCR / 白名单索引**（2026-09-15，两个新脚本）：补本次新登记的 16 份响应扫描件时，
-   **没有**用现成的 `ocr_batch.py` / `r5_index_bm25_only.py` —— 它们是「补到 N 份」的分批模式：
-   `ocr_batch.py` 的候选是 226 份（含 45 份 `native_pdf_text`（有文字层，OCR 是白外发）
-   + 12 份 `holding_review`（**待核红线**）+ 186 份历史欠账）；`r5_index_bm25_only.py` 传
-   TARGET_DOCS 会把**所有**未索引响应件一起带走。故写 `refresh_ocr_whitelist.py`（白名单 OCR，
-   复用 `ocr.ocr_pdf` + 与 ocr_batch 共用 state）与 `refresh_index_whitelist.py`（白名单索引，
-   只写指定文档）。**结论：只补本次、不误伤存量与待核件。**
-   ⚠️ 首次 OCR 预检时误以为候选是 17 份 —— 实际脚本全量模式是 226 份，**范围判断必须看脚本的
-   SQL 而非直觉**（本轮踩到，及时改白名单驱动）。
-22. **OCR 混扫带来的召回污染（2026-09-15 实测，已知未修）**：新增 930 条章节中 18 条被
-   `_is_plausible_heading` 挡（2%），**159 条能命中方案关键词（17%）**，其中 **51 条（32%）
-   标题含合同/财会噪声词** —— 根因是**几份扫描 PDF 把合同正本与财务报表跟响应文件扫在同一个
-   文件里**（如 `7.2 乙方违约责任`、`售后租回`（会计准则术语，误命中「售后」）），**是数据源特性
-   而非抽取 bug**。**未修理由**：3 道下游过滤 + `_FORMAT_RANK` 把 scanned_ocr 排最后 + 同项目
-   ≤2 条上限兜底；治本应做「**OCR 后按页归属拆分**（判定哪几页属合同、哪几页属响应）」——
-   **独立课题，已列待办，勿塞进增量脚本**。
-20. **信息层级重做 P1（2026-09-14）**：五项一起落地 ——
-   ① **三类材料 / 八类方案入口直展**（原在折叠里，新用户根本不会打开；示例按钮仍折叠，它们是长尾）；
-   ② **已识别条件改为可点标签**：`conditionTags()` / `conditionQuery()` / `conditionTagBar()` / `bindConditionTags()`；
-   ③ **命中与未命中分离**：被排除的收进 `<details>「另有 N 条被排除，查看原因」`；
-   ④ **移除「招标核对 + 模块化经验」UI**（两者都不是用户要的两个需求；**后端端点保留**，
-      `build_module_kb` 仍是生成时的内部依赖）；
-   ⑤ **移除左侧数据栏**，数字降页脚一行。
-   ⚠️ **② 的关键设计**：点标签回填的是**全部条件拼成的查询**（"代谢组，2万元，2024年12月以后"）
-   并**选中被点的那一段**，而不是只回填单个条件 —— 只回填单个条件会让用户"点完就查"因缺产品/金额
-   报 400（那是给用户挖坑）。拼接顺序**排除类放最后**（后端的排除捕获窗口会吃到句末标点）。
-   这条有**跨语言一致性测试**钉住：前端拼出的查询被逐个喂给 `app.api.parse_demo_query()`，
-   既断言不抛错、也断言关键字段（产品/金额/日期/机构/排除）解析正确。
-   ⚠️ **④ 的两处无保护绑定必须与 HTML 同批删**（`$("#load-kb")` / `$("#tender-form")` 是**顶层裸调用**，
-   删 HTML 不删它们 → 整个脚本 TypeError 中断）。为此**先加了三道护栏**（见下），再动删除。
-   ⚠️ **⑤ 连带**：`/api/status` 渲染原写死 `#metrics`/`#metrics-note`/`#scope-note-text`（在 `.then` 里，
-   不会中断脚本、只会静默不显示）→ 已改指 `#footer-stats`/`#footer-note`。
-21. **前端护栏三道新增（P1 前置，2026-09-14）**：都是"删 HTML 忘删 JS"这类**护栏原本抓不到**的错 ——
-   ① `test_app_js_only_references_ids_that_exist_in_html`：`app.js` 里 `$("#id")` 必须在 html 里存在
-     （例外白名单：`copy-cites`/`copy-draft`，运行期用 innerHTML 建、代码已判空）；
-   ② `test_no_unguarded_top_level_dom_bindings`：**列 0 的 `$("#id").…`** 必须存在 —— 精确编码 ④ 的教训；
-   ③ **node 探针的 DOM 桩改为"忠于真实 DOM"**：把 index.html 的真实 id 注入探针，引用不存在的 id 返回
-     `null` → 顶层直接 TypeError。旧的桩对任意选择器都返回 mock，**物理上抓不到**这类错。
-   **变异验证**：把 `id="metrics"` 改名为 `metricsX` → ①③ 双双失败（② 不响，因为它在 `.then` 里而非顶层）；
-   还原后 4 passed。⚠️ 另修：探针 `subprocess.run(text=True)` 用本机 **GBK** 解码 stdout，
-   探针一开始输出中文就崩 —— 已显式 `encoding="utf-8"`。
-22. **P1 收尾三项（2026-09-14）**：
-   ① **需求二生成结果显示「识别到的小节 + 证据覆盖」**（对治"方案生成是个黑盒"）：顶部渲染
-   `modules[]`（每个小节 → 模块名 · 证据充足/不足/没有找到 · N 条证据）与一行
-   `证据覆盖 N/M 个小节充足`。**纯渲染**（响应里早就有 `modules`/`coverage`），**不新增接口**、
-   不做"生成前预检"（那要新开端点，本轮不做）。
-   ② **三类材料 / 材料事实 / 方案章节的卡片也装上「打开文件 / 打开所在文件夹 / 复制路径」** ——
-   原先只有合同卡片有，其余仍是「复制文件位置（给IT定位用）」，而它们的行里**同样有 `document_id`**，
-   用户一样"找到了文件却打不开"。做法：`metaBlock` 的复制按钮换成 `fileActions(r)`（同一个函数，
-   缺 `document_id` 时自动降级为只给复制路径），并在三处调用点补 `bindOpenButtons`
-   —— ⚠️ **渲染了按钮就必须绑事件**，否则是个点了没反应的死按钮（护栏抓不到，靠这条规矩）。
-   ③ **死代码清理**（计划中原定 P1 之后单独做）：删 `[data-proposal]` 死绑定；`.elapsed` 计时器
-   原本指向一个**永不存在**的元素（空转）——**选择让它真正生效**（把 `.elapsed` 放进加载卡，
-   让 20~30 秒的生成过程有可见进度，这本是它原本的意图）而不是删掉。
-23. **⚠️ 草稿渲染样式与线上真实产物不匹配（2026-09-14 走查发现，未修）**：
-   用 7 份**真实 llm 样本**（`outputs/proposal-quality-review-20260914-155501/`）走了一遍展示流程，
-   实测 **`draft-para=0` / `cite-ref=0` / `draft-cite=0`（七份全是 0）**。
-   **根因**：`renderMarkdown` 里那三类样式是照着**本地拼装格式**（`- 正文 [E1]` + `  - 出处：文件`）
-   写的，而**该格式已随 local 下线而不再产出**；真实模型产物是普通 markdown 散文，
-   引用以**行内 `[En]`** 出现（实测每篇 24–87 处，如"…提供相应的技术和操作培训 [E4]。"），
-   全文**没有一行**「`- 出处：`」。
-   ⚠️ **连带一条更该记住的**：护栏里"草稿必须含 `draft-para`"那条断言**测的是一个不再产出的格式**
-   ——它喂的桩 markdown 照抄了 local 格式，所以**测试是绿的、线上却从不走那条分支**。
-   这是"测试断言了虚构"，本项目的红线。**修法**：把桩数据换成真实 llm 形状（散文 + 行内 `[En]`），
-   并按新形状决定引用要不要做成上标/可点。
-   **现状不影响可用**（散文正常渲染、行内 `[E1]` 可见、`引用来源` 块靠 `citations` 映射到文件），
-   故用户 2026-09-14 指示**只修影响演示的 P0**，此条**暂不修**。
-   ⚠️ 另一处取样本具缺口：`make_quality_review_samples.py` 只存摘要 `meta.json`，
-   **原始响应体没落盘** → `citations`/`validation`/`scope_note`/`refs` 事后无法复现（全流程只能重建）。
+## 3. Current Progress
 
-## 5. Contracts and Constraints
+**Completed + Verified（2026-09-16 实测）**
+- 需求方 5 条反馈全部实施：R1-1.a（覆盖面公示）、R1-1.b′（合同 127→**165**，白名单 95→**136**）、R1-1.c（`Visium HD`/`Stereo-seq` 并入空间转录组，`Xenium` 单列）、R1-2（社保月份，**六轮**修复）、R1-3（仪器通称→型号）、R1-4（模糊检索/裸厂商名）、R2-1（方案产品线维度）。逐条验证见计划 §11。
+- 查询意图识别层（`app/intent.py`，本地优先 + LLM 兜底）已上线，`INTENT_LLM_ENABLED=true`。
+- 三类材料卡片补齐「打开文件/文件夹」三件套（根因是 `material-facts` SELECT 漏 `d.document_id`）。
+- `pytest tests -q` → **267 passed**（本文件写作时亲跑，9.03s）。
+- 库规模（只读复核 `bid_ai_clean_reg.db`）：`documents 6043 / contracts 165（可查 136）/ contract_items 649 / material_facts 1986 / parse_artifacts 2810`；社保事实 **913**、财务 341、`instrument_name` 168。
+- 仓库发布：GitLab `ai-project/bid-ai` 与 GitHub `SuperGh2233/bid-knowledge`（**已私有**）两侧 `main` + tag `v1.0.0` 与本地 `deda794` 逐字节一致（`git ls-remote` 核对）；工作区从 1.4G 清到 **544M**。
 
-- **库**：活库（测试库）`bid_ai_clean_reg.db`；正式库 `bid_ai_clean.db` **禁写**。
-- **端点 12 个**：`/`、`/api/{status, ask, material-search, material-facts, scheme-search, three-modules, modules, module-kb, proposal-generate, tender-check, open}`。**路由分布在 5 个文件**（§7；`routes_open.py` 是新加的），URL/行为不变。
-  ⚠️ `POST /api/open` 是**唯一会在服务端机器上启动外部程序**的端点（默认关闭，见 §4.19）。
-- **`app/parser.py::PARSE_SET_ROLES` = 7 类**（+`process_material`/`qualification_evidence`/`tender_requirement`/`unknown`）；**竞品/空模板/系统文件仍禁解析**（有测试钉住）。
-- **检索资格门槛顺序不得改**（`app/search.py`）：角色 → 非 `BLOCKED_STATUSES` → 非 `framework_sample` → `art.sha256==canonical` → `contracts.source_sha256/parser_version` 一致 → `product_amount_status` ok。
-- **外发授权三份，范围不可自行扩大**：`docs/ocr-authorization.md`、`docs/ocr-authorization-response-docs.md`、`docs/llm-generation-authorization.md`。`.env` 里 `PROPOSAL_GEN_ENABLED=true`、模型 `qwen3.7-flash`。
-- **需求二只保留模型生成（2026-09-14 用户指令）**：`/api/proposal-generate` 只收 `mode=llm`（缺省即 llm）；`mode=local` → 400 明确下线提示。`assemble_proposal` **实现与单测保留待命**，只是不再从 API 暴露 —— 想恢复只消把 API 分支加回去。
-- **NAS 只读**；派生物只写本地；上传文件**不落库**（内存解析一次即弃）。
+**In progress**：无。
+**Not started**：`refresh_catalog.bat` 计划任务（已问未定）；方案质量的**业务人工评审**（前置已就绪，须业务发起）；OCR 混扫的**按页归属拆分**（独立课题）。
+**Rejected / abandoned（勿重开）**：确定性规则替代 LLM 语义分类材料来源（召回仅 7.4%）；收款凭证的两条补充通道（只覆盖 1/93）；拿 OCR 凑「项目风险识别与措施」（命中 0）。
 
-## 6. Tests and Verification
+## 4. Changes Made
+
+本轮**没有业务代码改动**（只有 `app/search.py` 一条注释去掉了失效的 handoff 节号引用）。2026-09-16 下午两件事：**① 旧系统迁出准备**、**② docs/ 目录重组 + AGENTS.md 落仓**（用户批准，一个提交）。
+
+| 文件 | 改了什么 |
+|---|---|
+| `AGENTS.md`（**新建**，仓库根） | 随仓库分发的稳定指令：环境/命令/红线/代码地图/文档导航。**不放进度与密钥**。`CLAUDE.md`（新建）是指向它的一行指针 |
+| `docs/` **目录重组**（`git mv`，21 个文件移位） | `specs/api.md`；`plans/legacy/MINIMAL_REBUILD_PLAN(.md/-DECISIONS.md)`（自旧仓库逐字复制，正文冻结）；`authorizations/`×5；`evals/success5-*` + `evals/archive/`×9（r5-*/d1/d2a，冻结不改名）；`business/`×4。**文件名一律未改**（授权文件名出现在 403 错误文案与脚本提示里，改名风险>收益；命名规范只约束**新**文档，见 index.md「新文档纪律」） |
+| 引用同步（25 个文件） | `docs/` 内互引、README、PLAN、代码注释（`app/config.py`、`app/ocr.py`、`app/proposal.py`、`app/intent.py`、`app/routes_*.py`、`app/search.py`、`app/extract.py`、`scripts/*` ×7、`tests/test_intent.py`）全部改指新路径；`docs/business/demo-feedback-open-questions.md` 与 `docs/evals/success5-*` 的裸相对引用单独修正 |
+| `docs/index.md`（重写） | 按新目录树重排 + **状态列**（active/legacy/archived/completed）+ 归档件一行化 + 「新文档纪律」5 条 |
+| `README.md`（M） | 「当前状态/运行/仓库与远端」三段重写；文档引用改指仓库内新路径；写明旧系统已移出工作区归档 |
+| `docs/agent-handoff.md`（M） | 本文件 |
+| **仓库外** `标书文库\CLAUDE.md`（工作区根） | **瘦身为纯拓扑**（两版本+归档+三份历史设计文档的地位）；命令与红线**移交** `bid-ai-clean/AGENTS.md`，不再双份维护 |
+| **仓库外** 工作区根 `.pytest_cache/` | **已删除**（4 文件 / 15K，仅 pytest 缓存元数据） |
+| **仓库外** `标书文库-旧系统归档\README.md` | 已建（说明内容、旧 git 历史唯一副本警告、`.env` 含真 key 勿外发、恢复步骤） |
+
+⚠️ **旧目录搬运尚未完成**：`bid-ai/` 与 `bid-ai-r0-snapshot/` **仍在工作区**（被残留 `tail` 进程锁住，见 §8/§9 第 1 条）。
+
+已提交的代码/测试改动在 `deda794`（`git show --stat deda794`），**不在此重复**；实现细节见计划 §9/§11。
+
+## 5. Technical Decisions and Documentation Debt
+
+已落档的决策：三份+1 外发授权（§2）；意图识别「本地优先、判不出才外发」，判据是既有解析器能否解析成功（`docs/authorizations/llm-intent-authorization.md`）；三个业务口径已定（**不接合同台账** / **Xenium 单列** / **模块通用-特异不做人工清单、交 LLM 裁**）。
+
+**文档债（下一动作，均未做）**：
+1. `docs/specs/api.md` **未同步**新增响应字段：`/api/ask` 的 `recognition`、`/api/material-facts` 与 `/api/three-modules` 的 `files`/`file_count`；且 `POST /api/tender-check` 在 api.md 里**完全没有条目**（端点在线但功能暂停）。计划 §10 明确要求「`docs/specs/api.md` 同步」。
+2. 计划与一页纸里的测试数字**过时**：`§9/§10/§12` 与 `demo-feedback-open-questions.md` 写的是 **245/256 passed**，实测 **267**。
+3. ~~`docs/index.md` 的 Agent 指令指针悬空（本仓库无 `CLAUDE.md`/`AGENTS.md`）~~ → **已修**（2026-09-16：新建仓库根 `AGENTS.md` + `CLAUDE.md` 指针；工作区根 `CLAUDE.md` 瘦身为纯拓扑）。
+4. 仓库拓扑与凭据处理此前只存在于对话里 → 已写入 README、本文件 §12 与归档目录 `README.md`。
+
+## 6. Contracts and Constraints
+
+- **库**：活库（测试/演示）`bid_ai_clean_reg.db`；正式库 `bid_ai_clean.db` **禁写**（脚本硬拒，退出码 2）。
+- **端点 12 个**，分布在 5 个文件（`api.py` + `routes_{search,proposal,status,open}.py`）：`/`、`/api/{status, ask, material-search, material-facts, scheme-search, three-modules, modules, module-kb, proposal-generate, tender-check, open}`。`POST /api/open` 是**唯一**会在服务端机器上启动外部程序的端点（默认关闭）。
+- **`data/approved_documents.json`（136 份）= 合同定位的第一道闸**，在 **import 期**载入 `APPROVED_DOCUMENT_IDS` → **改它必须重启服务**才生效。白名单过滤必须在 `LIMIT` 之前。
+- **资格门槛顺序不得改**（`app/search.py`）：角色 → 非 `BLOCKED_STATUSES` → 非 `framework_sample` → `sha256==canonical` → `contracts.source_sha256/parser_version` 一致 → `product_amount_status` ok。
+- **需求二只保留模型生成**：`mode=local` → 400（`assemble_proposal` 实现与单测保留待命）。每次生成都外发正文，依赖网关可达 + `PROPOSAL_GEN_ENABLED=true`。
+- `.env` 关键开关（**不含任何密钥值**）：`PROPOSAL_GEN_ENABLED=true`、`INTENT_LLM_ENABLED=true`、模型 `qwen3.7-flash`、网关 `newapi.oebiotech.com`（**外部网关，会外发**）。
+- NAS 只读；派生物只写本地；上传文件不落库；新别名/新角色规则**须人工确认**后落库。
+
+## 7. Tests and Verification
 
 ```bash
 CONDA="C:\Users\hao.guo\AppData\Local\miniconda3\envs\langchain-dev\python.exe"
 export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
-"$CONDA" -m pytest tests -q              # 245 passed
+"$CONDA" -m pytest tests -q              # 267 passed（9s，无需 ES/key）——本文件写作时实测
 "$CONDA" scripts/eval_gold_recall.py     # Recall 92.3% / 误返 0
 "$CONDA" scripts/eval_success_precision.py
-"$CONDA" scripts/refresh_catalog.py --dry-run   # 增量登记预览（只读，不写）
-"$CONDA" scripts/refresh_catalog.py             # 增量登记真实写入（幂等；.bat 供计划任务）
-"$CONDA" scripts/refresh_ocr_whitelist.py --dry-run   # 白名单 OCR 预览（列出将外发的扫描件）
-"$CONDA" scripts/refresh_ocr_whitelist.py             # 白名单 OCR（**外发**，需授权；断点续跑）
-"$CONDA" scripts/refresh_index_whitelist.py --dry-run # 白名单索引预览（零外发）
-"$CONDA" scripts/refresh_index_whitelist.py           # 白名单索引写入 ES（零外发）
+"$CONDA" scripts/refresh_catalog.py --dry-run        # 增量登记预览（只读，零外发）
+"$CONDA" scripts/refresh_ocr_whitelist.py --dry-run  # 白名单 OCR 预览（真跑会外发，需授权）
+"$CONDA" scripts/refresh_index_whitelist.py --dry-run# 白名单索引（零外发）
+BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api   # → http://127.0.0.1:8000
 ```
-⚠️ **`refresh_ocr_whitelist.py` 会外发正文**（qwen 网关）—— 只能处理 `our_response`/`final_signed`
-扫描件；与 `ocr_batch.py` 共用 state 文件（幂等/续跑）。改任何"我方能发什么"的判定前先读
-`docs/ocr-authorization-response-docs.md`。
-⚠️ **另两个脚本是"白名单"而非"全量"**：`ocr_batch.py`（补到 N 份）与 `r5_index_bm25_only.py`
-（补到 N 份）会把存量一起带走 —— 只补本次新增时用 `refresh_*_whitelist.py`。
-⚠️ **PATH 上的 `python` 是 hermes venv（3.13），没有 pytest** —— 必须用上面那个 conda 解释器。
-⚠️ `eval_success_precision.py` 顶层 `from eval_gold_recall import QUERY_SPEC` 会连带执行整个评测；报告写入已加 `__main__` 守卫。
-⚠️ 服务启动：`BID_AI_CLEAN_DB=<库> "$CONDA" -m app.api` → `http://127.0.0.1:8000`。
-⚠️ **改完代码要重启服务**：端口 8000 上很可能还挂着**上一轮启动的旧进程**（实测 2026-09-14
-  有一次旧进程从 10:38 一直占着端口，新进程 bind 失败但 curl 照样返回 200 —— **旧代码的 200**，
-  差点据此下错结论）。重启前先 `netstat -ano | grep :8000` 看 PID 与启动时间。
-⚠️ **Windows 上 curl 传中文参数会被 GBK 编码**（服务端收到乱码 → `未知模块`）。
-  验接口用 Python 的 `urllib.parse.urlencode`，别用 `curl --data-urlencode`。
 
-## 7. Problems and Risks
+- **服务当前状态（实测）**：PID **26368**（`python -m app.api`），启动于 **10:05:26**，晚于最后一次代码改动（`static/app.js` 10:03:11）→ **页面上跑的是最新代码**。`GET /api/status` 返回 `contracts 165 / queryable 136`，即读的是 reg 库、白名单已载入。
+- ⚠️ **演示前重启并按 PID+启动时间确认**：历史上旧进程占着 8000 会让新进程 bind 失败，而 `curl` 照样返回 200（**旧代码的 200**）。
+- ⚠️ **PATH 上的 `python` 是别的 venv，没有 pytest** —— 必须用上面的 conda 解释器。
+- ⚠️ Windows 上 `curl` 传中文参数会被 GBK 编码 → 验接口用 Python `urllib.parse.urlencode`。
 
-### Confirmed problems（**已修**，只留教训）
-- **页签01「项目业绩」曾整块打不开**：`static/app.js` 写成 Python 的 `str.rsplit` → `TypeError` 抛在 `map` 里 → 98 条合同全渲染不出。已修 + 加护栏测试。**这是评审 P0。**
-- **材料卡片曾把 `[our_response]` 当「对应文字」上屏**（2,286/2,373 条）→ 加 `_annotate_fact_role()` 剥枚举前缀；剥后**只剩文件名**则不作为证据。
-- **`/api/material-facts` 曾无角色分层**：「哪些响应文件包含2025年的社保」460 条里只有 205 来自我方响应、**68 条其实是采购人磋商文件**，却写「找到 460 份」。已加 `role_scope`。
-- **页签02 曾静默丢掉未识别的小节**（`必须包含质控要求` 无任何提示，接口 200）→ 加 `unrecognized_requirements()` 告警。
+## 8. Problems and Risks
+
+### Confirmed problems（已知、未修，均已记录）
+- **旧版本搬运被残留进程阻塞（2026-09-16，待执行一条命令）**：`tail -f bid-ai\tmp\pilot30_run.log`
+  （实测 PID 30880，早前会话追日志留下的常驻进程）持有 `bid-ai\tmp\` 内文件的句柄 →
+  Windows **拒绝重命名/移动整个旧目录**。逐目录诊断已证明锁**只在 `tmp/`**（`app/`、`tests/`、`scripts/` 等都能改名）。
+  结束该进程后一次 `Move-Item` 即可完成（见 §9 第 1 条）。
+- **OCR 混扫召回污染**：几份扫描 PDF 把合同正本/财务报表与响应文件扫进同一文件，新增 930 条章节里 **159 条**能命中方案关键词、其中 **51 条**标题含合同/财会噪声（如「售后租回」误命中「售后」）。**是数据源特性而非抽取 bug**；治本要「OCR 后按页归属拆分」，**独立课题**。
+- **`华大` 查不到是数据事实**：该词在本语料里既不是甲乙方也不是产品文本（各 0 条）。「平台名当产品」（如 `华大Stereo-seq`）不在已完成范围。
+- **泛问「找仪器」仍映射到 `instrument`（存期间）**：有意不改，有既有测试钉住。
+- **草稿渲染样式与真实产物不匹配**：`draft-para`/`cite-ref`/`draft-cite` 全为 0 —— 那三类样式是照已下线的 local 格式写的；真实模型产物是散文 + 行内 `[En]`。**不影响可用**，未修。
 
 ### Unverified risks / assumptions
-- **方案草稿质量未经业务人工评审**；需求方试读反馈未回收。**且评审包现为 llm 产物**（local 下线后）——
-  评审的实质是评「模型起草这条路的值不值得用」，衡量标准不变（§7 六项）。
-- **需求二只保留模型生成 → 每次生成都外发真实正文**：这是用户 2026-09-14 的明确指令，但意味着
-  「零外发也能出草稿」这条旧能力被关掉了 —— 以后每次生成都依赖网关可达 + 授权开关。
-  若网关抖动，页签 02 会直接 502；**回退**：`assemble_proposal` 实现仍在，API 加回 local 分支即可。
-- **~~`app/api.py` 1,085 行承载 8 个关注点，无 APIRouter 拆分~~ → 已拆（2026-09-14）**：
-  `app/api.py`（组装 + 共享辅助，621 行）＋ `app/routes_search.py`（需求一检索，468 行）＋
-  `app/routes_proposal.py`（需求二生成，228 行）＋ `app/routes_status.py`（健康状态，34 行）。
-  ⚠️ **路由文件两步坑，别重犯**：① `python -m app.api` 下 `from app.api import ...` 会**重复加载**
-  api.py 造成循环导入 —— api.py 顶部已加 `sys.modules.setdefault("app.api", sys.modules[__name__])`
-  自注册修复；② 路由文件顶部 `from app.api import 共享辅助` 时全局 `__globals__` 指向 app.api，
-  monkeypatch（`app.api.DEMO_DB` 等）**仍然生效** —— 这是有意为之，别把辅助函数搬去路由文件。
+- **方案质量未经业务人工评审**、需求方试读反馈未回收 —— 下一步的实质风险都在这里。
+- **令牌卫生**：GitLab 访问令牌以明文存在 `.git/config`（跟踪文件中 0 处、从未推送），且已在 2026-09-16 的对话里明文出现过 → **建议吊销重建**。
+- 「改私有」**撤不回**早先公开过的内容（旧库曾含 4 个文件合同号、8 个文件医院名、1 个 `Z:\` 路径）。
 
-### 尚未修（B2B 评审 P2，见 §8.2）
-- ~~页签02 **无模块选择入口**~~ → **已修**（新增 `GET /api/modules` + `#proposal-picker`；
-  各模块**逐个实测可生成** → 全部 `200`、`status=ok`、各 5 条证据、`gaps=0`。
-  注：该轮实测覆盖的是**当时的 9 个模块**；其中「对项目的理解与需求分析」已于同日按用户裁定摘除（§4.17），
-  现为 8 个，复测 **8/8 = 100%**）。
-- ~~**同一屏数字自相矛盾**~~ → **已修**（§4.15，`app/api.py` + `tests/test_module_counts.py`）。
-- `requirements.txt` **已按实测环境钉版本**（12 个包；顺带补上原先漏登的 `rapidocr`/`onnxruntime`）。
-  ⚠️ 以后加依赖**同时**钉版本 —— 不钉时「昨天 200 passed」不可复现。
-- ~~`tmp_probe/`（他人建的 API 探测助手，内含 `get.py`）不在 `.gitignore` 覆盖范围~~ → **已修**
-  （2026-09-14 加 `tmp_probe/` 进 `.gitignore`，`git check-ignore` 已生效、`git status` 0 命中）。
-  ⚠️ 更正：旧版这里还写了 `_render_probe.js` —— 那个在 `tmp/` 下，**已被挡住**（实测确认），别误删护栏。
-- ~~B2B 评审那一轮未记入 §10~~ → **已补记**（本轮把「前端 P0 `rsplit` + 护栏测试 + 195 passed」那一行
-  补进 `../bid-ai/MINIMAL_REBUILD_PLAN.md` §10；旧版说「B2B 零命中」是**错判**，§10 早有 B2B 行）。
+## 9. Next Actions
 
-### 待清理候选（**需用户确认后再动，别擅自删**）
-- ~~`app/r5_evidence.py` 是死模块~~ → **已删除**（2026-09-14 用户确认；187 行。删前复核：全仓无静态/动态
-  导入，只有 `app/proposal.py` 两处**注释**与 `tests/test_proposal.py` 一处 docstring 提到它 —— 已改写为
-  "判据自 R5 阶段沿用"，不再指向已不存在的模块。**它里面的 `SOURCE_ROOTS` 是文件根路径的又一份拷贝。**）
-- **根路径 `DEFAULT_ROOTS`/`SOURCE_ROOTS` 仍有 3 份拷贝**：`app/search.py:27`（**活的那份**）、
-  `scripts/r5_batch_parse.py:34`、`scripts/r5_parse_more.py:29`（后两者是一次性脚本）。
-  ⚠️ **新代码一律 `from app.search import DEFAULT_ROOTS`**（`app/routes_open.py` 就是这么做的）。
-  合并这两处价值有限（一次性脚本），但**新增拷贝是真隐患**。
+1. **结束残留 `tail` 进程 → 完成旧版本搬运**（2026-09-16 实测：它锁着 `bid-ai\tmp\`，导致整个旧目录无法改名/移动；`app/` 等其余目录已验证可移动）：
+   ```powershell
+   taskkill /PID 30880 /F      # tail -f bid-ai\tmp\pilot30_run.log（早前会话追日志留下的常驻进程）
+   Move-Item 'C:\Users\hao.guo\Desktop\标书文库\bid-ai' 'C:\Users\hao.guo\Desktop\标书文库-旧系统归档\bid-ai'
+   Move-Item 'C:\Users\hao.guo\Desktop\标书文库\bid-ai-r0-snapshot' 'C:\Users\hao.guo\Desktop\标书文库-旧系统归档\bid-ai-r0-snapshot'
+   ```
+   归档目录 `桌面\标书文库-旧系统归档\` 与其 `README.md`（含「旧 git 历史只剩这一份」「`.env` 含真 key 勿外发」「怎么移回」）**已就绪**。
+2. **推送 docs 重组提交到两个远端**（本地提交已完成，见 `git log -1`；纯文档 + 代码注释路径，无敏感文件）：
+   ```bash
+   cd "C:/Users/hao.guo/Desktop/标书文库/bid-ai-clean"
+   git push origin main && git push github main
+   ```
+3. **同步 `docs/specs/api.md`**：补 `/api/ask` 的 `recognition`、`/api/material-facts`+`/api/three-modules` 的 `files`/`file_count`，并为 `POST /api/tender-check` 加一条「已实现但**功能暂停，接入方勿依赖**」的条目（计划 §10 的未完成项）。
+4. **统一测试数字**：把 `docs/plans/active/PLAN-20260915-demo-feedback-issues.md` §9/§10/§12 与 `docs/business/demo-feedback-open-questions.md` 里的 `245/256 passed` 改成实测 **267**，并把两处「遗留」（`华大` 平台名语义、泛问「找仪器」）写成终态。
+5. **演示前重启服务并复核**：`netstat -ano | grep :8000` 记下 PID → 结束旧进程 → `BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db" "$CONDA" -m app.api` → `GET /api/status` 应返回 `queryable_contracts=136`。
+6. **把 `docs/business/demo-feedback-open-questions.md` 带给需求方复核**五条修复（**必须由用户/业务发起**）。
+7. **等用户点头再动**：`refresh_catalog.bat` 挂计划任务（需定时间与运行账号）；GitLab 令牌轮换；删掉已无独立价值的 `feat/info-architecture-rework` 分支；方案质量业务评审；OCR 按页归属拆分。
 
-## 8. Next Actions
+## 10. Do Not Repeat / Do Not Change
 
-### 8.1 立即可做（不需授权、按优先级）
-1. ~~跑 §6 三条命令确认基线未回退~~ → **已完成**（195 → 200 passed，Recall/误返/Success@5 未回退）。
-2. ~~统一「条数 vs 文件数」口径~~ → **已完成**（§4.15，实测 95/1564/722 同源，+4 条护栏）。
-3. ~~给页签02 补方案模块入口~~ → **已完成**（`GET /api/modules` + `#proposal-picker`，
-   点一下填进输入框、不覆盖已有内容、不重复堆；各模块逐个实测可生成。同日按用户裁定
-   只保留"方案"类 → 摘掉「对项目的理解与需求分析」，现 8 个模块、覆盖率 8/8，见 §4.17）。
-4. ~~`requirements.txt` 除 `elasticsearch==8.19.3` 外也钉版本~~ → **已完成**（12 个包全部按
-   实测跑通的环境钉死，`pip check` 无破损；**顺带补上原先漏登的 `rapidocr`/`onnxruntime`**
-   —— `app/ocr.py` 实际 import 的就是 rapidocr，照旧清单装是跑不了本地 OCR 的）。
+- **不重开**：接公司合同台账（2026-09-15 用户裁定不接，改为补齐语料内覆盖）；把 `Xenium` 并入空间转录组；做人工的模块通用/特异清单；确定性规则替代 LLM 材料分类；收款凭证的两条补充通道。
+- **不改**：正式库；资格门槛**顺序**；合同金额口径（产品金额 = 同产品 detail 行 `line_amount` 之和，`contracts.total_amount` **不得**替代）；合同级产品排除语义；`_FORMAT_RANK` 的 `mixed` 权重位。
+- **不删**：ES `bid_chunks_v2`；`tests/test_contract_items.py::test_amount_unknown_stays_unknown_not_zero`（口径已改写，不是删）。
+- **敏感/忽略**：`.env`（真实 key）、`bid_ai_clean_reg.bak-*.db`（**26 个写前备份 / 441MB**）、`*.db`、`tmp/`、`tmp_probe/`、`outputs/`（**真实投标正文**）、`data/*.bak-*.json`、`*.log`。**别把整个项目目录打包外发**（会带上 `.git/config` 里的令牌）。
+- **仍适用的坑**（旧版 23 条教训的浓缩；全文见 `git show HEAD:docs/agent-handoff.md`）：
+  ① 「有多少」的数字必须**同源**（唯一常量/函数，白名单过滤在 LIMIT 之前）；
+  ② 前端不得出现 Python 专有方法（`node --check` 抓不到，靠 `tests/test_frontend_syntax.py`）；
+  ③ `str.endswith(多字节串)` ≠ 末尾任一分隔符，须逐字判；半角 `+` 勿打成全角 `＋`；
+  ④ 改 `app/extract.py` 前先查模块级常量重名（已撞过一次 `_SIGN_LINE`）；
+  ⑤ **重算类脚本必须用与生产路径相同的输入**（曾用空文本重算，抹掉 3 个合同总额）；
+  ⑥ **报结论前先验口径**（R1-1 初判错误：只在可检索白名单内取证 → 误判「库里有/没有」）；
+  ⑦ 增量脚本一律**只登记不删**，正式库硬拒；`refresh_*_whitelist.py` 是白名单驱动，别用 `ocr_batch.py`/`r5_index_bm25_only.py` 的「补到 N 份」模式补新增。
 
-5. ~~在 `../bid-ai/MINIMAL_REBUILD_PLAN.md` §10 补记 B2B 评审那一轮~~ → **已完成**（补的是
-   **前端 P0 `rsplit` 修复 + `tests/test_frontend_syntax.py` + 195 passed** 那一行 —— §10 里
-   B2B 行本来就有，缺的是这一行；本轮的口径修复也已单独入表）。
+## 11. Minimum Recovery Context
 
-**§8.1 至此全部完成**（含 `tmp_probe/` 已纳入 `.gitignore`，见 §7）。
+1. 本文件 + `docs/index.md` + 仓库根 `AGENTS.md`（命令与红线；工作区拓扑见 `../CLAUDE.md`）
+2. `docs/plans/active/PLAN-20260915-demo-feedback-issues.md`（§6 需求、§8 口径、§9/§11 实现与验证、§12 状态）
+3. 最后活跃的实现：`app/api.py`、`app/routes_search.py`、`app/intent.py`、`app/proposal.py`、`app/extract.py`
+4. `docs/specs/api.md`（契约）、`docs/authorizations/llm-intent-authorization.md`（外发边界）
+5. 两个常驻检查：`scripts/eval_gold_recall.py`、`scripts/eval_success_precision.py`
 
-### 8.2 已评估、暂不动
-- ~~`app/api.py` 拆 APIRouter~~ → **已完成**（2026-09-14：`api.py` 621 行 + `routes_search/proposal/status` 三个路由文件，见 §7）。
-- 「结果出不去系统」（无服务端导出/邮件/webhook）—— **评审提过，但属臆造需求**（本项目只声明两个需求）。
+## 12. Git State
 
-### 8.3 已定，勿再问
-- **招标要求核对功能：用户 2026-09-14 明确暂停开发**。
-- **OCR 阶段 2–4：维持不续跑**（内存阻塞未解除，用户自己的 java/WorkBuddy 占用 80%；阶段 1 已完成 346 份）。
+- **分支**：本轮提交在 **`main`**（此前工作分支 `feat/info-architecture-rework` 停在 `deda794`，已无独立价值，可删可留）。
+- **上一发布点**：`deda794`（`feat: 需求方试用反馈五条整改 + 查询意图识别层`，2026-09-16 10:15:15）= tag `v1.0.0`，两远端一致；其后是本轮 **docs 重组提交**（`AGENTS.md` 新建 + docs/ 类型分目录 + 引用同步 + README/index/handoff 更新，见 `git log -1`）。
+- **提交数 11**；根提交 `cc28082`（R1 骨架）。
+- **tag**：`v1.0.0`（→`deda794`）、`minimal-rebuild-r1-20260907`。
+- `git status --short`：**0 行**（本轮改动已全部入提交；**尚未推送**，见 §9 第 2 条）。
+- **工作区根（`标书文库\`，不在任何 git 仓库内）**：`CLAUDE.md`（已改写为新系统）、三份设计文档 + `任务分析.docx`、
+  `.claude/`，加上**待搬走的** `bid-ai/`、`bid-ai-r0-snapshot/`；根残留 `.pytest_cache/` 已删。
+- **远端**（`git ls-remote` 与本地逐字节一致）：
 
-## 9. Do Not Repeat / Do Not Change
+| 远端 | 地址 | 角色 |
+|---|---|---|
+| `origin` | `gitlab.oebiotech.com/ai-project/bid-ai` | 公司内网主库；**HTTPS + 访问令牌**已配在 `.git/config`（明文）→ `git push` 免交互 |
+| `github` | `github.com/SuperGh2233/bid-knowledge` | 个人库，**2026-09-16 已设为私有**；默认分支 `main` |
+| `C:\Users\hao.guo\Desktop\标书文库-旧系统归档\bid-ai\`（**另一个本地仓库，已移出工作区**）| 旧 GitHub 远端（历史） | **旧系统 R0 基线 + 全部 12 个提交的 git 历史**；其 GitHub 远端已被新代码**强制覆盖**，旧历史**只在此归档内**；同目录另有 R0 数据快照 `bid-ai-r0-snapshot\`（非 git，166M）|
 
-- **不重开**：确定性规则替代 LLM 材料分类；收款凭证的两条补充通道；拿 OCR 凑覆盖率。
-- **不改**：正式库 `bid_ai_clean.db`；`app/search.py` 资格门槛**顺序**；**合同级产品排除**语义（改行级会让 G05 的多组学合同误返）；`_FORMAT_RANK` 的 `mixed` 权重位（全库目前为 0，删了将来会当未知）。
-- **不删**：ES `bid_chunks_v2`；`tests/test_contract_items.py::test_amount_unknown_stays_unknown_not_zero`（已改写口径，不是删掉）。
-- ⚠️ **三条曾被写成本文件里的「已实测结论」、后来被推翻的**（**别照抄旧版**）：
-  1. ~~「本地零外发扩容已挖尽」~~ → **错**。根因是解析驱动脚本写死角色 + 只认 `pending`；修好后 +631、再 +828 份。
-  2. ~~「必要小节覆盖率 8/9 是语料限制，别为凑覆盖率放宽判据」~~ → **错**。是 `MODULE_KEYWORDS` 词形太窄（真风险小节写「风险**管理**/风险**点**/风险**预案**/突发风险」）；**这是修关键词覆盖面，不是放宽 `ok` 判据**（仍要求 ≥3 条标题命中）。修后 **9/9**。
-  3. ~~「社保/财务条目是『起始期间』语义，按月查返回 0」~~ → **过时**。主体是具体年月（社保 70.2%、财务 75.9%）。
-- **改 `app/extract.py` 前先查模块级常量重名**（已撞过一次 `_SIGN_LINE`）。
-- ⚠️ **我犯过的错，别重犯**：① 先给结论、后补验证（多次，含指标预测被实测推翻）；② 测量工具本身有错（未施加产品排除 → 误报「误返 2」，实际 0）；③ 把「解析器丢了文档明写信息」误归因为「OCR 质量」（实为 4 个解析 bug）；④ 在 JS 里写 Python 方法。
-  **归因之前先看原文；报数字之前先验口径。**
+- ⚠️ **两个仓库历史互不相关**（根提交是 `cc28082`）→ 往旧库推新代码**必须 `--force`**（已按用户指示执行过）。
+- ⚠️ 旧系统的 tag `v1.0.0`（`6590fc2`）**未推任何远端**（随归档留在 `标书文库-旧系统归档/bid-ai/`）；
+  其两份权威计划文档已于 2026-09-16 复制进本仓库 `docs/`（见 §2）。
+- ⚠️ 行尾：`core.autocrlf` 提交时把 CRLF 归一为 LF（提交时大量 warning，属正常）。
 
-## 10. Minimum Recovery Context
+## 13. Recovery Command
 
-1. 本文件
-2. `../bid-ai/MINIMAL_REBUILD_PLAN.md` —— §2（需求定义 + 金额口径修订）、§10、§11A
-3. `app/api.py`、`app/search.py`、`app/proposal.py`（三个最后活跃实现）
-4. `scripts/eval_gold_recall.py`、`scripts/eval_success_precision.py`（两个常驻检查）
-5. `docs/llm-generation-authorization.md`（外发范围）、`docs/api.md`（接口契约）
-
-## 11. Git State
-
-- **分支 `feat/info-architecture-rework`，HEAD `3b52af9`**（2026-09-14 用户指示「把他们纳入一次提交」）。
-  这是**本项目的第一个正式回滚点**：106 个文件 / +28,912 行，含 `app/`、`static/`、`tests/`、
-  `scripts/`、`docs/`、`data/`。**`main` 仍停在 `cc28082`（R1 骨架）**，未动。
-  ⚠️ **在此之前 `static/` 与 `tests/` 从未进过 Git**（不是被忽略，是没 `add` 过）——
-  所以那之前"用 `git checkout` 回滚前端"是**空话**（对未跟踪文件无效）。现已解决。
-- **提交前做过密钥扫描**（`sk-*` / `api_key=` / `Bearer` / `password=`）—— 干净；`data/` 只有
-  文件白名单与评测产物（无敏感内容）。
-- `git status --short`：**0 行**（工作区干净）。
-- **禁提交 / 保持忽略**：`.env`（**含真实 key**）、`bid_ai_clean_reg*.bak*.db`（26 个写前备份，441MB）、
-  `*.db`、`tmp/`、`outputs/`、`tmp_probe/`、`data/ocr_batch_state.json`、`*.log`。
-  ⚠️ `outputs/` **必须保持忽略** —— `r7-*/prompt.md` 与评审样本是**真实投标正文**。
-  ⚠️ **`.gitignore` 不支持行尾注释**（注释必须独立成行，否则规则静默失效——已踩过）。
-  ⚠️ 行尾：本机 `core.autocrlf` 会在提交时把 CRLF 归一为 LF（提交时有大量 warning，属正常）。
-- 数据库备份**已按用户确认瘦身**：50 个 → **26 个**（保留被脚本具名读取的 + 最近回滚点）。
-- **回滚方式**：`git checkout -- <path>` / `git revert 3b52af9` / `git checkout main` 回到骨架。
-  另有文件级快照 `tmp/pre-p0-20260914/`（P0 改动前），**仅作双保险、不是主回滚手段**。
-
-## 12. Recovery Command
-
-> **当前状态**：需求一/二**全部退出门槛已达标**（§1 表）；B2B 四维评审 P0/P1/P2 已全部处理；
-> **需求二只保留模型生成**（2026-09-14 用户指令，local 已下线）；招标核对功能**已由用户暂停**。
-> **没有任何正在进行的任务。**
+> **当前状态**：需求一/二退出门槛**全部达标**；需求方 5 条反馈**六轮整改全部完成并验证**；仓库已发布到两个远端；
+> **没有任何正在进行的任务**，下一步都是决策或文档同步，不是 bug 修复。
 >
-> **下一步需用户指定**，候选（都不是 bug，是决策）：
-> ① **方案质量的业务人工评审**（corresponding §7 一直挂着；评审包已改 llm 产出，`--dry-run` 确认后取样）；
-> ② 需求方试读反馈的回收与消化；
-> ③ `app/api.py` 拆 APIRouter（结构改动，值得单独一轮）；
-> ④ `tmp_probe/` 纳入 `.gitignore`（提交前的杂事，5 分钟）。
->
-> 动手前：① 跑 §6 三条命令确认基线未回退（当前应为 **200 passed** / Recall **92.3%** / 误返 **0**）；
-> ② 读 §9 的三条「曾被推翻的旧结论」，**不要照抄旧版交接文档的判断**；
-> ③ 改完接口**重启 8000 端口**（旧进程残留会让你验证到旧代码，§6 有实测教训）。
+> 动手前：① 读 §5 的文档债与 §9 的动作清单；② 跑 §7 第一条确认基线（应为 **267 passed**）；
+> ③ 改完代码**重启 8000 端口**再验（旧进程会让你验证到旧代码）。
+
+`Invoke $resume-work in this repository, verify docs/index.md, the linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`

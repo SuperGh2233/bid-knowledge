@@ -134,7 +134,7 @@ def ask(q: str = ""):
     # 原实现用**手写词表** `_ASK_FACT_KW` / `_ASK_SCHEME_KW` 判"该查哪一类"，
     # 三份表（路由/拦截/检索）互不知道对方 → `测序仪` 能过而 `质谱仪` 掉洞里。
     # 现统一交给 `app/intent.py`：开关开→LLM（外发**只发这一句查询**，授权见
-    # `docs/llm-intent-authorization.md`）；关/失败→**本地确定性识别**（行为与本改动前一致）。
+    # `docs/authorizations/llm-intent-authorization.md`）；关/失败→**本地确定性识别**（行为与本改动前一致）。
     # 无论走哪条，都把识别结果原样回显（`recognition`）—— 用户能看到"系统理解成了什么"。
     intent = recognize_intent(text)
     # `source` 如实回显走了哪条路（`local` 本地判定 / `llm` 模型兜底 / `local_fallback` 外发失败回落），
@@ -181,7 +181,7 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
     """场景2/3：查询某份响应文件是否包含某类材料（财务社保月份／仪器／资质／发票…）。
 
     数据来自 `material_facts`（由「文字清单 + LLM 语义分类」产出，见
-    docs/material-facts-feasibility.md 与 docs/llm-classification-authorization.md）。
+    docs/business/material-facts-feasibility.md 与 docs/authorizations/llm-classification-authorization.md）。
 
     两种用法：
       - `?q=找含2025年12月社保的资料`  —— 自然问句，内部粗映射（**推荐**）

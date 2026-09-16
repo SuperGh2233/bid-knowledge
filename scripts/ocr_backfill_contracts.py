@@ -3,7 +3,7 @@
 只处理 `scripts/backfill_missing_contracts.py` 判定为「缺口合同、且**无正文**」的文档 ——
 不碰 `ocr_batch.py` 的全量候选（那有 1331 份 `contract_evidence`，远超本次范围）。
 
-授权依据：`docs/ocr-authorization.md` —— `contract_evidence` 扫描件 OCR 外发**已有书面授权**。
+授权依据：`docs/authorizations/ocr-authorization.md` —— `contract_evidence` 扫描件 OCR 外发**已有书面授权**。
 安全：NAS 只读；只写测试库；与 `ocr_batch.py` 共用 state 文件语义（幂等、可续跑）。
 
 用法（**外发**，需 `!` 前缀由用户执行）：

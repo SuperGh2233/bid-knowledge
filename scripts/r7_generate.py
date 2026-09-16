@@ -4,7 +4,7 @@
   零外发、**不需要任何授权**。把 Evidence Pack 里的原文按小节组织成方案草稿，
   **每句话都是原文 + 引用编号**，「只用我方响应 / 可逐句溯源 / 不补造」**由构造保证**。
 - **`--send` → 走模型生成**（外发，需 `PROPOSAL_GEN_ENABLED=true` + 授权记录
-  `docs/llm-generation-authorization.md`）。落盘的 `prompt.md` 就是待审阅的逐字内容。
+  `docs/authorizations/llm-generation-authorization.md`）。落盘的 `prompt.md` 就是待审阅的逐字内容。
 
 两条路的产物用 `mode` 字段区分（`local_extractive` / 模型），**永不混淆**。
 

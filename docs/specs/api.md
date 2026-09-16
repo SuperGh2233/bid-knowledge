@@ -254,7 +254,7 @@ GET /api/module-kb?modules=售后方案,应急预案      # 指定模块
   那是**语料限制**（已实测记载），成文时必须以证据包为准，**不得凭"经验"补写**。
 - ⚠️ **零外发**：整理全程本地（ES 召回 + 确定性归纳），不调用任何模型。
   只有点「模型起草」时，这段归纳才会随提示词外发（授权记录见
-  `docs/llm-generation-authorization.md` §8）。
+  `docs/authorizations/llm-generation-authorization.md` §8）。
 - ⚠️ 提示词里的归纳段**显式禁止被引用**（`kb_to_prompt_block` 段首写明）——
   否则模型会把归纳句当原文引用，破坏可追溯性。
 
@@ -269,7 +269,7 @@ GET /api/module-kb?modules=售后方案,应急预案      # 指定模块
 |---|---|
 | 生成 | 模型起草：证据包 + 模块化经验 → 模型成文 |
 | 外发 | **会把我方响应正文发往公司网关**（qwen3.7-flash） |
-| 授权 | 需 `PROPOSAL_GEN_ENABLED=true`（`docs/llm-generation-authorization.md` §9 已有记录） |
+| 授权 | 需 `PROPOSAL_GEN_ENABLED=true`（`docs/authorizations/llm-generation-authorization.md` §9 已有记录） |
 
 **请求**
 ```json

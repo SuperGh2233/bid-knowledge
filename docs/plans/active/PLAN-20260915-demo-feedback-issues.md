@@ -46,7 +46,7 @@
 
 ## 4. Non-goals
 
-- 不改数据源范围与三份外发授权边界（`docs/ocr-authorization*.md`、`docs/llm-generation-authorization.md`）。
+- 不改数据源范围与三份外发授权边界（`docs/authorizations/ocr-authorization*.md`、`docs/authorizations/llm-generation-authorization.md`）。
 - 不引入 embedding / kNN（仍是 BM25-only，避免正文外发）。
 - **不做全库重解析**（除非 R1-2 的修复必须回填历史事实 —— 届时单独评估授权与代价）。
 - 不重做 UI 架构；不新增第三条主链路。
@@ -148,7 +148,7 @@ extract_required_sections("单细胞转录组，应急管理措施") → ['应�
   （无合同号、有甲方与金额，来自 4 份文档）—— 属另一条抽取路径，与合同原件不同源。
 
   **结论**：补齐路径 = **解析这 39–43 份合同原件 → 提取合同头/金额 → 进 `contracts`**。
-  ⚠️ 合同扫描件 OCR **已在既有授权内**（`docs/ocr-authorization.md`，`contract_evidence` 角色）。
+  ⚠️ 合同扫描件 OCR **已在既有授权内**（`docs/authorizations/ocr-authorization.md`，`contract_evidence` 角色）。
   ⚠️ 与"接入台账"是两件事：本项**不外扩数据源**，只在既有语料内提高覆盖率。
 
   **✅ 工作量估算（2026-09-15 实测）**：待补的**合同主文档 49 份 / 70 MB**（已剔逐页图），其中
@@ -283,7 +283,7 @@ extract_required_sections("单细胞转录组，应急管理措施") → ['应�
 | `material_facts`（`social_security_month`/`finance_period`） | 抽取规则收紧（不改表结构） | 需评估是否回填历史脏值 |
 | 新数据文件：仪器通称字典 | 新增（如 `app/instrument_aliases.json`） | 须人工确认后落库（沿用产品别名同样规则） |
 | `_UNSUPPORTED_CONDITIONS`（`app/api.py`） | 放宽 `供应商` 类；新增解析分支 | 需回归"拒绝"用例不被静默放行 |
-| `docs/api.md` | 同步 `product` 入参与新错误语义 | 契约文档须与实现同批更新 |
+| `docs/specs/api.md` | 同步 `product` 入参与新错误语义 | 契约文档须与实现同批更新 |
 
 ---
 
@@ -407,7 +407,7 @@ extract_required_sections("单细胞转录组，应急管理措施") → ['应�
 - **R1-4.a**：`华大转录组30万以上` 返回按 乙方=华大 ∧ 转录组 ∧ ≥30万 过滤的结果（或明确说明为何无结果）。
 - **R2-1.c**：`单细胞转录组，应急管理措施` 生成的草稿**不含** RNA/DNA 项目异常处理条目。
 - **R1-3.b**：`找有质谱仪的合同` 返回含 `Bruker timsTOF HT` 等型号命中的合同。
-- **全局**：`pytest tests -q` 不回退（当前基线 **245 passed**）；`docs/api.md` 同步。
+- **全局**：`pytest tests -q` 不回退（当前基线 **245 passed**）；`docs/specs/api.md` 同步。
 
 ---
 

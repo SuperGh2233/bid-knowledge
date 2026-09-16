@@ -41,7 +41,7 @@ OCR_ENABLED = os.environ.get("OCR_ENABLED", "false").lower() == "true"  # 默认
 PARSE_NATIVE_FIRST = os.environ.get("PARSE_NATIVE_FIRST", "true").lower() == "true"
 DERIVED_PAGE_IMAGE_SKIP = os.environ.get("DERIVED_PAGE_IMAGE_SKIP", "true").lower() == "true"
 
-# OCR（**外发，须单独授权**；授权记录见 docs/ocr-authorization.md）
+# OCR（**外发，须单独授权**；授权记录见 docs/authorizations/ocr-authorization.md）
 # 主通道 qwen（与 LLM 同网关），兜底 MinerU（公网）。默认关闭，未授权不得启用。
 OCR_BASE_URL = os.environ.get("OCR_BASE_URL", "")
 OCR_API_KEY = os.environ.get("OCR_API_KEY", "")
@@ -58,12 +58,12 @@ MINERU_API_TOKEN = os.environ.get("MINERU_API_TOKEN", "")
 
 # 方案生成（**外发，须单独授权**）：把证据包正文交给生成模型。
 # 默认关闭 —— 未开启时任何生成入口直接抛错，不"未授权却默默外发"（同 OCR 的做法）。
-# 注意：现有两份授权记录**均不覆盖方案章节正文**（docs/llm-classification-authorization.md
+# 注意：现有两份授权记录**均不覆盖方案章节正文**（docs/authorizations/llm-classification-authorization.md
 # 只授权候选行短文本）。启用前须另立授权记录。本地机械件（召回/聚类/证据包）不需要它。
 PROPOSAL_GEN_ENABLED = os.environ.get("PROPOSAL_GEN_ENABLED", "false").lower() == "true"
 PROPOSAL_GEN_TIMEOUT = int(os.environ.get("PROPOSAL_GEN_TIMEOUT", "300"))
 # LLM **查询意图识别**（2026-09-16 用户选择「调 LLM 做意图识别」）。
-# 授权记录：`docs/llm-intent-authorization.md`（只发**用户那一句查询**，不含任何文档正文）。
+# 授权记录：`docs/authorizations/llm-intent-authorization.md`（只发**用户那一句查询**，不含任何文档正文）。
 # **默认 false** —— 关闭时走本地确定性识别，与改前行为一致，且不会有任何外发。
 INTENT_LLM_ENABLED = os.environ.get("INTENT_LLM_ENABLED", "false").lower() == "true"
 INTENT_LLM_TIMEOUT = int(os.environ.get("INTENT_LLM_TIMEOUT", "20"))

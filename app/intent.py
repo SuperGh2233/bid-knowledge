@@ -14,7 +14,7 @@
 ## 两条路径
 
 - `recognize_intent_llm()` —— 调公司网关识别（**外发**：只发用户那一句查询，
-  授权记录 `docs/llm-intent-authorization.md`）。**默认关闭**。
+  授权记录 `docs/authorizations/llm-intent-authorization.md`）。**默认关闭**。
 - `recognize_intent()` —— 入口：开关开→LLM，关/失败→**本地确定性识别**（离线路径），
   返回里的 `source` 如实标注走了哪条（`llm` / `local` / `local_fallback`）。
 

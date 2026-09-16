@@ -1,12 +1,12 @@
 # 方案质量业务人工评审指引
 
-> 2026-09-14 建立，对应 `docs/llm-generation-authorization.md §7 未决`——
+> 2026-09-14 建立，对应 `docs/authorizations/llm-generation-authorization.md §7 未决`——
 > 方案草稿**从未经过业务人工评审**。本包把评审前置做掉：已按一组**覆盖能力面**的查询生成好草稿，
 > 你需要做的只有**读、判、填**，预计 30–40 分钟。
 >
 > **2026-09-14 修订**：需求二只保留**模型生成**（用户指令）—— 本地拼装已从 `/api/proposal-generate`
 > 下线。因此评审样本**全部是模型起草产物**（`qwen3.7-flash`），生成时正文**外发过**公司网关
-> （授权记录 `docs/llm-generation-authorization.md §9`）。旧版「六大零外发样本 + llm 单独授权」
+> （授权记录 `docs/authorizations/llm-generation-authorization.md §9`）。旧版「六大零外发样本 + llm 单独授权」
 > 的写法已不适用，样本会重新生成。
 
 ## 为什么评
@@ -97,7 +97,7 @@
 ## 外发说明（2026-09-14 修订后）
 
 **所有评审样本都是模型起草产物，生成时正文外发过公司网关**（qwen3.7-flash，授权记录
-`docs/llm-generation-authorization.md` §9：用户已配置网关并开过真实生成）。提交评审包的参考动作：
+`docs/authorizations/llm-generation-authorization.md` §9：用户已配置网关并开过真实生成）。提交评审包的参考动作：
 `scripts/make_quality_review_samples.py --dry-run` 先打印将外发的清单，确认后去掉 `--dry-run` 运行。
 若有疑问（比如想对比零外发版本的原文）找工程侧另行讨论 —— 本地拼装已下线，但 `app/proposal.py::assemble_proposal`
 实现仍在，不排除恢复。

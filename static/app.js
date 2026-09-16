@@ -367,7 +367,7 @@ function renderContractAnswer(data, target) {
   bindOpenButtons(target);
   bindConditionTags(target, p);
   // ⚠️ 导出**只含命中**：让"条上的数字 = 复制全部的个数 = CSV 行数"三者同源。
-  // 原先导出含未采用项、而数字与复制不含 —— 代码与自己的注释相反，也违反 docs/api.md
+  // 原先导出含未采用项、而数字与复制不含 —— 代码与自己的注释相反，也违反 docs/specs/api.md
   // 「hits 与 excluded 要分开看，做导出/统计时不要混用」。要看未采用的原因，展开上面那个折叠即可。
   bindBatchBar(target, data.hits, `材料定位-${data.parsed.product || "查询"}.csv`, CONTRACT_CSV);
 }

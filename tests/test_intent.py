@@ -2,7 +2,7 @@
 
 由来：需求方连续三轮在同一处踩坑（`华大转录组30w` 被拦、`质谱仪` 不行而 `测序仪` 可以），
 根因是**路由靠多份手写词表**且互相漂移。用户 2026-09-16 选择「调 LLM 做意图识别」，
-授权记录 `docs/llm-intent-authorization.md`。
+授权记录 `docs/authorizations/llm-intent-authorization.md`。
 
 本文件钉住三件事：
   1) **默认关闭**，关闭时走本地识别，且**绝不构造网关请求**；

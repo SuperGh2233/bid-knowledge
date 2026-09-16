@@ -1,8 +1,8 @@
 """批量 OCR：扫描 PDF 与图片。**可断点续跑**。
 
 授权依据（**两份**）：
-  · `docs/ocr-authorization.md`（2026-09-10）—— `contract_evidence` 扫描件。
-  · `docs/ocr-authorization-response-docs.md`（2026-09-11）—— **`our_response` / `final_signed`** 扫描件
+  · `docs/authorizations/ocr-authorization.md`（2026-09-10）—— `contract_evidence` 扫描件。
+  · `docs/authorizations/ocr-authorization-response-docs.md`（2026-09-11）—— **`our_response` / `final_signed`** 扫描件
     （用户就「640 份必须重做 OCR（外发）」回复「允许」）。**不含**竞品/招标/未知角色。
 
 关键性质：
@@ -89,7 +89,7 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--pdf-only", action="store_true")
     ap.add_argument("--roles", default="contract_evidence",
-                    help="要处理的文件角色，逗号分隔。扩大范围见 docs/ocr-authorization-response-docs.md")
+                    help="要处理的文件角色，逗号分隔。扩大范围见 docs/authorizations/ocr-authorization-response-docs.md")
     ap.add_argument("--max-mb", type=float, default=None,
                     help="只处理小于该体积(MB)的文件 —— 用于**分阶段推进**（大文件少而贵）")
     ap.add_argument("--db", default=None, help="覆盖测试库路径（默认取 BID_AI_CLEAN_DB）")

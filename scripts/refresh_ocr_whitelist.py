@@ -5,7 +5,7 @@
 一起列进候选，还会把历史约 186 份存量欠账带进来。用户裁定选 X：**只补本次新增的
 16 份扫描 PDF**，其余留待单独商议。
 
-授权依据：`docs/ocr-authorization-response-docs.md`（2026-09-11）—— our_response /
+授权依据：`docs/authorizations/ocr-authorization-response-docs.md`（2026-09-11）—— our_response /
 final_signed 扫描件 OCR 外发已获书面授权。**不含**竞品/招标/未知角色（代码层过滤）。
 
 白名单口径（与刷新登记新增集一致）：

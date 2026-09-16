@@ -72,7 +72,7 @@ D01:257   （三）财务状况表或银行资信证明           ← 材料条�
     页码、期间、年度、出具单位——这部分复核认可"可留"
 ```
 
-**代价**：第二段需要 LLM，属**外发**。当前 `docs/ocr-authorization.md` 只覆盖 OCR（且只限 `contract_evidence`），**不含此用途**。
+**代价**：第二段需要 LLM，属**外发**。当前 `docs/authorizations/ocr-authorization.md` 只覆盖 OCR（且只限 `contract_evidence`），**不含此用途**。
 
 ## 四、本轮结论
 

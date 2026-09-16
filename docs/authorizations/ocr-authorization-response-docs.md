@@ -1,6 +1,6 @@
 # 授权记录：我方响应/最终版扫描件 OCR（2026-09-11 扩大范围）
 
-> **本记录是对 `docs/ocr-authorization.md` 范围的扩大**，不替代它。原记录只覆盖
+> **本记录是对 `docs/authorizations/ocr-authorization.md` 范围的扩大**，不替代它。原记录只覆盖
 > `contract_evidence` 的扫描件（157 份 / 1,435 页，已完成）。
 
 ## 1. 授权事项
@@ -50,4 +50,4 @@
 - 全量约 **60–121 小时**（按单页 3–6 秒估算），须分批推进、可随时中断续跑。
 - 超大文件（≥40 MB、22 份、30% 字节）建议**单独评估**——其中含 605 页级文档。
 - 本记录**不覆盖**：竞品/招标文件、公网 OCR 兜底、以及把正文送 LLM 生成（那是
-  `docs/llm-generation-authorization.md` 的范围）。
+  `docs/authorizations/llm-generation-authorization.md` 的范围）。

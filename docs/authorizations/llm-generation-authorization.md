@@ -26,7 +26,7 @@
 **不允许**：
 - 竞品响应（`competitor_response`）、招标要求（`tender_requirement`）、
   未知文件、空模板 —— **代码层已过滤**（`VALID_ROLES`），不是靠约定；
-- 扫描件 OCR（那是 `docs/ocr-authorization.md` 的范围，本记录不覆盖）；
+- 扫描件 OCR（那是 `docs/authorizations/ocr-authorization.md` 的范围，本记录不覆盖）；
 - **MinerU 等公网第三方兜底** —— 本链路**不使用**任何公网兜底，只走 `.env` 配置的网关。
 
 ## 4. 网关
@@ -92,7 +92,8 @@
 **用户指示**：「把 env 建起来，开一次真实的生成，就用我配置的 qwen3.7-flash 模型就行，我也配置了 key。」
 
 **环境变更**：
-- 新建 `bid-ai-clean/.env`（已被 `.gitignore` 排除），键值从 `../bid-ai/.env` 搬运：
+- 新建 `bid-ai-clean/.env`（已被 `.gitignore` 排除），键值从旧系统的 `bid-ai/.env` 搬运
+  （该仓库 2026-09-16 已移出工作区、归档于 `标书文库-旧系统归档/`）：
   `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL=qwen3.7-flash` / `ELASTICSEARCH_URL`。
 - `PROPOSAL_GEN_ENABLED=true`。
 - ⚠️ **同时修了一个潜在缺陷**：`app/config.py` 原先**不加载 `.env`**（只读 `os.environ`），

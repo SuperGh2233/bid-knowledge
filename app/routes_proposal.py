@@ -88,7 +88,7 @@ def proposal_generate(request: GenerateRequest):
     """**需求二 R7：模块级方案生成** —— 目前只有**模型起草**一条路径。
 
     - 走模型生成。**会把我方响应正文送往外发网关**，默认关闭（`PROPOSAL_GEN_ENABLED`）；
-      未开启时返回 403 且**不会有任何外发**（授权记录见 `docs/llm-generation-authorization.md`）。
+      未开启时返回 403 且**不会有任何外发**（授权记录见 `docs/authorizations/llm-generation-authorization.md`）。
 
     本地抽取式装配（`mode=local`）已于 2026-09-14 **下线**（用户指令只保留模型生成）；
     `assemble_proposal` 实现仍在 `app/proposal.py`（含单元测试），但不再从 API 暴露。
