@@ -34,6 +34,13 @@ import app.config as config
 _ORD = re.compile(r"^\d{1,3}(?:\s*\||\s)")
 # 章节标题：`十三、《…》` / `十四、类似项目业绩一览表` / `一、…`（业绩数据行不会这样开头）
 _SECTION_HEAD = re.compile(r"^[一二三四五六七八九十百]{1,3}\s*[、.．]")
+# 纯日期/年份段（`2023年-2025年` / `2025年2月` / `2023.9`）—— 不能当项目名
+# 纯日期/年份段：`2023年-2025年` / `2025年2月` / **`2025年10月17日`**（含"日"——第一版漏了，
+# 实测该格被当成项目名）/ `2023.9`
+_DATEISH = re.compile(r"^(?:20\d{2}\s*年?)(?:\s*[-~—至到]\s*20\d{2}\s*年?)?"
+                      r"(?:\s*\d{1,2}\s*月)?(?:\s*\d{1,2}\s*日)?\s*$|^20\d{2}\.\d{1,2}$")
+# 联系方式格（`潘杰028-85502628` / `韩煦，18616122427` / 邮箱）—— 不能当项目名
+_CONTACTISH = re.compile(r"\d{7,}|@|\d{3,4}[-－]\d{7,}")
 _PURE_NUM = re.compile(r"^\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?$")
 _YEAR_FULL = re.compile(r"^(?:20\d{2})(?:\s*年)?$")
 
@@ -70,6 +77,8 @@ def _to_yuan(amount_raw, unit: str | None) -> float | None:
 
 _AMOUNT_COL = re.compile(r"金额|总价|价格|合同额")
 _PROJECT_COL = re.compile(r"项目名称|项目内容|服务名称|业绩名称|工作主要内容|合同主要内容|采购内容")
+# 业绩内容列（用于判定"这是业绩表"）：与 _PROJECT_COL 同族，另收「服务内容/标的名称」等实测写法
+_LEDGER_CONTENT_COL = re.compile(r"项目|服务内容|服务名称|业绩|标的|采购内容|工作内容|主要内容")
 _DATE_COL = re.compile(r"签订|签约|年份|竣工验收|时间")
 
 
@@ -150,6 +159,16 @@ def _parse_row(row_text: str, unit: str | None, header_line: str | None = None) 
                     unit_eff = "万元"
                 elif m.group(2) == "元":
                     unit_eff = "元"
+            else:
+                # **合并列**（2026-09-16 实测 6 例）：表头写 `项目名称及合同金额（万元）`，
+                # 一格内容形如 `LC-MS/MS 全谱代谢组检测、35.5` / `LC-MS非靶向代谢31` ——
+                # 金额就在格子里，只是与项目名合并了。取**结尾的数**，单位按表头列名的「万元」。
+                # 安全边界：仅当该列名本身含 金额/总价/价格 时才走这条路（`_column_index` 已保证），
+                # 且数值须在本语料合理量级内（后续 `_to_yuan` 的上限再兜一层）。
+                tail = re.search(r"(\d+(?:\.\d+)?)\s*万?元?\s*$", a)
+                if tail and "万" in (header_line or ""):
+                    amount_raw = tail.group(1)
+                    unit_eff = "万元"
         project_by_col = _at("project")
     for c in rest:
         if party:
@@ -178,10 +197,23 @@ def _parse_row(row_text: str, unit: str | None, header_line: str | None = None) 
             break
     project = project_by_col
     if not project:
-        for c in rest:
-            if c != party and c != amount_raw and len(c) >= 4 and not _year_of(c):
-                project = c
-                break
+        # **结构判据**（2026-09-16，替代"取第一个中文格"）：项目列 = 排除掉
+        #   ① 当事人格 ② 金额格 ③ 纯日期/年份段 ④ 联系方式格（姓名+电话/邮箱）之后，
+        #   **最长的中文格**。
+        # 为什么不用词表：实测列名写法无穷（项目名称 / 服务内容 / 主要采购内容 / 标的名称 /
+        # 工作主要内容 / 合同主要内容 …），逐个补必然漏 —— 与「意图识别」那次的教训同源：
+        # 多份手写词表互不知情。位置无关、词表无关，而"最长的中文格就是项目描述"在真实业绩表里稳定。
+        # 注释/说明格（`（2023年1月至本采购活动比选公告日期，以合同或协议签字日期为准）`）也排除——
+        # 实测它被当成项目名上过屏。判据：整格被括号包住，或含"为准/公告/签字日期/备注"等说明语。
+        note = re.compile(r"^[（(].*[）)]$|为准|公告日期|签字日期|详见|略$|^备注")
+        # 另：项目名**必含中文**（实测英文人名 `Lingge Tu` 被当成项目名上过屏）
+        cands = [c for c in rest
+                 if c != party and c != amount_raw and len(c) >= 4
+                 and re.search(r"[一-龥]", c)
+                 and not _year_of(c) and not _DATEISH.match(c)
+                 and not _CONTACTISH.search(c) and not note.search(c)]
+        if cands:
+            project = max(cands, key=len)
     if amount_raw is None:
         # 金额被写在项目名里（实测 `10x Genomics 单细胞空转￥39.9万元`、
         # `代谢学检测技术服务合同（30万元）`、`LC-MS/MS脂质组检测 9万元`）——
@@ -191,6 +223,12 @@ def _parse_row(row_text: str, unit: str | None, header_line: str | None = None) 
         if m_emb:
             amount_raw = m_emb.group(1)
             unit_eff = "万元"
+        else:
+            # 合并列形态（`…检测、35.5`）：表头含「万元」且格尾是数字 → 取格尾数
+            m_tail = re.search(r"、\s*(\d+(?:\.\d+)?)\s*$", joined)
+            if m_tail and "万元" in (header_line or ""):
+                amount_raw = m_tail.group(1)
+                unit_eff = "万元"
     total = _to_yuan(amount_raw, unit_eff)
     return {"row_ord": ord_, "party_a_raw": party, "project_raw": project,
             "total_amount": total,
@@ -358,7 +396,14 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
             # 不可能是业绩清单。表头常跨行（金额列可能写在下一行，如 合同 / 金额 / （万元）），故在 ±4 行窗口内找。
             window = [x for x in lines[i: i + 5]]
             window += [x for x in lines[max(0, i - 2): i]]
-            if not any(_AMOUNT_COL.search(x) for x in window):
+            # 表头必须能证明「这是一张业绩表」——**有金额列 或 有业绩内容列**。
+            #   ① 金额列：业绩清单按定义列合同金额（挡掉「序号|单位名称|相互关系」的**关联方表**，
+            #      它曾让电话号码被当成金额，实测一条 4.46 亿）；
+            #   ② 业绩内容列：实测有的业绩表**不含金额**（如「…承担相关业绩一览表」只列
+            #      履约时间/服务内容/采购单位/履约情况）—— 若一律拒掉，那张表的行
+            #      **再也不会被重新解析**，早期写错的旧值就永远留在库里（用户实测 6 条如此）。
+            if not (any(_AMOUNT_COL.search(x) for x in window)
+                    or any(_LEDGER_CONTENT_COL.search(x) for x in window)):
                 continue
             header = i
             break
@@ -541,7 +586,14 @@ def sync_contract_ledger(con, source_doc_id: str, header_found: bool, records: l
         # → 属于**纯新增**，既不会删旧行、也不会覆盖既有快照。
         # 故：仅当「有行 + 已收尾 + 无既有行」三者同时成立才放行，状态另记为 `synced_partial`
         # （与完整解析的 `synced` 严格区分，可审计）；**删除保护路径一字未动**。
-        if not (records and closed and existing == 0):
+        # 2026-09-16 口径再放宽**一格**（根因：全有或全无 → 部分解析时**旧值永不被纠正**；
+        # 用户列出的 6 条「项目名仍是旧的 2023年-2025年」就是这么留下来的）：
+        # **可疑解析禁止删除，但允许 upsert**（改写/新增）。删除仍只在 full_result 时发生。
+        # ️ **不再要求 `closed`**（2026-09-16 二次修正）：`closed` 只是"表已收尾"的**代理**，
+        # 它要求表后紧邻 `注：`/章节标题/另一张表 —— 实测大量表后面跟的是普通段落，
+        # 于是永远 closed=False → 旧值永不被纠正（用户列出的 6 条正是此因）。
+        # **安全关键从来不是 `closed`，而是"可疑解析下不删行"**（下面 `partial` 分支保证）。
+        if not records:
             return {"status": "incomplete", "upserted": 0, "deleted": 0,
                     "kept_updated": 0, "cleared": 0, "total": existing,
                     "reason": "表头命中但未取得完整清单（截断/尾段缺失/已有快照），"
@@ -579,6 +631,8 @@ def sync_contract_ledger(con, source_doc_id: str, header_found: bool, records: l
             return stats
         for ord_, cid in cur_rows.items():
             if ord_ not in desired:
+                if partial:
+                    continue      # 可疑解析：**不删**（只做 upsert）
                 con.execute("DELETE FROM contract_items WHERE contract_id=?", (cid,))
                 con.execute("DELETE FROM contracts WHERE contract_id=?", (cid,))
                 stats["deleted"] += 1

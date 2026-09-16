@@ -78,9 +78,11 @@ def test_truncated_after_header_keeps_records(fresh_db):
     st = extract_contract_ledger_state(truncated)
     assert st["header_found"] is True and st["full_result"] is False
     r = extract_and_sync(fresh_db, "doc-A", truncated)
-    assert r["status"] == "incomplete"
-    assert r["deleted"] == 0
-    assert len(_rows(fresh_db)) == 2
+    # 2026-09-16 口径放宽一格：可疑解析**允许 upsert、禁止删除**（原先整份不写 →
+    # 部分解析时旧值永不被纠正）。**本测试要守的是"不丢数据"**，这一点没变：
+    assert r["status"] == "synced_partial"
+    assert r["deleted"] == 0                       # ⚠️ 关键：一行都没删
+    assert len(_rows(fresh_db)) == 2               # 已有 2 行原样保留（未被截断解析抹掉）
 
 
 # —— C) 候选行解析失败（序号行存在但解析不出采购人/金额）→ 不清空 ——

@@ -130,20 +130,28 @@ def test_partial_write_allowed_for_doc_without_existing_rows(tmp_path):
                        ).fetchone()[0] == 2
 
 
-def test_partial_write_refused_when_doc_has_existing_rows(tmp_path):
-    """已有快照的文档**不放行** —— 保护既有行不被可疑解析删改（删除保护一字未动）。"""
+def test_partial_write_updates_but_never_deletes(tmp_path):
+    """可疑解析对**已有快照**的文档：**允许 upsert、禁止删除**（2026-09-16 口径放宽一格）。
+
+    根因：原先"整份不写"→ 部分解析时**旧值永不被纠正**（实测用户列出 6 条业绩行的
+    项目名长期停留在旧的 `2023年-2025年`）。放宽的是「写入」，**没有**放宽「删除」——
+    保护的本意是"别在可疑解析下丢数据"，而 upsert 不丢数据。
+    """
     con = _con(tmp_path)
     con.execute("INSERT INTO contracts (contract_id, document_id, ordinal, party_a, total_amount,"
                 " evidence_text) VALUES ('LEDGER-docB-1','docB',1,'旧医院',999999.0,'旧证据')")
+    con.execute("INSERT INTO contracts (contract_id, document_id, ordinal, party_a, total_amount,"
+                " evidence_text) VALUES ('LEDGER-docB-9','docB',9,'只在旧快照里的行',123.0,'旧证据9')")
     con.commit()
     out = extract_and_sync(con, "docB", PARTIAL)
-    assert out["status"] == "incomplete", out
-    # 旧行**原样保留**
+    assert out["status"] == "synced_partial", out
+    # ① 同 ordinal 的行被**改写**为新值
     row = con.execute("SELECT party_a, total_amount FROM contracts WHERE contract_id='LEDGER-docB-1'"
                       ).fetchone()
-    assert row["party_a"] == "旧医院" and row["total_amount"] == 999999.0
-
-
+    assert row["party_a"] == "某医院" and row["total_amount"] == 300000.0, dict(row)
+    # ② **不在新解析里的旧行不许被删**（删除仍只在完整解析时发生）
+    assert con.execute("SELECT COUNT(*) FROM contracts WHERE contract_id='LEDGER-docB-9'"
+                       ).fetchone()[0] == 1
 # —— 列定位（项目名在前、单位在后的表，不得把项目名当采购人）——
 
 def test_column_position_mapping_when_party_column_is_last():
