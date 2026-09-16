@@ -120,14 +120,28 @@ def _cross_ref_amount(text: str, project: str, party: str) -> tuple[float | None
     party_key = (party or "").strip()[:6]
     if len(proj_key) < 5 or len(party_key) < 4:
         return None, ""
-    for ln in (text or "").splitlines():
+    # 金额写法在同一份文档里都不统一（实测三种）：
+    #   `（北京师范大学，270万）` / `(四川大学华西第四医院 399万)` / `（浙江大学医学院附第二医院 80991元）`
+    AMT = re.compile(r"[（(]?[^（()）]*?[，,\s]\s*(\d+(?:\.\d+)?)\s*(万元|万|元)[）)]?\s*$")
+    lines = [ln.strip() for ln in (text or "").splitlines()]
+    # ① 严格路径：项目名 + 采购人**同一行** + 金额
+    for ln in lines:
         if proj_key not in ln or party_key not in ln:
             continue
-        m = re.search(r"[（(][^）)]*?[，,]\s*(\d+(?:\.\d+)?)\s*万", ln)
+        m = AMT.search(ln)
         if m:
-            val = float(m.group(1)) * 10000
+            val = float(m.group(1)) * (10000 if m.group(2) in ("万", "万元") else 1)
             if val <= 100_000_000.0:
-                return round(val, 2), ln.strip()[:120]     # 连**依据原文**一起回，供证据引用
+                return round(val, 2), ln[:120]             # 连**依据原文**一起回，供证据引用
+    # ② 放宽路径（名称写法不一致时）：只按**采购人**找，但要求
+    #    「该采购人在全文里**只有一行**带金额」—— 唯一性是这里的安全保证，
+    #    同一采购人出现多条带金额的行就放弃（可能张冠李戴，宁缺毋滥）。
+    hits = [ln for ln in lines if party_key in ln and AMT.search(ln)]
+    if len(hits) == 1:
+        m = AMT.search(hits[0])
+        val = float(m.group(1)) * (10000 if m.group(2) in ("万", "万元") else 1)
+        if val <= 100_000_000.0:
+            return round(val, 2), hits[0][:120]
     return None, ""
 
 

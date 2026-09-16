@@ -196,3 +196,23 @@ def test_cross_ref_end_to_end_marks_source(tmp_path):
     assert rec["total_amount"] == 144000.0, rec
     assert rec["amount_source"] == "同文档合同清单"
     assert "14.4万" in rec["amount_source_line"]        # 可审计：金额出自哪一行
+
+
+def test_cross_ref_handles_three_amount_formats():
+    """同一文档里金额写法不统一（实测三种），都要认；且**单位是「元」时不得当成万**。"""
+    from app.extract import _cross_ref_amount
+    text = ("6.1 10000 例样本项目合同(四川大学华西第四医院 399万)\n"
+            "6.6 单细胞组学项目合同 （浙江大学医学院附第二医院 80991元）\n")
+    a, _ = _cross_ref_amount(text, "队列高通量基因分型芯片检测服务项目", "四川大学华西第四医院")
+    assert a == 3_990_000.0, a                       # 半角括号 + 空格 + 万
+    b, _ = _cross_ref_amount(text, "角膜组织单细胞转录组测序项目", "浙江大学医学院附第二医院")
+    assert b == 80_991.0, b                          # **元** 单位（若按万算会差 1 万倍）
+
+
+def test_cross_ref_gives_up_when_party_is_ambiguous():
+    """同一采购人在全文出现**多条**带金额的行 → 放弃（唯一性是放宽路径的安全保证）。"""
+    from app.extract import _cross_ref_amount
+    text = ("6.1 甲项目合同（某医院，10万）\n"
+            "6.2 乙项目合同（某医院，20万）\n")
+    got = _cross_ref_amount(text, "丙项目（名称对不上）", "某医院")
+    assert got[0] is None, got
