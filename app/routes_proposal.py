@@ -24,6 +24,10 @@ class GenerateRequest(BaseModel):
     query: str = ""
     modules: str = ""
     constraints: str = ""
+    # 产品线（2026-09-15 加，见 PLAN-20260915 §8-3）：**可选**，缺省时从 `query` 自动识别
+    # （`app.api.detect_product`，与检索侧同一套别名口径）。用于让模型**只保留与该产品线相关**的条目
+    # （典型：证据里并列「RNA/DNA/单细胞项目」的异常处理时，只写本次产品线那一条）。
+    product: str = ""
     # 需求二只保留**模型起草**（2026-09-14 用户指令）；`mode=local`（本地抽取式装配）
     # 已从产品入口下线 —— API 不再接受，历史调用方会收到明确 400。
     mode: str = "llm"
@@ -113,8 +117,12 @@ def proposal_generate(request: GenerateRequest):
         # ES 不可达时降级为 None（生成仍可跑，只是少了结构与口径那一段），**不因此 500**。
         kb = build_module_kb(con, mods)
     payload = packs_to_payload(packs)
+    # 产品线：显式传入优先；否则从 `query`/`modules` 自动识别（**与检索侧同一套别名口径**）。
+    # 识别不出 → 空串 → 提示词不加裁剪规则（不猜、不误裁）。
+    from app.api import detect_product
+    product = request.product.strip() or detect_product(f"{request.query} {request.modules}")
     try:
-        result = generate_proposal(payload, request.constraints, kb)
+        result = generate_proposal(payload, request.constraints, kb, product=product)
     except ProposalGenNotAuthorized as exc:
         raise HTTPException(403, str(exc)) from exc
     except ProposalGenError as exc:

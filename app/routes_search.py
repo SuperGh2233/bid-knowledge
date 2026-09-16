@@ -18,9 +18,10 @@ from app.api import (BASE_DIR, PRODUCT_ALIASES, PRODUCT_MATCH_EXCLUDE,
                      SearchRequest, _FACT_KW, _FINANCE_FACT_TYPES,
                      _INSTRUMENT_FACT_TYPES, THREE_MODULES, _annotate_fact_role,
                      _approved_contract_ids, _count_material_facts, _fold_by_contract,
-                     _MONTHISH, live_scope, parse_demo_query, parse_fact_query,
+                     _MONTHISH, _fold_facts_by_file, live_scope, parse_demo_query, parse_fact_query,
                      parse_scope_conditions, period_covers, readonly_db,
-                     scope_filter_note)
+                     resolve_instrument_query, scope_filter_note)
+from app.intent import recognize_intent
 from app.search import DEFAULT_ROOTS as MATERIAL_ROOTS
 from app.search import locate_by_product_amount, search_scheme_sections
 
@@ -32,37 +33,32 @@ _ASK_SCHEME_KW = ("方案", "预案", "措施", "保密", "培训", "质量控�
                   "物流", "风险", "团队", "服务周期", "售后", "项目管理",
                   "对项目的理解", "需求分析", "样本接收")
 
-@router.post("/api/material-search")
-def material_search(request: SearchRequest):
-    try:
-        product, keywords, minimum, date_from, date_to = parse_demo_query(request.query)
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
-    with readonly_db() as con:
-        scope = live_scope(con)
-        party_inc, party_exc, prod_exc_keys, _ = parse_scope_conditions(request.query)
-        # 产品排除**必须展开成别名元组**，与包含侧（`product_keywords` 就是别名元组）保持同一口径。
-        # 否则拿规范键（如「蛋白组」）去对 `product_raw` 的类别做字面子串匹配：真实类别是
-        # 「Olink 蛋白质组（S）」「Pro DIA定量蛋白质组」，都不含子串「蛋白组」（蛋白质组≠蛋白组）
-        # → 排除**完全不生效**，而 filter_note 仍宣称已排除（对抗性复核实测）。
-        prod_exc = tuple(dict.fromkeys(
-            a for key in prod_exc_keys for a in PRODUCT_ALIASES.get(key, (key,))))
-        results = locate_by_product_amount(con, keywords, minimum,
-                                           date_from=date_from, date_to=date_to,
-                                           party_include=party_inc, party_exclude=party_exc,
-                                           product_exclude=prod_exc,
-                                           match_exclude=PRODUCT_MATCH_EXCLUDE.get(product, ()))
-        rows = []
-        for result in results:
-            item = asdict(result)
-            doc = con.execute(
-                "SELECT d.document_role, d.parse_status, a.content_format "
-                "FROM documents d LEFT JOIN parse_artifacts a "
-                "ON a.canonical_document_id=d.canonical_document_id WHERE d.document_id=?",
-                (result.document_id,),
-            ).fetchone()
-            item.update(dict(doc) if doc else {})
-            rows.append(item)
+def _contract_search_body(con, *, product, keywords, minimum, date_from, date_to,
+                          party_inc, party_exc, prod_exc_keys, prod_exc):
+    """**纯检索 + 组装响应** —— 把「解析」与「检索」分开。
+
+    为什么要拆（2026-09-16）：意图识别层（LLM）已经抽出了实体（产品/金额/日期/厂商），
+    若下游仍拿**原句**再走一遍旧的确定性解析器，就会**把已识别的实体丢掉** ——
+    实测 `帮我把华大做的那种转录组、三十万往上的合同找出来`：意图层认出「转录组 + 30万 + 华大」，
+    而 `parse_demo_query` 认不出**中文数字「三十万」** → 400。实体必须直接进检索，不能二次解析。
+    """
+    scope = live_scope(con)
+    results = locate_by_product_amount(con, keywords, minimum,
+                                       date_from=date_from, date_to=date_to,
+                                       party_include=party_inc, party_exclude=party_exc,
+                                       product_exclude=prod_exc,
+                                       match_exclude=PRODUCT_MATCH_EXCLUDE.get(product, ()))
+    rows = []
+    for result in results:
+        item = asdict(result)
+        doc = con.execute(
+            "SELECT d.document_role, d.parse_status, a.content_format "
+            "FROM documents d LEFT JOIN parse_artifacts a "
+            "ON a.canonical_document_id=d.canonical_document_id WHERE d.document_id=?",
+            (result.document_id,),
+        ).fetchone()
+        item.update(dict(doc) if doc else {})
+        rows.append(item)
     # —— R6-06：同一文件的多条命中**折叠成一个文件结果**，内部业务记录保留在 `records` ——
     # 实测未折叠时「2万元以上的代谢组合同」返回 21 条却只有 17 份合同（同一合同出现 5 次），
     # 用户要在一堆重复卡片里找——而他要的是「哪几份文件可用」。
@@ -82,9 +78,34 @@ def material_search(request: SearchRequest):
         "excluded_records": len([r for r in rows if not r["hit"]]),
         # 说明里用**规范键**（用户说的词），不用展开后的别名串 —— 别名是匹配手段，不是用户语言
         "filter_note": scope_filter_note(party_inc, party_exc, prod_exc_keys),
-        "scope_note": f"注意：本页目前覆盖 {scope['queryable_contracts']} 份已核合同。"
-                      f"这里查不到 ≠ 公司没有，实际库里的量远不止这些。",
+        # ⚠️ **覆盖面必须写明**（2026-09-15 需求方反馈）：需求方按「公司合同台账」预期召回
+        # （展示的 8 份 ≥50万空间转录组合同，库内一份都没有），而本系统语料 = Z 盘项目文件夹内的
+        # 文档 —— **两者不是同一数据源**。只说「查不到 ≠ 公司没有」不够，必须点破范围边界，
+        # 否则「查不到」会被当成系统缺陷（实测：需求方就是这么理解的）。
+        "scope_note": f"检索范围：Z 盘项目文件夹内的文档（当前 {scope['queryable_contracts']} 份已核合同）；"
+                      f"不含公司合同台账 —— 因此「查不到」不等于「公司没有这份合同」，"
+                      f"成交合同的完整清点请以合同台账为准。",
     }
+
+
+@router.post("/api/material-search")
+def material_search(request: SearchRequest):
+    try:
+        product, keywords, minimum, date_from, date_to = parse_demo_query(request.query)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    with readonly_db() as con:
+        party_inc, party_exc, prod_exc_keys, _ = parse_scope_conditions(request.query)
+        # 产品排除**必须展开成别名元组**，与包含侧（`product_keywords` 就是别名元组）保持同一口径。
+        # 否则拿规范键（如「蛋白组」）去对 `product_raw` 的类别做字面子串匹配：真实类别是
+        # 「Olink 蛋白质组（S）」「Pro DIA定量蛋白质组」，都不含子串「蛋白组」（蛋白质组≠蛋白组）
+        # → 排除**完全不生效**，而 filter_note 仍宣称已排除（对抗性复核实测）。
+        prod_exc = tuple(dict.fromkeys(
+            a for key in prod_exc_keys for a in PRODUCT_ALIASES.get(key, (key,))))
+        return _contract_search_body(
+            con, product=product, keywords=keywords, minimum=minimum,
+            date_from=date_from, date_to=date_to, party_inc=party_inc,
+            party_exc=party_exc, prod_exc_keys=prod_exc_keys, prod_exc=prod_exc)
 
 
 
@@ -109,13 +130,48 @@ def ask(q: str = ""):
     text = (q or "").strip()
     if not text:
         raise HTTPException(400, "请输入查询，例如：2024年12月以后，代谢组金额2万元以上的合同")
-    if any(k in text for k in _ASK_FACT_KW):
+    # —— 意图识别层（2026-09-16）——
+    # 原实现用**手写词表** `_ASK_FACT_KW` / `_ASK_SCHEME_KW` 判"该查哪一类"，
+    # 三份表（路由/拦截/检索）互不知道对方 → `测序仪` 能过而 `质谱仪` 掉洞里。
+    # 现统一交给 `app/intent.py`：开关开→LLM（外发**只发这一句查询**，授权见
+    # `docs/llm-intent-authorization.md`）；关/失败→**本地确定性识别**（行为与本改动前一致）。
+    # 无论走哪条，都把识别结果原样回显（`recognition`）—— 用户能看到"系统理解成了什么"。
+    intent = recognize_intent(text)
+    # `source` 如实回显走了哪条路（`local` 本地判定 / `llm` 模型兜底 / `local_fallback` 外发失败回落），
+    # `decided` 说明本地是否判得出 —— 页面上能看出"这句是本地秒判、还是问了模型"。
+    recognition = {"intent": intent.intent, "confidence": intent.confidence,
+                   "reason": intent.reason, "source": intent.source,
+                   "decided": intent.decided}
+    if intent.intent == "instrument":
         body = material_facts(q=text, fact_type="", fact_value="", limit=500)
-        return {"kind": "fact", "query": text, **body}
-    if any(k in text for k in _ASK_SCHEME_KW):
+        return {"kind": "fact", "query": text, "recognition": recognition, **body}
+    if intent.intent == "material":
+        body = material_facts(q=text, fact_type="", fact_value="", limit=500)
+        return {"kind": "fact", "query": text, "recognition": recognition, **body}
+    if intent.intent == "scheme":
         body = scheme_search(q=text, limit=8)
-        return {"kind": "scheme", "query": text, **body}
-    return {"kind": "contract", "query": text, **material_search(SearchRequest(query=text))}
+        return {"kind": "scheme", "query": text, "recognition": recognition, **body}
+    # —— 合同：**LLM 已抽出的实体直接进检索**，不再拿原句二次解析 ——
+    # ⚠️ 二次解析会把已识别实体丢掉：实测 `…三十万往上的合同` 被 `parse_demo_query`
+    # 卡在「认不出中文数字」→ 400（而意图层明明认出了 300000）。
+    if intent.source == "llm" and (intent.product or intent.amount_min or intent.vendor_include):
+        with readonly_db() as con:
+            keywords = tuple(dict.fromkeys(
+                a for a in PRODUCT_ALIASES.get(intent.product, (intent.product,)) if a))
+            if not keywords:
+                keywords = tuple(intent.product_exclude) or ("",)   # 只给机构/日期时的占位
+            prod_exc = tuple(dict.fromkeys(
+                a for key in (intent.product_exclude or []) for a in PRODUCT_ALIASES.get(key, (key,))))
+            return {"kind": "contract", "query": text, "recognition": recognition,
+                    **_contract_search_body(
+                        con, product=intent.product, keywords=keywords,
+                        minimum=intent.amount_min or 0.0,
+                        date_from=intent.date_from, date_to=intent.date_to,
+                        party_inc=tuple(intent.vendor_include),
+                        party_exc=tuple(intent.vendor_exclude),
+                        prod_exc_keys=tuple(intent.product_exclude), prod_exc=prod_exc)}
+    return {"kind": "contract", "query": text, "recognition": recognition,
+            **material_search(SearchRequest(query=text))}
 
 
 
@@ -135,9 +191,18 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
     结构化信息取自响应文件正文里的文字清单，下方扫描件**未做 OCR**。
     无 `fact_value` 表示该条目本身不含期间（如证书名），**不是缺失**。
     """
+    inst_models: tuple[str, ...] = ()
     if q and not fact_type:
-        fact_type, auto_value = parse_fact_query(q)
-        fact_value = fact_value or auto_value
+        # R1-3（2026-09-15 需求方反馈）：仪器**通称**（`找质谱仪`/`测序仪`）或**型号名**
+        # → 查 `instrument_name`（库里存的是具体型号）。此前 `质谱仪` **完全不被识别**、
+        # `测序仪` 被 `_FACT_KW` 抢先归到 `instrument`（那一类存的是**期间**不是型号）。
+        # ⚠️ **必须先试通称/型号**，否则又被 `_FACT_KW` 抢走。
+        inst_models = resolve_instrument_query(q)
+        if inst_models:
+            fact_type = "instrument_name"
+        else:
+            fact_type, auto_value = parse_fact_query(q)
+            fact_value = fact_value or auto_value
     con = readonly_db()
     # WHERE 单独拼，供「取数」与「数总数」两条查询共用（参数也共用）
     where = " WHERE 1=1"
@@ -148,9 +213,18 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
     if fact_value:
         where += " AND f.fact_value LIKE ?"
         args.append(f"%{fact_value}%")
+    if inst_models:
+        # 通称展开成多个型号 → **OR**（`?fact_value=` 的单值 LIKE 表达不了）
+        where += " AND (" + " OR ".join("f.fact_value LIKE ?" for _ in inst_models) + ")"
+        args.extend(f"%{m}%" for m in inst_models)
     cap = max(1, min(limit, 500))
+    # ⚠️ **必须带 `d.document_id`**（2026-09-16 需求方反馈「其他两类材料不能打开文件」）：
+    # 前端 `fileActions()` 缺 `document_id` 时**只渲染「复制路径」**（否则点了必然失败）——
+    # 于是这条路径（页签01「直接提问」/`/api/ask` 的材料查询）的卡片没有"打开文件/文件夹"，
+    # 而「按类浏览」（three-modules）那条有：**同一个概念两个端点字段不一致**。
     _SELECT = ("SELECT f.fact_type, f.fact_value, f.evidence_text, d.project_folder, "
-               "d.relative_path, d.source_root_id, d.document_role FROM material_facts f "
+               "d.relative_path, d.source_root_id, d.document_role, d.document_id, "
+               "d.content_format FROM material_facts f "
                "JOIN documents d ON d.document_id = f.document_id")
     _FROM = " FROM material_facts f JOIN documents d ON d.document_id = f.document_id"
     try:
@@ -165,7 +239,8 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
         related: list[dict] = []
         if fact_value and _MONTHISH.match(fact_value.strip()):
             rq = ("SELECT f.fact_type, f.fact_value, f.evidence_text, d.project_folder, "
-                  "d.relative_path, d.source_root_id, d.document_role FROM material_facts f "
+                  "d.relative_path, d.source_root_id, d.document_role, d.document_id, "
+                  "d.content_format FROM material_facts f "
                   "JOIN documents d ON d.document_id = f.document_id "
                   "WHERE f.fact_value LIKE '%~%'")
             rargs: list = []
@@ -189,6 +264,11 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
     return {
         "count": len(rows),
         "facts": rows,
+        # 按文件折叠（2026-09-16 需求方反馈「检索还返回很多相同的文件」）：
+        # 材料事实是**一条期间一行**，同一文件会重复出现；`files` 折成一条/文件、期间收进
+        # `fact_values`。**新增字段，不动 `facts`**（接入方可继续用原口径）。
+        "files": _fold_facts_by_file(rows),
+        "file_count": len({r["relative_path"] for r in rows}),
         "total_available": total_available,
         "truncated": truncated,
         "related_count": len(related),
@@ -419,6 +499,9 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
     our_n = sum(1 for r in rows if r["role_scope"] == "our")
     tender_n = sum(1 for r in rows if r["role_scope"] == "tender")
     return {"module": module, "spec": THREE_MODULES[module], "count": len(rows), "records": rows,
+            # 同类折叠（见 material-facts 的说明）：同一文件的多条期间折成一条
+            "files": _fold_facts_by_file(rows),
+            "file_count": len({r["relative_path"] for r in rows}),
             "type_counts": type_counts, "total_available": total_available, "truncated": truncated,
             "our_count": our_n, "tender_count": tender_n, "other_count": len(rows) - our_n - tender_n,
             "scope_note": "材料事实取自**已解析文件**的正文与文件名；未解析的扫描件不在内。"

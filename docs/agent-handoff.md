@@ -45,8 +45,14 @@
 - `pytest tests -q` → **200 passed**（必须用 conda `langchain-dev` 解释器，见 §6）。
 - **「条数 vs 文件数」口径已统一**（§4.15）：卡上数字与点进去的条数同源，HTTP 实测
   **95 / 1564 / 722**，项目业绩卡 == 侧栏可查数 == 95。
-- 库规模（实测复核）：`documents 5,913 / contracts 127`（其中 CTL 98、**已核对可查 95**）
-  `/ parse_artifacts 2,790 / contract_items 597 / material_facts 2,373`。
+- 库规模（实测复核）：`documents 6,043 / contracts 127`（其中 CTL 98、**已核对可查 95**）
+  `/ parse_artifacts 2,807（scanned_ocr 549） / contract_items 597 / material_facts 2,373`。
+  **ES `bid_scheme_sections_v1`：11,672 条章节 / 641 份文档**（2026-09-15 白名单索引 +930 条 / +10 份）。
+  **2026-09-15 增量登记 +130**（`scripts/refresh_catalog.py`，新交付）：2026 年 9 月上旬
+  新项目目录（孟令莹/赵玲云/穆志国等 130 文件）入库；非标书仍跳过（口径延续）、系统文件跳过；
+  改名目录按新路径重新登记、旧行保留（只登记不删，见 §4.18）。
+  **同日白名单 OCR + 索引**：16 份新登记的响应扫描件 OCR（外发，已授权，238 万字，
+  `scripts/refresh_ocr_whitelist.py`）→ 930 条章节入库（`scripts/refresh_index_whitelist.py`，零外发）。
 - 语料零外发扩容已完成两轮（+631、+828 份），**尚未耗尽**（还能再挖，见 §9）。
 
 ### In progress
@@ -114,6 +120,17 @@
    ⚠️ **白名单过滤必须在 `LIMIT` 之前** —— 原写法先 `LIMIT n` 再过滤，库里合同一超 n 就原样复发。
    ⚠️ 概览卡「财务社保 1564」vs 明细页显示 1000 是**显式截断**（页面写明「库内共 1564 条」），**不是矛盾**，
    别把它当 bug 一起「修」掉。
+16. **增量登记脚本的语义**（`scripts/refresh_catalog.py`，2026-09-15 交付）：
+   - **只读与只登记**：脚本只 `os.walk`+`stat` Z 盘，不解析/不触 ES/不外发/不算 sha256；
+     任一根目录**遍历前**不可访问 → 整轮 `_AbortError` 中止且一行不写（`main` 的 `--dry-run` 也先过此闸）。
+   - **登记口径 = 现库既有一致行为**：一级目录名含「非标书」→ 整目录跳过；`classify_path` 判
+     `system_or_temp`（thumbs.db/~$/.db/.exe）→ 跳过；其余（标书/比选/调研/询价/报名）都登记。
+   - **幂等**：身份 = `deterministic_document_id(source_root_id, relative_path)`，与现库同算法；
+     `UNIQUE(source_root_id, relative_path)` 兜底，重复跑「新增 0」。
+   - **不删除任何行**（红线刻意不带 `--apply-deletes`）：Z 上消失/改名的旧路径行保留，
+     改名目录按新路径重新登记 —— 两者并存是**预期行为**。
+   - **正式库禁写**：默认 reg 演示库（`BID_AI_CLEAN_DB` → 再默认 reg）；`--db bid_ai_clean.db`
+     一律退出码 2，即使显式传也拒绝。
 16. **前端整理后的三条（页面只留重要信息，2026-09-14）**：
    ① **`renderMarkdown` 必须把证据的多行文本归并成一段** —— 证据原文本身带换行（一段长文被拆成
    `- ` 首行 + 若干无前缀续行，`[E1]` 落在靠后行）。旧实现逐行渲染 → 一段证据碎成一串 `<p>`/`<li>`。
@@ -164,6 +181,39 @@
    含 `..`，子串判会误拒）/ 词法包含性断言（**不用 `resolve()`** —— 不可达 UNC 上会挂住）/
    后缀黑名单先判 + `target=file` 白名单（**排除宏格式**）。可达性(`503`)与存在性(`404`)**刻意分开**。
    **实测**：库里 6 个 `.exe`（投标客户端安装包），`os.startfile` 对 `.exe` 是**执行** —— 故黑名单是硬要求。
+20. **方案生成证据带「文件身份说明」**（2026-09-15）：证据原本只有章节 heading+正文，LLM 召回后
+   不知道这份文件属于什么项目、是什么角色 → 可能误把报价单内容当承诺引。已加两个**纯确定性字段**：
+   `project_summary`（一级目录名去日期前缀 = 项目简介）、`doc_purpose`（`document_role` 中文标签
+   + 文件名主干，含厂商段剥离）。
+   **落点**：`build_evidence_packs`（`proposal.py` item 构造处）附加 → `packs_to_payload` **白名单**
+   显式补两行 → `build_gen_prompt` 模板补「｜项目简介：…｜文件用途：…」（**绝不含 source_path**，
+   红线有测试钉住）→ `GEN_SYSTEM` 加规则 8「项目简介/文件用途只用于判断适用性，不得当原文引用」。
+   **关键实现教训**：① `_document_role` 的 SELECT 不能动（测试 fixture 只有 6 列）；新增字段数据源
+   只用已 SELECT 的 `project_folder` / `relative_path` / `document_role` → fixture 一行不改。
+   ② **`str.endswith(多字节串)` 不等于「末尾任一分隔符」**—— `endswith("+·-｜_（(/ ")` 是问结尾
+   是否以**整串**结束，不是任一字符；必须逐字 `while s and s[-1] in seps`（踩到一次）。
+   ③ 半角 `+` 勿打成全角 `＋`（U+FF0B），分隔符集合里混入全角会静默失效。
+   ④ 厂商剥除规则是「独立段」语义：末尾段 `endswith` 剥；中段只剥**前后都有分隔符**（或到串首）的；
+   抬头独立段/嵌入词不剥（`欧易生物报名文件` → 保留，`(加密)上海欧易生物…` → 保留）。
+   ⚠️ **残留 4% 厂商字样**（266/6043）属「不误剥」成本（厂商嵌项目名无分隔或前随字），可接受不追。
+   ⚠️ 前端**未显示**这两个字段（只进 LLM 提示词）—— 若要在引用来源上屏需另开小步。
+   **第二步（未做、需授权）**：用 LLM 概括项目/文件用途（会外发正文），质量更高但需单独授权。
+21. **白名单 OCR / 白名单索引**（2026-09-15，两个新脚本）：补本次新登记的 16 份响应扫描件时，
+   **没有**用现成的 `ocr_batch.py` / `r5_index_bm25_only.py` —— 它们是「补到 N 份」的分批模式：
+   `ocr_batch.py` 的候选是 226 份（含 45 份 `native_pdf_text`（有文字层，OCR 是白外发）
+   + 12 份 `holding_review`（**待核红线**）+ 186 份历史欠账）；`r5_index_bm25_only.py` 传
+   TARGET_DOCS 会把**所有**未索引响应件一起带走。故写 `refresh_ocr_whitelist.py`（白名单 OCR，
+   复用 `ocr.ocr_pdf` + 与 ocr_batch 共用 state）与 `refresh_index_whitelist.py`（白名单索引，
+   只写指定文档）。**结论：只补本次、不误伤存量与待核件。**
+   ⚠️ 首次 OCR 预检时误以为候选是 17 份 —— 实际脚本全量模式是 226 份，**范围判断必须看脚本的
+   SQL 而非直觉**（本轮踩到，及时改白名单驱动）。
+22. **OCR 混扫带来的召回污染（2026-09-15 实测，已知未修）**：新增 930 条章节中 18 条被
+   `_is_plausible_heading` 挡（2%），**159 条能命中方案关键词（17%）**，其中 **51 条（32%）
+   标题含合同/财会噪声词** —— 根因是**几份扫描 PDF 把合同正本与财务报表跟响应文件扫在同一个
+   文件里**（如 `7.2 乙方违约责任`、`售后租回`（会计准则术语，误命中「售后」）），**是数据源特性
+   而非抽取 bug**。**未修理由**：3 道下游过滤 + `_FORMAT_RANK` 把 scanned_ocr 排最后 + 同项目
+   ≤2 条上限兜底；治本应做「**OCR 后按页归属拆分**（判定哪几页属合同、哪几页属响应）」——
+   **独立课题，已列待办，勿塞进增量脚本**。
 20. **信息层级重做 P1（2026-09-14）**：五项一起落地 ——
    ① **三类材料 / 八类方案入口直展**（原在折叠里，新用户根本不会打开；示例按钮仍折叠，它们是长尾）；
    ② **已识别条件改为可点标签**：`conditionTags()` / `conditionQuery()` / `conditionTagBar()` / `bindConditionTags()`；
@@ -234,10 +284,21 @@
 ```bash
 CONDA="C:\Users\hao.guo\AppData\Local\miniconda3\envs\langchain-dev\python.exe"
 export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
-"$CONDA" -m pytest tests -q              # 200 passed
+"$CONDA" -m pytest tests -q              # 245 passed
 "$CONDA" scripts/eval_gold_recall.py     # Recall 92.3% / 误返 0
 "$CONDA" scripts/eval_success_precision.py
+"$CONDA" scripts/refresh_catalog.py --dry-run   # 增量登记预览（只读，不写）
+"$CONDA" scripts/refresh_catalog.py             # 增量登记真实写入（幂等；.bat 供计划任务）
+"$CONDA" scripts/refresh_ocr_whitelist.py --dry-run   # 白名单 OCR 预览（列出将外发的扫描件）
+"$CONDA" scripts/refresh_ocr_whitelist.py             # 白名单 OCR（**外发**，需授权；断点续跑）
+"$CONDA" scripts/refresh_index_whitelist.py --dry-run # 白名单索引预览（零外发）
+"$CONDA" scripts/refresh_index_whitelist.py           # 白名单索引写入 ES（零外发）
 ```
+⚠️ **`refresh_ocr_whitelist.py` 会外发正文**（qwen 网关）—— 只能处理 `our_response`/`final_signed`
+扫描件；与 `ocr_batch.py` 共用 state 文件（幂等/续跑）。改任何"我方能发什么"的判定前先读
+`docs/ocr-authorization-response-docs.md`。
+⚠️ **另两个脚本是"白名单"而非"全量"**：`ocr_batch.py`（补到 N 份）与 `r5_index_bm25_only.py`
+（补到 N 份）会把存量一起带走 —— 只补本次新增时用 `refresh_*_whitelist.py`。
 ⚠️ **PATH 上的 `python` 是 hermes venv（3.13），没有 pytest** —— 必须用上面那个 conda 解释器。
 ⚠️ `eval_success_precision.py` 顶层 `from eval_gold_recall import QUERY_SPEC` 会连带执行整个评测；报告写入已加 `__main__` 守卫。
 ⚠️ 服务启动：`BID_AI_CLEAN_DB=<库> "$CONDA" -m app.api` → `http://127.0.0.1:8000`。

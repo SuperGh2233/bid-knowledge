@@ -1,0 +1,33 @@
+{
+ "92b41b500a717ffd9e937f2a2152a23fed2cc173d0389dcd79ee5eef9be78ea3": {
+  "status": "done",
+  "chars": 9439,
+  "pages_ok": 15,
+  "pages_total": 15,
+  "file": "YOE2024051711.pdf"
+ },
+ "d35a5a320cab0a340a89ec6fae25fab4845f2b86d14dbe5cb795309e3de48fac": {
+  "status": "done",
+  "note": "源文件不可达",
+  "file": "YOE2025040964-4D-DIA乙酰化蛋白质组-南京大学-67500.00.pdf"
+ },
+ "8169d7fd5024be9eb71b0b595e8b9dcd340ebb898f5e304b89805c619d294e2a": {
+  "status": "done",
+  "note": "源文件不可达",
+  "file": "ZOE2024113839-4D-DIA泛素化蛋白质组-华中农业大学-156,000.00.pdf"
+ },
+ "b9295ea6786c514ab69de705a115cd53fec64f285b8acedf9e9c94afd10c7e8e": {
+  "status": "done",
+  "chars": 6875,
+  "pages_ok": 11,
+  "pages_total": 11,
+  "file": "YOE2025040964-4D-DIA乙酰化蛋白质组-南京大学-67500.00.pdf"
+ },
+ "fdcc6667739c070d80053ebb3d83b6e81f66acf17eb13b038dc95fd8cd0263f2": {
+  "status": "done",
+  "chars": 7173,
+  "pages_ok": 12,
+  "pages_total": 12,
+  "file": "ZOE2024113839-4D-DIA泛素化蛋白质组-华中农业大学-156,000.00.pdf"
+ }
+}

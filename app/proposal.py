@@ -231,6 +231,126 @@ def _is_plausible_heading(heading: str | None) -> bool:
     return True
 
 
+# ============================================================================
+# 文件身份说明（2026-09-15）：给证据附带「项目是干什么的 + 文件是干什么的」，
+# 让 LLM 召回后能复核证据的类型/作用。**纯确定性、零外发** —— 只从项目目录名与
+# 文件角色/文件名主干规则推导，不概括正文（那是第二步，需外发授权）。
+# ============================================================================
+
+# document_role → 中文短标签（供 LLM 复核「这份文件是什么」）
+_ROLE_LABELS = {
+    "our_response": "我方响应",
+    "final_signed": "我方最终版",
+    "contract_evidence": "合同证据",
+    "competitor_response": "竞品响应",
+    "tender_requirement": "招标要求",
+    "qualification_evidence": "资质证明",
+    "process_material": "过程材料",
+    "system_or_temp": "系统/临时",
+    "unknown": "待定",
+    "ambiguous": "未判定",
+}
+# 文件名**末尾**常见厂商署名段（剥除后露出业务主干）；抬头（如「上海欧易生物…投标文件」）不剥
+_FN_COMPANY_SUFFIXES = (
+    "上海欧易生物医学科技有限公司", "欧易生物医学科技有限公司", "欧易生物科技有限公司",
+    "上海欧易生物", "欧易生物", "鹿明生物", "上海鹿明", "欧易", "鹿明",
+    "百趣生物", "诺禾致源", "诺禾", "美吉生物", "美吉", "华大基因", "华大",
+    "联川生物", "联川", "拜谱生物", "拜谱", "吉凯基因", "吉凯",
+)
+
+
+_FN_SEPARATORS = "+·-｜_（(/ "  # str（rstrip/lstrip 只收 str，不收 tuple）；半角 +，勿打全角 ＋
+
+
+_FN_SEPARATORS = "+·-｜_（(/ "  # str 单字符集（勿打全角 ＋）
+
+def _strip_trailing_separators(text: str) -> str:
+    """剥掉末尾任意个分隔符（endswith(整串) 不表示「末尾任一分隔符」，须逐字判断）。"""
+    while text and text[-1] in _FN_SEPARATORS:
+        text = text[:-1]
+    return text
+
+
+def _strip_company_suffix(filename: str) -> str:
+    """剥文件名自带的厂商署名段（末尾 + 中间**独立段**），恢复业务主干。
+
+    示例：`报价单+上海欧易生物医学科技有限公司.pdf` → `报价单`
+          `欧易响应文件-上海欧易生物.pdf` → `欧易响应文件`
+          `…-欧易生物-响应文件-20250103.docx` → `…-响应文件-20250103`（中段独立段剥除）
+
+    只剥「独立段」：厂商名**前后都是分隔符**（或到串首/串尾）才剥 ——
+    嵌在中文词里（`欧易生物资源中心`/`…欧易生物科技公司`）不碰。
+    """
+    name = re.sub(r"\.[^.]+$", "", filename)   # 去扩展名，便于按段判定
+    # 1) 末尾独立段：`endswith(suffix)`，循环剥并被其前分隔符
+    changed = True
+    while changed:
+        changed = False
+        for suffix in _FN_COMPANY_SUFFIXES:
+            if name.endswith(suffix):
+                name = name[: -len(suffix)]
+                name = _strip_trailing_separators(name)
+                changed = True
+                break
+    # 2) 中段独立段：厂商名前后都有分隔符（或前为串首）→ 剥除该段及一侧分隔符。
+    #    规则：只剥「后随分隔符 &&（前随分隔符 || 前为串首）」的实例 —— 登记前缀或
+    #    项目名内分隔的厂商，不是业务主干；抬头独立段（`欧易生物报名文件`）**不剥**（后随字）。
+    for suffix in _FN_COMPANY_SUFFIXES:
+        while True:
+            idx = name.find(suffix)
+            if idx < 0:
+                break
+            before, after = name[:idx], name[idx + len(suffix):]
+            front_ok = idx == 0 or before[-1] in _FN_SEPARATORS
+            back_ok = bool(after) and after[0] in _FN_SEPARATORS
+            if front_ok and back_ok:
+                # 剥掉厂商段，保留一侧分隔符（`A-欧易生物-B` → `A-B`）。
+                # 前侧：厂商在串首时（idx==0）无前分隔，只需清 after 的**前导**分隔符；
+                #       厂商在中段时剥 before 尾分隔（`A-` → `A`）。
+                if idx == 0:
+                    after2 = after[1:] if after[:1] in _FN_SEPARATORS else after
+                    name = after2.lstrip(_FN_SEPARATORS)
+                else:
+                    name = _strip_trailing_separators(before) + after
+                continue
+            break  # 该 suffix 在此无独立段出现，换下一个
+    return _strip_trailing_separators(name)
+
+
+def project_summary_of(project_folder: str) -> str:
+    """项目简介 = 一级目录名去掉日期前缀。
+
+    现库目录名形态 `20250103-客户-联系人-项目名`（实测 20 条），日期段是纯登记前缀、
+    不含业务信息，剥掉即是「这个项目干什么」的最小确定性描述。容忍无日期（原样保留）。
+    """
+    pf = (project_folder or "").strip()
+    if not pf:
+        return ""
+    return re.sub(r"^\d{8}-?", "", pf)
+
+
+def _filename_stem(relative_path: str) -> str:
+    """文件名主干：剥厂商尾缀 + 去扩展名 + 收紧空白与首尾符号。不判角色（角色由 document_role 给出）。"""
+    fn = (relative_path or "").rsplit("/", 1)[-1]
+    base = _strip_company_suffix(fn)
+    base = re.sub(r"\.[^.]+$", "", base)
+    return base.strip().strip("-_（）()[]【】 ")
+
+
+def doc_purpose_of(relative_path: str, document_role: str) -> str:
+    """文件用途一句话 = 角色中文标签（document_role）+ 文件名主干。
+
+    例：our_response + `…/欧易响应文件_20260912151213.pdf` → `我方响应（欧易响应文件_20260912151213）`
+        其中 `_20260912151213` 保留（版本戳，剥掉会丢区分度）。
+    """
+    stem = _filename_stem(relative_path)
+    if not stem:
+        role = _ROLE_LABELS.get(document_role or "", None)
+        return role or document_role or "待定"
+    role = _ROLE_LABELS.get(document_role or "", document_role or "待定")
+    return f"{role}（{stem}）"
+
+
 def _recall(module: str, pool_size: int) -> list[dict]:
     """**按小节**召回候选池（R7-03：「每个小节先召回 20–30 候选池」）。
 
@@ -329,6 +449,11 @@ def build_evidence_packs(con, modules: list[str], *, pool_size: int = 25,
                         project_folder=d["project_folder"], document_role=d["document_role"],
                         source_path=str(roots.get(d["source_root_id"], Path("")).joinpath(
                             *d["relative_path"].split("/"))))
+            # 文件身份说明（2026-09-15）：让 LLM 复核「这份文件属于什么项目、是干什么的」。
+            # 纯规则生成、零外发；`_doc()` 已 SELECT 到 project_folder / relative_path / document_role，
+            # 故不改 SQL、不改测试 fixture。source_path **不进提示词**（红线，见 build_gen_prompt）。
+            item["project_summary"] = project_summary_of(d["project_folder"])
+            item["doc_purpose"] = doc_purpose_of(d["relative_path"], d["document_role"])
             (head if basis == "heading" else text_only).append(item)
 
         if not head and not text_only:
@@ -441,6 +566,8 @@ def packs_to_payload(packs: list[EvidencePack], *, excerpt: int = 1200,
                 "content_format": e.get("content_format"),
                 "document_role": e.get("document_role"),
                 "match_basis": e.get("match_basis"),
+                "project_summary": e.get("project_summary"),
+                "doc_purpose": e.get("doc_purpose"),
                 "text": text[:per_item],
                 "text_full_len": len(text),
                 "score": e.get("score"),
@@ -484,7 +611,13 @@ GEN_SYSTEM = """你是投标方案撰写助手。你**只能**使用下面给出
 4. 证据状态为 sparse 的小节，如材料不足请直接写「历史材料不足，以下仅为可查到的片段」，**不要用常识补写**。
 5. 证据状态为 insufficient 的小节，直接写「历史材料未覆盖本小节」。
 6. **不要**写评分标准、招标文件要求、竞品做法的内容。
-7. 输出 Markdown；每个小节用二级标题，标题必须包含小节名。"""
+7. 输出 Markdown；每个小节用二级标题，标题必须包含小节名。
+8. 每条证据行给出的【项目简介】/【文件用途】只用于**判断该证据是否适用于本方案**；
+   **不得**把这两项的内容当作可引用的原文或承诺。
+9. 若提示里指定了【本次方案的产品线】，而证据中**并列了多个产品线**的条目
+   （典型：同时列出「RNA 项目 / DNA 项目 / 单细胞项目」的异常处理），
+   **只保留与该产品线相关的条目**，其余产品线的条目**不得写入**；
+   若该小节确实与产品线无关（如通用管理条款），照常写。"""
 
 
 class ProposalGenError(RuntimeError):
@@ -511,16 +644,24 @@ def _gen_client():
                   timeout=config.PROPOSAL_GEN_TIMEOUT, max_retries=2), model
 
 
-def build_gen_prompt(payload: dict, constraints: str = "", kb: list[dict] | None = None) -> str:
-    """把**模块化经验** + 证据包 + 用户约束拼成提示词。
+def build_gen_prompt(payload: dict, constraints: str = "", kb: list[dict] | None = None,
+                     product: str = "") -> str:
+    """把**模块化经验** + 证据包 + 用户约束(+产品线) 拼成提示词。
 
     两段分工明确（R7-05 的范围未变：仍然只放命中原文、来源、约束）：
       - `kb`（可选）：**归纳自历史文件**的结构与口径（常用小节、承诺时限）。
         它告诉模型「我们通常怎么写」；**它本身不是原文，不得被引用**。
       - 证据包：**这一次可引用的原文**，带 `[E1]` 编号。
     两者混在一起会让模型把归纳句当原文引用，故显式分段并在提示里写明禁令。
+
+    `product`（2026-09-15 加，见 PLAN-20260915 §8-3）：**方案按产品线裁剪**。
+    用户裁定"全部模块都按产品特异处理、调用时交给 LLM 区分" —— 故这里只**如实告知产品线**
+    并给一条裁剪规则（`GEN_SYSTEM` 规则 9），**不做人工的通用/特异清单**。
     """
     lines: list[str] = []
+    if product:
+        lines.append(f"【本次方案的产品线】{product}"
+                     f"（证据里若并列了其它产品线的条目，只保留与本产品线相关的）\n")
     if constraints.strip():
         lines.append(f"【用户要求必须包含的内容】\n{constraints.strip()}\n")
     if kb:
@@ -532,7 +673,10 @@ def build_gen_prompt(payload: dict, constraints: str = "", kb: list[dict] | None
             lines.append("（无证据）")
         for e in m["evidence"]:
             lines.append(f"[{e['ref']}] 来源：{e.get('file_name')}"
-                         f"（项目：{e.get('project_folder')}；{e.get('heading') or '无标题'}）")
+                         f"（项目：{e.get('project_folder')}"
+                         f"｜项目简介：{e.get('project_summary') or '—'}"
+                         f"｜文件用途：{e.get('doc_purpose') or '—'}"
+                         f"｜章节：{e.get('heading') or '无标题'}）")
             lines.append(e.get("text") or "")
     lines.append("\n请按上述规则输出 Markdown 方案。")
     return "\n".join(lines)
@@ -884,7 +1028,10 @@ def assemble_proposal(payload: dict, constraints: str = "") -> dict:
             text = (e.get("text") or "").strip()
             lines.append(f"- {text} [{ref}]")
             lines.append(f"  - 出处：{e.get('file_name')}"
-                         f"（{e.get('heading') or '无标题'}）")
+                         f"（项目：{e.get('project_folder')}"
+                         f"｜项目简介：{e.get('project_summary') or '—'}"
+                         f"｜文件用途：{e.get('doc_purpose') or '—'}"
+                         f"｜{e.get('heading') or '无标题'}）")
         lines.append("")
     lines += ["---", "", "## 引用来源（逐条可打开核对）", ""]
     lines += [f"- `{c['ref']}` {c.get('heading') or '（无标题）'} — {c.get('file_name')}"
@@ -902,7 +1049,8 @@ def assemble_proposal(payload: dict, constraints: str = "") -> dict:
     }
 
 
-def generate_proposal(payload: dict, constraints: str = "", kb: list[dict] | None = None) -> dict:
+def generate_proposal(payload: dict, constraints: str = "", kb: list[dict] | None = None,
+                      product: str = "") -> dict:
     """R7-05/06/07：证据包 → 方案正文 + 引用清单 + 冲突/缺口警告 + 校验结果。
 
     `kb` 为「模块化经验」（`build_module_kb` 产出），由调用方从库里整理后传入 ——
@@ -913,7 +1061,7 @@ def generate_proposal(payload: dict, constraints: str = "", kb: list[dict] | Non
     """
     _guard()
     client, model = _gen_client()
-    prompt = build_gen_prompt(payload, constraints, kb)
+    prompt = build_gen_prompt(payload, constraints, kb, product=product)
     try:
         resp = client.chat.completions.create(
             model=model, temperature=0,

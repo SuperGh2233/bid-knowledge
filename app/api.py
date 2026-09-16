@@ -41,7 +41,13 @@ PRODUCT_ALIASES = {
     #   2. 每个条目的别名里**要包含它自己的规范名**，否则「不要脂质组」这类排除写法
     #      会在 `_classify_term` 里归不了类（它判的是 `t == alias or t in aliases`）。
     # —— 具体产品线（窄）——
-    "空间转录组": ("空间转录组", "空间转录"),
+    # 平台型号并入「空间转录组」（2026-09-15 业务裁定，见 PLAN-20260915 §8-2）：
+    #   · `Visium` / `Visium HD`（10x，测序型，全转录组）→ 并入；
+    #   · `Stereo-seq`（华大，测序型，全转录组）→ 并入（平台归属在结果里仍可辨）；
+    #   · `Xenium`（10x，**成像型、靶向**，非全转录组）→ **单列**，见下方独立条目（勿并入）；
+    #   · `CytAssist` 是**仪器**不是产品线 → 归 `instrument_name`，不在此。
+    # ⚠️ 别名是子串匹配、首个命中即返回 → 「空间转录组」必须仍排在「转录组」之前（有护栏测试钉住）。
+    "空间转录组": ("空间转录组", "空间转录", "Visium HD", "Visium", "Stereo-seq", "Stereo"),
     "空间代谢组": ("空间代谢组", "空间代谢"),
     "脂质组": ("脂质组", "脂质"),
     "靶向检测": ("精准靶向", "靶向检测", "靶向"),
@@ -85,7 +91,7 @@ _UNSUPPORTED_CONDITIONS = (
     # 若不拦，"找代谢组合同，不要蛋白组" 会照常返回——排除条件被静默丢弃。
     (re.compile(r"排除|不要|不含|去掉|除了|以外|剔除"), "排除／负向过滤条件"),
     (re.compile(r"发票|照片|凭证|回单|截图"), "发票／照片材料条件"),
-    (re.compile(r"供应商|乙方|甲方|竞品|华大|吉凯|诺禾|分包"),
+    (re.compile(r"供应商|乙方|甲方|竞品|分包"),
      "供应商／竞品范围条件"),
     # 方案主题检索：本页方案入口只提供一份冻结的售后服务示范稿，不支持按主题跨库检索。
     # 若不拦，"找写过售后方案的文件"会落到"请写明最低金额"，属误导性提示。
@@ -184,6 +190,20 @@ def _org_key(term: str) -> str | None:
     return min(hits, key=len) if hits else None
 
 
+def detect_product(text: str) -> str:
+    """从自由文本里识别**产品线**（首个命中的别名所属条目）；识别不出返回 `""`。
+
+    与检索侧**同一套 `PRODUCT_ALIASES` 与同一条「窄在前、首个命中即返回」口径** ——
+    两处若各写一套，会出现「查询按 A 产品召回、生成按 B 产品裁剪」的静默分叉。
+    **刻意不抛异常**：生成链路不该因产品识别失败而 500（识别不出就是不裁剪）。
+    """
+    t = text or ""
+    for alias, aliases in PRODUCT_ALIASES.items():
+        if any(a in t for a in aliases):
+            return alias
+    return ""
+
+
 def _classify_term(term: str) -> tuple[str | None, str | None]:
     """把一个词归类 → ('org'|'product', 归一关键词)；归不了返回 (None, None)。
 
@@ -249,6 +269,37 @@ def parse_scope_conditions(text: str) -> tuple[tuple[str, ...], tuple[str, ...],
             kind, _key = _classify_term(term)
             if kind and term.strip():
                 unresolved.append(term.strip())
+
+    # —— 裸厂商名 → 「乙方包含」（R1-4，2026-09-15）——
+    # 由来（需求方实测）：`华大转录组30万以上` 被**一律拒绝** —— 旧实现把 `华大|吉凯|诺禾`
+    # 直接列进 `_UNSUPPORTED_CONDITIONS` 的「供应商／竞品范围条件」。但那正是业务最自然的问法
+    # （「谁做的 + 什么产品 + 多少钱」）。现改为：**识别为乙方包含条件**。
+    # ⚠️ 出现在**排除语境**里的厂商**不**计入（`不要华大的转录组合同` 是排除项，不是包含项）。
+    # ⚠️ 排除语境里的厂商**不**计入（`不要华大的转录组合同` 是排除项，不是包含项）。
+    # 判据必须看**名称前后两侧**：否定词既可能在前面（`不要华大`），也可能在后面
+    # （`欧易以外的` —— 实测漏判过一次：只看前侧会把「欧易以外」误当包含）。
+    _exc_spans = [m.span() for m in _EXCLUDE_ASK.finditer(t)]
+    _NEG = re.compile(r"不要|不是|不为|并非|排除|去掉|剔除|不含|除了|以外|之外|除开")
+
+    def _in_negation(pos: int, length: int) -> bool:
+        if any(a <= pos < b for a, b in _exc_spans):
+            return True
+        return bool(_NEG.search(t[max(0, pos - 8):pos])
+                    or _NEG.search(t[pos + length:pos + length + 8]))
+
+    _found: set[str] = set()
+    for _name in _KNOWN_ORGS:
+        _start = 0
+        while True:
+            _i = t.find(_name, _start)
+            if _i < 0:
+                break
+            if not _in_negation(_i, len(_name)):
+                _found.add(_name)
+            _start = _i + 1
+    # 与 `_org_key` 同口径：同时命中长短两个名字（`华大`/`华大基因`）时**取短的** ——
+    # 简称拿去子串匹配的面更广，且避免 filter_note 里并列两个同义名。
+    inc.extend(sorted(n for n in _found if not any(o != n and o in n for o in _found)))
 
     return (tuple(dict.fromkeys(inc)), tuple(dict.fromkeys(exc_org)),
             tuple(dict.fromkeys(exc_prod)), tuple(dict.fromkeys(unresolved)))
@@ -327,6 +378,13 @@ def parse_demo_query(query: str) -> tuple[str, tuple[str, ...], float, str | Non
         # 用户并未确认（对抗审计指出这一点）。
         has_scope = bool(inc_p or exc_org)
     if blocked:
+        # 仪器类单独给**可执行的出路**（2026-09-16 需求方实测：`质谱仪` 在合同检索里被拦）——
+        # 仪器不是「合同的产品条件」，查它的正确入口是「仪器设备清单」或直接搜型号名。
+        if blocked == "仪器／设备条件":
+            raise ValueError(
+                "「仪器／设备」不是合同检索条件 —— 这里只按产品加最低金额查合同。"
+                "要查仪器请改用「仪器设备清单」，或直接输入通称/型号"
+                "（如「质谱仪」「测序仪」「Bruker timsTOF HT」）。")
         raise ValueError(f"当前预览暂不支持「{blocked}」。本页只支持按产品＋最低金额查找合同，"
                          f"请去掉该条件后重试。")
     if any(word in text for word in ("以下", "以内", "不超过", "最多")):
@@ -384,6 +442,35 @@ def live_scope(con) -> dict:
 
 
 
+
+
+def _fold_facts_by_file(rows: list[dict]) -> list[dict]:
+    """把**同一份文件**的多条材料事实折成一条，期间收进 `fact_values`。
+
+    为什么要折（2026-09-16 需求方反馈「检索 2026 年社保还会返回很多相同的文件」）：
+    材料事实是**一条期间一行**（社保缴费记录表一份文件就有 4 个月 ⇒ 4 条），
+    列表于是把同一份文件显示 4 次。业务要的是「**哪几份文件**含这类材料、涉及哪些期间」。
+    与 `_fold_by_contract`（R6-06 合同折叠）同一原则。
+
+    **保序**：按输入顺序取首次出现的文件建组；组内期间按出现顺序去重。
+    返回的每条保留原行字段，另有 `fact_values`（全部期间）与 `record_count`。
+    """
+    order: list[str] = []
+    groups: dict[str, dict] = {}
+    for r in rows:
+        key = r.get("relative_path") or r.get("document_id") or ""
+        if key not in groups:
+            order.append(key)
+            groups[key] = {**r, "fact_values": [], "record_count": 0}
+        g = groups[key]
+        g["record_count"] += 1
+        v = r.get("fact_value")
+        if v not in g["fact_values"]:
+            g["fact_values"].append(v)
+    for g in groups.values():
+        # 期间按字典序（ISO 字符串即时间序）；None（期间未知）排最后
+        g["fact_values"].sort(key=lambda x: (x is None or x == "", str(x)))
+    return [groups[k] for k in order]
 
 
 def _fold_by_contract(rows: list[dict]) -> list[dict]:
@@ -444,6 +531,57 @@ def parse_fact_query(text: str) -> tuple[str, str]:
 
 
 _MONTHISH = re.compile(r"^\d{4}(-\d{2})?$")
+
+
+# —— R1-3 仪器「通称 → 型号」映射（2026-09-15）——
+# 由来（需求方反馈）：业务按**通称**搜仪器（「找质谱仪」「测序仪」），而库里存的是**具体型号**
+# （`instrument_name`：`Bruker timsTOF HT`/`TapeStation 4200`…）——`质谱仪` 此前**完全不被识别**。
+# 词表在 `app/instrument_aliases.json`，**关键词全部取自库内真实型号**（不是凭空编的）；
+# 新增须人工确认后落库（与产品别名同一规则）。
+_INSTRUMENT_ALIASES_FILE = Path(__file__).resolve().parent / "instrument_aliases.json"
+
+
+def _load_instrument_aliases() -> dict[str, tuple[str, ...]]:
+    import json   # 与本文其余函数一致：局部导入，不抬到模块级
+
+    try:
+        raw = json.loads(_INSTRUMENT_ALIASES_FILE.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 —— 词表缺失/损坏时退化为「无通称映射」，不影响其余功能
+        return {}
+    return {k: tuple(v) for k, v in raw.items() if not k.startswith("_")}
+
+
+INSTRUMENT_ALIASES: dict[str, tuple[str, ...]] = _load_instrument_aliases()
+
+
+def resolve_instrument_query(text: str) -> tuple[str, ...]:
+    """自然问句 → **仪器型号关键词**元组；识别不出返回空元组（不猜）。
+
+    三路命中，顺序固定（窄→宽）：
+      1. 通称映射（`质谱仪` → `Bruker/timsTOF/Orbitrap/…`）；
+      2. 型号**直接命中**（用户直接写了 `Bruker timsTOF HT` 这类专业名）；
+      3. `instrument_name` 里已出现过的型号名（用库内真实值兜底，避免词表漏收）。
+    """
+    t = (text or "").strip()
+    if not t:
+        return ()
+    for name, models in INSTRUMENT_ALIASES.items():
+        if name in t:
+            return models
+    # 直接写型号
+    try:
+        con = readonly_db()
+        try:
+            names = [r[0] for r in con.execute(
+                "SELECT DISTINCT fact_value FROM material_facts "
+                "WHERE fact_type='instrument_name' AND fact_value IS NOT NULL")]
+        finally:
+            con.close()
+    except Exception:  # noqa: BLE001 —— 库不可达时不阻断（返回空 = 不筛选）
+        return ()
+    hit = [n for n in names if n and (n in t or any(
+        w in t for w in re.split(r"[\s\-_]+", n) if len(w) >= 4))]
+    return tuple(sorted(set(hit)))
 
 
 def period_covers(query_value: str, fact_value: str) -> bool:

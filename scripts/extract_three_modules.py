@@ -36,14 +36,16 @@ os.environ["BID_AI_CLEAN_DB"] = str(BASE / "bid_ai_clean_reg.db")
 
 import app.config as config  # noqa: E402
 from app import db as db_mod  # noqa: E402
+import app.extract as E  # noqa: E402
+from app.extract import scan_periods  # noqa: E402
 
 db = Path(config.DB_PATH)
 assert db.name.endswith("_reg.db") and db.name != "bid_ai_clean.db", f"拒绝写非测试库：{db}"
 
 # —— ② 财务社保：期间识别 ——
-YEAR = re.compile(r"(20\d{2})\s*年度?")
-YM = re.compile(r"(20\d{2})\s*年\s*(\d{1,2})\s*月")
-RANGE = re.compile(r"(20\d{2})\s*[-~至]\s*(20\d{2})")
+# 期间抽取已抽到 `app.extract.scan_periods`（可单测、口径一处维护）——
+# 2026-09-15 修 bug：原实现就地扫全文月份，把「授权书有效期到期日」当成社保月份
+# （实测 `social_security_month=2026-03` 伪造值）；现在那一层过滤在 `scan_periods` 里。
 
 # —— ③ 仪器设备：仪器名句式 ——
 # 实测形态：`共有11台10X单细胞Genomics Chromium仪器，设备序列号为：`、
@@ -97,21 +99,6 @@ def kind_of(name: str, text: str) -> str | None:
         if any(k in text for k in kws):
             return kind
     return None
-
-
-def periods_of(name: str, text: str) -> list[str]:
-    """抽期间：月份优先（精确），否则年度，再否则年度区间。**提不到返回空**。"""
-    src = name + "\n" + text[:2000]
-    mons = sorted({f"{y}-{int(m):02d}" for y, m in YM.findall(src)})
-    if mons:
-        return mons
-    yrs = sorted({y for y in YEAR.findall(src)})
-    if yrs:
-        return yrs
-    out = []
-    for a, b in RANGE.findall(src):
-        out += [a, b]
-    return sorted(set(out))
 
 
 def _unwrap(text: str) -> str:
@@ -258,7 +245,30 @@ with con:
 
         if not kind:
             continue
-        per = periods_of(name, text)
+        # 期间抽取：**只在材料标记附近取**（响应件里夹着营业执照/合同/证书/招标要求/身份证，
+        # 全文扫描会把「营业执照登记日期」「签署日期」甚至**招标文件自己的投标截止时间**
+        # 当成社保月份 —— 2026-09-15/16 需求方两轮实测）。
+        # 两级标记：强标记（材料段落标题）优先，取不到再用宽标记。
+        # ⚠️ **不再回退到全文扫描**：实测那一路正是伪造值来源（851 份含社保事实的文档里
+        #    501 份靠它给值，其中就有把「2026 年 6 月」（招标截止）当社保月份的）。
+        #    找不到材料记录段 → **如实「期间未知」，不猜**（与"提不到就不写"同一原则）。
+        # ⚠️ **分档**（2026-09-16 需求方第三轮反馈「不能只改个例」）：
+        #   强标记（`社会保险费缴费记录`/`社会保障记录`）→ **窗口**：那是**记录表**，
+        #     OCR 把表格列打散，期间与关键词常不同行；
+        #   宽标记（`社会保险`/`社保` 泛词）→ **同一行**：那多是**声明句**
+        #     （`现附上自2025年2月1日至…我方缴纳的社会保险凭据`）。统一用 ±150 窗口会把
+        #     同段的「签署时间/日期」也收进来 —— 实测窗口内约 650 条是签署日期。
+        if kind == "social_security_month":
+            per = (E.scan_periods_near(text, E.SS_MARKERS_STRONG, month_only=True)
+                   or E.scan_periods_near(text, E.SS_MARKERS, same_line=True))
+        elif kind == "finance_period":
+            per = (E.scan_periods_near(text, E.FIN_MARKERS_STRONG)
+                   or E.scan_periods_near(text, E.FIN_MARKERS, same_line=True))
+        else:
+            per = []
+        # 独立信号校验：**材料期间不得晚于项目日期**（目录名自带 `YYYYMMDD`）——
+        # 证书/身份证**有效期**（`2027-12`/`2028-04`）紧邻社保段落时会被收进来（实测 2026-09-16）。
+        per = E.filter_periods_by_project_date(per, r["relative_path"].split("/")[0])
         if not per:
             # 无期间：仍记一条（事实是"有这类材料"，期间未知）
             per = [None]

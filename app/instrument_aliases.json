@@ -1,0 +1,14 @@
+{
+  "_note": "仪器「通称 → 型号关键词」映射（R1-3，2026-09-15）。用途：业务按通称（质谱仪/测序仪…）搜索时，命中对应的具体型号 —— 型号本身存在 material_facts.fact_type='instrument_name'。关键词全部取自**库内真实仪器名**（16 类，实测：TapeStation 4200/4150、Bioanalyzer 2100、10X单细胞Genomics Chromium仪器、192通道HBH192、96通道Auto-Pure 96、10X CytAssist 仪器、Bruker timsTOF HT、Agilent 7890B-5977B、Thermo Fisher Obitrap Astral、Thermo Fisher Q Exactive HF、QE质谱仪、Novaseq X Plus、DNBSEO-T7），**不是凭空编的**。⚠️ 新增/调整须**人工确认**后落库（与产品别名同一规则，见父级 CLAUDE.md）。⚠️ 判断是**子串匹配**：窄词要与宽词并列时注意顺序不是问题（这里全部 OR 展开）。",
+  "质谱仪": ["Bruker", "timsTOF", "Agilent", "7890B", "5977B", "Thermo", "Orbitrap", "Q Exactive", "QE质谱"],
+  "高分辨质谱": ["Bruker", "timsTOF", "Orbitrap", "Q Exactive", "QE质谱"],
+  "色谱质谱联用仪": ["7890B", "5977B", "Agilent"],
+  "测序仪": ["Novaseq", "DNBSEQ-T7"],
+  "高通量测序仪": ["Novaseq", "DNBSEQ-T7"],
+  "生物分析仪": ["TapeStation", "Bioanalyzer"],
+  "片段分析仪": ["TapeStation", "Bioanalyzer"],
+  "单细胞平台": ["Chromium", "CytAssist"],
+  "单细胞仪器": ["Chromium", "CytAssist"],
+  "核酸提取仪": ["Auto-Pure"],
+  "自动化建库设备": ["HBH192"]
+}

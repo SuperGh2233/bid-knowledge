@@ -71,7 +71,8 @@ const CONTRACT_CSV = {
 // 需求一另两类问法的导出列（与卡片上显示的一致）
 const FACT_CSV = {
   headers: ["材料类别", "期间", "项目", "文件", "文件内文字", "文件位置"],
-  rowOf: (r) => [FACT_LABEL[r.fact_type] || r.fact_type, r.fact_value || "",
+  // 期间用 `factValuesText`（折叠后多值一并导出）—— 与卡片上显示的**同一口径**
+  rowOf: (r) => [FACT_LABEL[r.fact_type] || r.fact_type, factValuesText(r),
                  r.project_folder, r.file_name, r.evidence_text, r.source_path],
 };
 const SCHEME_CSV = {
@@ -373,12 +374,16 @@ function renderContractAnswer(data, target) {
 
 /** ②③ 材料存在性（财务社保 / 仪器设备 / 发票 / 照片 / 资质）→ 哪些文件里有这类材料 */
 function renderFactAnswer(data, target) {
-  const facts = data.facts || [];
+  // ⚠️ 与「按类浏览」同一口径：优先用**按文件折叠后**的 `files`
+  // （2026-09-16 需求方反馈「同一份文件按每月一条出现多次」）—— 这条路径原先只用未折叠的 `facts`，
+  // 于是同一份社保缴费记录表会重复出现好几次。缺 `files` 时回退到 `facts`。
+  const facts = (data.files && data.files.length) ? data.files : (data.facts || []);
   const related = data.related || [];
   const cards = facts.map(f => `<article class="result-card ${f.role_scope === "tender" ? "warning" : ""}">
     <div class="card-top"><h3>${esc(factLabel(f.fact_type))}</h3>
-      <span class="amount">${esc(f.fact_value || "期间未提取到")}</span></div>
+      <span class="amount">${esc(factValuesText(f))}</span></div>
     <span class="tag">${esc(f.role_label || ROLE_LABEL[f.role_scope] || "")}</span>
+    ${(f.record_count || 1) > 1 ? `<span class="tag">本文件 ${f.record_count} 条</span>` : ""}
     ${metaBlock(f)}
     ${f.evidence_text ? `<div class="evidence">文件中对应文字：${esc(f.evidence_text)}</div>`
       : `<div class="evidence">这份文件本身只登记了文件名，正文里没有可引用的原句 —— 请打开文件确认。</div>`}
@@ -434,6 +439,43 @@ function renderSchemeAnswer(data, target) {
 
 function inline(text) {
   return esc(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`(.+?)`/g, "<code>$1</code>");
+}
+
+/**
+ * 「复制草稿全文」用的**净正文**：剥掉证据痕迹，只留可编辑的内容。
+ *
+ * 起因（2026-09-14 用户反馈）：原来复制的是 `data.markdown` 原始串 —— 每个 [E4] 引用编号、
+ * 每段的「出处：」行、引用清单汇总全被一起复制走。用户要的是「方案正文」，不要「证据」。
+ *
+ * 处理规则（与渲染同一份源，勿另起一套）：
+ *   - 删 `[En]` 引用编号、`  - 出处：` 行、`## 引用来源` 起的清单（出处靠页面引用清单与
+ *     「复制全部来源文件位置」按钮单独承担）；
+ *   - 标题 `#→` 去井号、列表 `*  **x**` → `- x`、粗体/行内码去符号、分隔线删。
+ */
+function markdownToPlainText(markdown) {
+  const out = [];
+  for (const line of (markdown || "").split(/\r?\n/)) {
+    const raw = line.replace(/\[E\d+\]/g, "");
+    if (/^ {2,}- 出处：/.test(raw)) continue;   // 出处行不进复制正文
+    if (/^## 引用来源/.test(raw)) break;        // 引用清单汇总不复制（页面已单独提供复制来源）
+    if (/^- `[E\d]+`/.test(raw)) continue;      // 引用清单行
+    // 空行 → 段落分隔（复制到 Word 时保留分段，不要全挤成一行）
+    if (!raw.trim()) {
+      if (out.length && out[out.length - 1] !== "") out.push("");
+      continue;
+    }
+    let t = raw.trim();
+    if (/^#{1,4}\s/.test(t)) t = t.replace(/^#{1,4}\s*/, "");
+    else if (/^>\s?/.test(t)) t = t.replace(/^>\s?/, "");
+    t = t.replace(/^\*\*\s+/, "- ").replace(/^\*+\s*/, "- ").replace(/^-\s+/, "- ");
+    t = t.replace(/^\s*[-*]+\s*$/, "");           // 纯分隔线（--- 或 ***）
+    t = t.replace(/\*\*(.+?)\*\*/g, "$1").replace(/`([^`]+)`/g, "$1");
+    // 编号被剥掉后常剩 `空格＋标点`（原文「…培训 [E4]。」→ 剥编号 →「…培训 。」）—— 收掉
+    t = t.replace(/\s+([。！？；：,，.、）】])/g, "$1");
+    if (!t.trim()) continue;
+    out.push(t.trim());
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function renderMarkdown(markdown) {
@@ -587,7 +629,7 @@ async function generateDraft(mode) {
     const copyDraft = $("#copy-draft");
     if (copyDraft) {
       copyDraft.addEventListener("click", () => copyText(copyDraft,
-        data.markdown || "", "已复制草稿全文"));
+        markdownToPlainText(data.markdown || ""), "已复制草稿正文（不含证据编号）"));
     }
   } catch (error) { target.innerHTML = `<div class="error">${esc(error.message)}</div>`; }
   finally { done(); }
@@ -669,14 +711,24 @@ function renderProjectRows(rows) {
   }).join("");
 }
 
+/** 材料事实的期间显示（**两处共用，勿各写一份**）：
+ *  折叠后 `fact_values` 有多值就一并显示；期间未知（null）**不是缺失**，如实写「期间未提取到」。 */
+function factValuesText(r) {
+  const vals = (r.fact_values || [r.fact_value]).filter(v => v !== null && v !== undefined && v !== "");
+  return vals.length ? vals.join(" / ") : "期间未提取到";
+}
+
 function renderFactRows(rows) {
-  return rows.map(r => `<article class="result-card ${r.role_scope === "tender" ? "warning" : ""}">
+  return rows.map(r => {
+    const shown = factValuesText(r);
+    const more = (r.record_count || 1) > 1 ? `<span class="tag">本文件 ${r.record_count} 条</span>` : "";
+    return `<article class="result-card ${r.role_scope === "tender" ? "warning" : ""}">
     <div class="card-top"><h3>${esc(FACT_LABEL[r.fact_type] || r.fact_type)}</h3>
-      <span class="amount">${esc(r.fact_value || "期间未提取到")}</span></div>
-    <span class="tag">${esc(ROLE_LABEL[r.role_scope] || "")}</span>
+      <span class="amount">${esc(shown)}</span></div>
+    <span class="tag">${esc(ROLE_LABEL[r.role_scope] || "")}</span>${more}
     ${metaBlock(r)}
     ${r.evidence_text ? `<div class="evidence">文件中对应文字：${esc(r.evidence_text)}</div>` : ""}
-  </article>`).join("");
+  </article>`; }).join("");
 }
 
 const MODULE_CSV = {
@@ -740,7 +792,11 @@ async function loadModule(name) {
     // 排在后头的类别（如「仪器采购合同」）会被整类切掉，页面看起来像「这一类没有」。
     const data = await request(`/api/three-modules?module=${encodeURIComponent(name)}&limit=1000`);
     const rows = data.records || [];
-    const cards = name === "项目业绩" ? renderProjectRows(rows) : renderFactRows(rows);
+    // ⚠️ 材料事实类走**按文件折叠后**的 `files`（2026-09-16 需求方反馈「检索还返回很多相同的文件」）：
+    // 一条期间一行会让同一份文件重复出现（社保缴费记录表一份文件就有好几个月）。
+    // `files` 由后端折叠（期间收进 `fact_values`）；缺该字段时回退到原始 records。
+    const folded = data.files && data.files.length ? data.files : rows;
+    const cards = name === "项目业绩" ? renderProjectRows(rows) : renderFactRows(folded);
     // 类别存量必须上屏：**没显示出来的类别 ≠ 没有这类材料**
     const tc = data.type_counts || {};
     const chips = Object.entries(tc)

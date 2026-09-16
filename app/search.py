@@ -24,6 +24,11 @@ from pathlib import Path
 from app.extract import (parse_contract_service_table, product_amount_status,
                          product_from_filename, product_key_of)
 
+# 方案 C（2026-09-15 用户批准，PLAN-20260915 §8-3）：无明细表的**单产品**合同，
+# 金额按「文件名唯一产品 × 合同总额」归因。该来源值 **必须**与真实明细的 `declared`
+# 严格区分 —— 它是**归因**不是正文声明，前端/接入方据此可辨。
+FILENAME_PRODUCT_TOTAL = "filename_product_total"
+
 DEFAULT_ROOTS = {
     "2025年": Path(r"\\192.168.10.188\大客户部\01 投标项目文件\2025年"),
     "2026年": Path(r"\\192.168.10.188\大客户部\01 投标项目文件\2026年"),
@@ -334,15 +339,30 @@ def locate_by_product_amount(con, product_keywords: tuple[str, ...], min_amount:
                     r["category"] = fp
         # 若该文档 canonical 正文未解析出任何服务明细，则显示为 "dataless" 跳过（不参与命中）
         if not records:
-            out.append(LocateResult(
-                contract_id=ctl["contract_id"], document_id=doc["document_id"],
-                project_folder=doc["project_folder"],
-                file_name=doc["relative_path"].rsplit("/", 1)[-1],
-                source_path=str(Path(roots.get(doc["source_root_id"], Path(""))).joinpath(*doc["relative_path"].split("/"))),
-                product="", amount=None, amount_status="dataless",
-                detail_evidence="", hit=False,
-                skipped_reason="canonical 正文无服务明细（可能表格格式或表头缺失）", **hdr))
-            continue
+            # —— 方案 C 回退（2026-09-15 用户批准，见 PLAN-20260915 §8-3）——
+            # 简式/技术开发（委托）合同的**正文本就没有服务明细表**（实测 43 个合同号皆此因），
+            # 若**文件名给出唯一产品**且**合同头取到金额**，则按「该产品 × 合同总额」合成一条明细参与判定。
+            # ⚠️ 来源标注 `filename_product_total`，与真实明细 `declared` **严格区分、可审计**；
+            #    单产品合同下「合同总额 == 该产品金额」，不是编造；多产品（文件名给不出唯一产品）**不走此路**。
+            fp_syn = product_from_filename(doc["relative_path"].rsplit("/", 1)[-1])
+            if fp_syn and hdr.get("total_amount"):
+                records = [{
+                    "row_type": "detail", "category": fp_syn, "service_name": "",
+                    "line_amount": float(hdr["total_amount"]),
+                    "amount_source": FILENAME_PRODUCT_TOTAL,
+                    "row_text": f"[文件名归因] {doc['relative_path'].rsplit('/', 1)[-1]}"
+                                 f"（单产品合同、正文无服务明细表；金额=合同总额 {hdr['total_amount']}）",
+                }]
+            else:
+                out.append(LocateResult(
+                    contract_id=ctl["contract_id"], document_id=doc["document_id"],
+                    project_folder=doc["project_folder"],
+                    file_name=doc["relative_path"].rsplit("/", 1)[-1],
+                    source_path=str(Path(roots.get(doc["source_root_id"], Path(""))).joinpath(*doc["relative_path"].split("/"))),
+                    product="", amount=None, amount_status="dataless",
+                    detail_evidence="", hit=False,
+                    skipped_reason="canonical 正文无服务明细（可能表格格式或表头缺失）", **hdr))
+                continue
         # 产品匹配：`product_raw` = 「类别/服务名」，**两段都参与匹配**。
         # 只匹配类别会让「类别通用」的合同（如 `多组学检测（非范本合同）`，实测 98 份里有 30 份）
         # 任何产品查询都查不到 —— 尽管其服务名里有 `LC-MS/MS 精准靶向代谢`。
@@ -405,10 +425,15 @@ def locate_by_product_amount(con, product_keywords: tuple[str, ...], min_amount:
                 for r in records
                 if r["row_type"] == "detail" and needle in _row_product_raw(r)
             )[:240]
-            # 金额来源：该产品是否含**推算**出来的明细行（开关开启时才可能）
+            # 金额来源：该产品是否含**推算**出来的明细行（开关开启时才可能）；
+            # 或**方案 C 的文件名归因**（无明细表单产品合同，见上）。
             src_kind = ("derived_qty_x_price"
                         if any(r["row_type"] == "detail" and needle in _row_product_raw(r)
                                and r.get("amount_source") == "derived_qty_x_price"
+                               for r in records)
+                        else FILENAME_PRODUCT_TOTAL
+                        if any(r["row_type"] == "detail" and needle in _row_product_raw(r)
+                               and r.get("amount_source") == FILENAME_PRODUCT_TOTAL
                                for r in records)
                         else "declared")
             hit = (label == "ok" and amount is not None and amount >= min_amount)

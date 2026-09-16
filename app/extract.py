@@ -810,6 +810,137 @@ def extract_period(text: str) -> str | None:
     return m.group(1) if m else None
 
 
+# —— 期间扫描（「三类材料定位」的财务/社保期间用）——
+# 与 `extract_period` 的分工：`extract_period` 从**单条声明句**里抽精确期间（带区间）；
+# 本组函数从**整段文本**扫出期间候选（宽口径），供三模块定位用。
+_SCAN_YEAR = re.compile(r"(20\d{2})\s*年度?")
+_SCAN_YM = re.compile(r"(20\d{2})\s*年\s*(\d{1,2})\s*月")
+_SCAN_RANGE = re.compile(r"(20\d{2})\s*[-~至]\s*(20\d{2})")
+# ⚠️ **非材料期间**的上下文 —— 这些句子里的年月不是「材料所属期间」，必须先剔除。
+# 实测（2026-09-15 需求方反馈）：正文里的
+#   `本授权书有效期限为：2025年3月14日至2026年3月14日，特此声明。`
+# 到期日被抽成 `social_security_month=2026-03`（**伪造值**）—— 授权书写的是委托期限，
+# 与社保缴纳月份无关。同类还有证书有效期、投标有效期。
+_SCAN_NOISE_CTX = re.compile(
+    r"(?:有效期限|有效期|授权期限|委托期限|证书有效|投标有效|认证有效)"
+    r"[^\n。；]{0,80}")
+# 合理年份区间（与 `app/api.py::parse_demo_date` 同口径）：材料期间不会落在范围外。
+# 实测脏值 `2046-06` / `2029-03` / `2028-07` / `2009-03` 全部来自无关上下文。
+_SCAN_YEAR_MIN, _SCAN_YEAR_MAX = 2015, 2030
+
+
+def scan_periods(name: str, text: str, *, head: int = 2000) -> list[str]:
+    """从「文件名 + 正文前 `head` 字」扫描期间候选：月份优先，否则年度，再否则年度区间。
+
+    返回按值排序的去重列表；**提不到返回空**（宁缺毋滥）。
+
+    两处收紧（2026-09-15 修 bug）：
+      1. 剔除「有效期／授权期限」等**非材料期间**上下文（`_SCAN_NOISE_CTX`）——
+         否则授权书到期日会被当成社保月份（实测：`2026-03` 伪造值）；
+      2. 只认 `[_SCAN_YEAR_MIN, _SCAN_YEAR_MAX]` 内的年份 —— 剔除 `2046-06` 这类脏值。
+    """
+    src = _SCAN_NOISE_CTX.sub(" ", name + "\n" + (text or "")[:head])
+    mons = sorted({f"{y}-{int(m):02d}" for y, m in _SCAN_YM.findall(src)
+                   if _SCAN_YEAR_MIN <= int(y) <= _SCAN_YEAR_MAX})
+    if mons:
+        return mons
+    yrs = sorted({y for y in _SCAN_YEAR.findall(src)
+                  if _SCAN_YEAR_MIN <= int(y) <= _SCAN_YEAR_MAX})
+    if yrs:
+        return yrs
+    out: list[str] = []
+    for a, b in _SCAN_RANGE.findall(src):
+        out += [y for y in (a, b) if _SCAN_YEAR_MIN <= int(y) <= _SCAN_YEAR_MAX]
+    return sorted(set(out))
+
+
+# —— 按「材料标记」限定范围的期间抽取（2026-09-15 修）——
+# 由来（需求方反馈）：一份 48k 字的**扫描响应件**里夹着营业执照、合同、证书、完税凭证……
+# 全量扫描会把「营业执照**登记机关** 2024年09月26日」「签署**日期** 2026年8月27日」
+# 当成社保月份（实测正是这两个假值）。真正的社保期间在「社会保险费缴费记录」表里。
+# 故：**只在材料标记附近取期间**，且接受连字符形态 `YYYY-MM`（社保/完税表多用此形）。
+_SCAN_YM_DASH = re.compile(r"(20\d{2})[-/.](\d{1,2})(?![\d])")
+# **只认「月」**：`YYYY-MM` 后面**不接**「-日」/「.日」——用于区分
+# 「费款所属期」（是**月**）与「入库日期」（是**具体日**）。
+_SCAN_YM_DASH_MONTH = re.compile(r"(20\d{2})[-/.](\d{1,2})(?![-/.\d])")
+_SCAN_YM_CN_MONTH = re.compile(r"(20\d{2})\s*年\s*(\d{1,2})\s*月(?!\s*\d)")
+# 材料标记（按 kind 分）：**强**标记 = 该材料段落的标题；宽标记 = 相关词（兜底用）
+SS_MARKERS_STRONG = ("社会保险费缴费记录", "社会保障记录")
+SS_MARKERS = SS_MARKERS_STRONG + ("社会保险事业管理中心", "社保经办机构", "社会保险", "社保")
+FIN_MARKERS_STRONG = ("财务报告", "审计报告", "资产负债表", "利润表", "资信证明")
+FIN_MARKERS = FIN_MARKERS_STRONG + ("纳税", "完税", "税收凭据", "税收业务专用章")
+
+
+def filter_periods_by_project_date(periods: list[str], project_folder: str, *,
+                                   margin_months: int = 3) -> list[str]:
+    """剔除**晚于「项目日期 + margin」**的期间 —— 社保/财务材料不可能来自未来。
+
+    项目目录名自带登记日期（`20260814-标书-…`）。实测（2026-09-16 需求方反馈）：
+    证书/身份证/认证的**有效期**（`2027-12`/`2028-04`/`2027-05`）会紧邻社保段落被收进来，
+    产出「未来社保月份」—— 一个 2026-08 的项目报出 2028-04 的社保，一眼即假。
+    `margin_months=3` 是留给「登记日 → 实际投标」的正常间隔（实测 23 例只差 1 个月）。
+
+    取不到项目日期（目录名无 `YYYYMMDD` 前缀）时**不筛**（宁可不筛，不可误删）。
+    """
+    import re as _re
+
+    m = _re.match(r"^\s*(\d{4})(\d{2})", project_folder or "")
+    if not m:
+        return periods
+    cutoff = int(m.group(1)) * 12 + int(m.group(2)) + margin_months
+    out: list[str] = []
+    for p in periods:
+        mm = _re.match(r"^(\d{4})-(\d{1,2})$", p or "")
+        if mm and int(mm.group(1)) * 12 + int(mm.group(2)) > cutoff:
+            continue                      # 未来期间 → 剔除
+        out.append(p)
+    return out
+
+
+def scan_periods_near(text: str, markers: tuple[str, ...], *,
+                      window: int = 150, head: int = 120_000,
+                      same_line: bool = False, month_only: bool = False) -> list[str]:
+    """只在 `markers` 的**上下文**里取期间；找不到返回空（宁缺毋滥）。
+
+    `same_line=False`（默认）：标记 ±`window` 字窗口 —— 用于**记录表**
+      （`社会保险费缴费记录`：OCR 把表格列打散，期间与关键词常不在同一行）。
+    `same_line=True`：**只取含标记的那一行**内的期间 —— 用于**声明句**
+      （`现附上自2025年2月1日至…我方缴纳的社会保险凭据`：期间与关键词同句同行）。
+    `month_only=True`：**只认「月」形态**，不认完整日期 —— 用于社保**记录表**：
+      表里有两类日期列，`费款所属期` 是**月**（`2026-04`），`入库日期` 是**具体日**
+      （`2026-05-14`）。不区分会把入库日当社保月份（2026-09-16 需求方实测：
+      一份文件报出 4 个月，全是入库日期与隔壁税收凭据段的日期）。
+
+    ⚠️ 为什么必须分档（2026-09-16 实测）：统一的 ±150 窗口会把**同段里出现的任意日期**
+    都收进来 —— 实测窗口内**约 650 条是「签署时间/日期」**。**宽标记（`社保` 泛词）必须走同行**。
+
+    仍受 `[_SCAN_YEAR_MIN, _SCAN_YEAR_MAX]` 年份区间与月份合法性（1–12）约束，
+    并**先做「有效期/授权期限」等噪声上下文掩码**。
+    """
+    t = _SCAN_NOISE_CTX.sub(" ", (text or "")[:head])
+    if same_line:
+        segs = [ln for ln in t.splitlines() if any(mk in ln for mk in markers)]
+    else:
+        segs = []
+        for mk in markers:
+            start = 0
+            while True:
+                i = t.find(mk, start)
+                if i < 0:
+                    break
+                segs.append(t[max(0, i - window): min(len(t), i + window)])
+                start = i + len(mk)
+    got: set[str] = set()
+    for seg in segs:
+        pairs = (_SCAN_YM_CN_MONTH.findall(seg) + _SCAN_YM_DASH_MONTH.findall(seg)
+                 if month_only
+                 else _SCAN_YM.findall(seg) + _SCAN_YM_DASH.findall(seg))
+        for y, m in pairs:
+            if _SCAN_YEAR_MIN <= int(y) <= _SCAN_YEAR_MAX and 1 <= int(m) <= 12:
+                got.add(f"{y}-{int(m):02d}")
+    return sorted(got)
+
+
 def extract_material_facts(text: str, document_id: str) -> list[dict]:
     """从「现附上…」声明句提取材料事实。
 
@@ -886,7 +1017,13 @@ def contract_header_facts(text: str, filename: str) -> dict:
             # 抓到**隔壁列的标签**「供方（乙方）」。取错比不取更糟 → 复用 _clean_org 的机构词校验
             # （对当前 98 份 CTL 全量回放，仅此 1 例受影响，其余 93 例取值不变）。
             out[key] = _clean_org(mm.group(1))
-    m = _FILE_AMOUNT.search(filename or "")
+    # ⚠️ 匹配文件名金额前**先把合同号去掉**：文件名形如 `YOE2024051711.pdf`（不含金额）时，
+    # `_FILE_AMOUNT` 会把**合同号本身**当成金额（实测 `total_amount=2024051711.0`，
+    # 而明细合计仅 272,000 —— 2026-09-15 补提取时发现）。去掉编号后无数字 → 正确落到正文兜底。
+    _amt_src = filename or ""
+    if out.get("contract_number"):
+        _amt_src = _amt_src.replace(out["contract_number"], "", 1)
+    m = _FILE_AMOUNT.search(_amt_src)
     if m:
         try:
             out["total_amount"] = round(float(m.group(1).replace(",", "").replace("，", "")), 2)
@@ -1301,7 +1438,12 @@ def sync_contract_service_items(con, source_doc_id: str, records: list[dict],
                  # 否则 product_raw 会以 "/" 开头，_cat_of 取到空串、产品匹配全部失效。
                  ((r.get("category") + "/") if r.get("category") else "") + (r.get("service_name") or ""),
                  None, r.get("quantity"), r.get("unit_price"), r.get("line_amount"),
-                 r["row_type"], "declared" if r["row_type"] == "detail" else "explicit_product_subtotal",
+                 r["row_type"],
+                 # 来源**可审计**：调用方可显式指定（如 `filename_product_total` ——
+                 # 单产品、无明细表合同的**文件名归因**，见 `PLAN-20260915` R1-1.b′ / §8-3），
+                 # 缺省仍按 row_type 推导 `declared` / `explicit_product_subtotal`。
+                 r.get("product_amount_source")
+                 or ("declared" if r["row_type"] == "detail" else "explicit_product_subtotal"),
                  r.get("row_text") or ""))
             n += 1
     total = contract_total

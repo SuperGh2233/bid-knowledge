@@ -131,16 +131,39 @@ def test_scope_label_is_never_cleared_without_a_parsed_object():
     """
     for query in ("找2万元以上的代谢组合同，除了欧易以外",
                   "找2万元以上的代谢组合同，欧易以外的",
-                  "找华大的2万元以上代谢组合同",
-                  "找2万元以上的代谢组合同，甲方是华大",
-                  "找2万元以上的代谢组合同，乙方不是欧易",
-                  "找2万元以上的代谢组合同，乙方：欧易"):
+                  "找2万元以上的代谢组合同，乙方不是欧易"):
+        # ⚠️ 2026-09-15（R1-4）**移出本用例**的两条：`找华大的2万元以上代谢组合同`、
+        # `找2万元以上的代谢组合同，甲方是华大`、`…，乙方：欧易` —— 它们现在**能解析出对象**
+        # （裸厂商名 → 「乙方包含」），不再属于「只命中词表、解析不出对象」的拒绝类。
+        # **仍然拒绝**的这三条：否定/排除语境里厂商名解析不出对象，必须如实拒绝、不得静默放行。
         try:
             parse_demo_query(query)
         except ValueError:
             pass
         else:
             raise AssertionError(f"范围条件被静默丢弃：{query}")
+
+
+def test_bare_vendor_name_is_a_supported_scope_condition():
+    """裸厂商名 → 「乙方包含」条件（R1-4，2026-09-15 业务反馈）。
+
+    由来：需求方问 `华大转录组 30w 合同`（业务最自然的「谁做的 + 什么产品 + 多少钱」）被**一律拒绝** ——
+    旧实现把 `华大|吉凯|诺禾` 直接列进「供应商／竞品范围条件」的拦截正则。
+    现改为识别为乙方包含条件；**排除语境里的厂商仍走排除**，不得被当包含。
+    """
+    from app.api import parse_scope_conditions
+    # 无排除语境 → 包含
+    inc, exc_org, exc_prod, _ = parse_scope_conditions("华大转录组30万以上的合同")
+    assert inc == ("华大",) and exc_org == () and exc_prod == ()
+    # 有排除语境 → 归排除，**不得**同时进包含
+    inc2, exc_org2, _, _ = parse_scope_conditions("不要华大的转录组合同，2万元以上")
+    assert inc2 == () and exc_org2 == ("华大",)
+    # ⚠️ 否定词在厂商名**后面**（`欧易以外的`）同样不得被当成包含 —— 实测漏判过一次
+    inc4, _, _, _ = parse_scope_conditions("找2万元以上的代谢组合同，欧易以外的")
+    assert "欧易" not in inc4
+    # 同时命中长短两个名字（`华大`/`华大基因`）→ 取短的（与 `_org_key` 同口径）
+    inc3, _, _, _ = parse_scope_conditions("华大基因的转录组合同")
+    assert inc3 == ("华大",)
 
 
 def test_other_unsupported_condition_is_not_dropped_alongside_scope():
@@ -397,3 +420,26 @@ def test_negation_words_we_cannot_parse_are_rejected_not_dropped():
     # 「不含税」不是排除材料（业务上说的是价格口径）→ 不该被当成排除项举报
     _, _, _exc, unres2 = parse_scope_conditions("找2万元以上的代谢组合同，不含税")
     assert "税" not in "".join(unres2)
+
+
+def test_platform_aliases_fold_into_spatial_transcriptomics():
+    """平台型号归属（2026-09-15 业务裁定，PLAN-20260915 §8-2）：
+
+      · `Visium` / `Visium HD`（10x，测序型全转录组）→ **并入**「空间转录组」；
+      · `Stereo-seq`（华大，测序型全转录组）→ **并入**；
+      · `Xenium`（成像型、**靶向**，非全转录组）→ **单列**（不得被并入）；
+      · `CytAssist` 是仪器不是产品线 → 不出现任何产品别名里。
+
+    这些是**业务口径决定**，不是实现细节 —— 改动前须先改 PLAN 的 §8-2。
+    """
+    from app.api import PRODUCT_ALIASES
+    # ⚠️ 用不带**供应商名**的写法：`华大 Stereo-seq …` 会被「供应商／竞品范围条件」守卫拒绝
+    # （那是 R1-4 的问题，与别名无关；R1-4 修好后可加回该写法，见 PLAN-20260915 §R1-4）。
+    for text in ("Visium HD 空间转录组", "10x Visium 空转", "Stereo-seq 空间转录组测序"):
+        assert parse_demo_query(f"查找1万元以上的{text}合同")[0] == "空间转录组", text
+    # Xenium 单列：不得落到「空间转录组」
+    assert parse_demo_query("查找1万元以上的Xenium合同")[0] == "Xenium"
+    assert "Xenium" not in PRODUCT_ALIASES["空间转录组"]
+    # CytAssist 是仪器，不是产品线
+    for aliases in PRODUCT_ALIASES.values():
+        assert not any("CytAssist" in a for a in aliases)

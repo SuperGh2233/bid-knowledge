@@ -2861,5 +2861,141 @@
   "pages_total": 160,
   "file": "投标文件 正本 上海欧易生物医学科技有限公司（盖章版）.pdf",
   "sha": "bf2d13f80b3d70cf"
+ },
+ "1b502eaf584ee1003dea435e74caa9141f189304f08926b82977fa189dcb85a3": {
+  "status": "done",
+  "chars": 241,
+  "pages_ok": 1,
+  "pages_total": 1,
+  "file": "获取文件登记表-上海欧易生物医学科技有限公司.pdf",
+  "sha": "860a3db4fba5bdb3"
+ },
+ "c4ca75aeac63c1f3e6023af9f16ff85cbf2fbc4aa20ecaed94872b32fd09768c": {
+  "status": "done",
+  "chars": 551,
+  "pages_ok": 1,
+  "pages_total": 1,
+  "file": "报价文件2.pdf",
+  "sha": "f1480a0cca340ae1"
+ },
+ "569429f8e8915ff0ac70f63b0b62d3f76994835bdd0c66d8a119d01c2eb909e6": {
+  "status": "done",
+  "chars": 672,
+  "pages_ok": 1,
+  "pages_total": 1,
+  "file": "上海欧易生物医学科技有限公司报名材料.pdf",
+  "sha": "fb63431ef6cdc116"
+ },
+ "460ecfe5bd45e950f1f813ca3b83e0595a5ff814cabf49e6de8af0a607348fdd": {
+  "status": "done",
+  "chars": 907,
+  "pages_ok": 2,
+  "pages_total": 2,
+  "file": "报价单.pdf",
+  "sha": "db9639ac1e670e11"
+ },
+ "64147370574601c9c940a83d117c6a88a1b890b821cec5e756423db67e85c2bd": {
+  "status": "done",
+  "chars": 1217,
+  "pages_ok": 4,
+  "pages_total": 4,
+  "file": "报名文件-上海欧易生物医学科技有限公司.pdf",
+  "sha": "3fd9722bd6bcff0f"
+ },
+ "de707034355bdc7c91101ac50e3166a142b839996d2a14841f25b573cee1cceb": {
+  "status": "done",
+  "chars": 3279,
+  "pages_ok": 4,
+  "pages_total": 4,
+  "file": "复旦大学附属肿瘤医院肾癌组织空间转录组学检测服务项目+上海欧易生物医学科技有限公司报名文件.pdf",
+  "sha": "7584f33beda14a2c"
+ },
+ "8068495a56c6319ffffc8a8808c137d95d385f85ae314a9b8510f34f062f5268": {
+  "status": "done",
+  "chars": 8044,
+  "pages_ok": 6,
+  "pages_total": 6,
+  "file": "报价文件1.pdf",
+  "sha": "4f67784706b6d88f"
+ },
+ "aca0a93878fafaf146d078280a5eaacf721192d056d99f53fe2ff079012867ea": {
+  "status": "done",
+  "chars": 22772,
+  "pages_ok": 42,
+  "pages_total": 42,
+  "file": "欧易响应文件.pdf",
+  "sha": "7ea0bcef386e378f"
+ },
+ "c12c8f03ddfb060cd9e1cf19f21e84cbc0347585b8ca28796a5d33dbf3fe69cb": {
+  "status": "done",
+  "chars": 60683,
+  "pages_ok": 54,
+  "pages_total": 54,
+  "file": "欧易材料.pdf",
+  "sha": "9a6014775791faab"
+ },
+ "98789c8edbf3891143f13f0b9364028386edfb7ce79d63fb77896441e14f0324": {
+  "status": "done",
+  "chars": 85506,
+  "pages_ok": 114,
+  "pages_total": 114,
+  "file": "供应商响应材料（服务类项目）+上海欧易生物医学科技有限公司.pdf",
+  "sha": "5aacb712fd62eda3"
+ },
+ "7e14be00b1bd4f503d621fdcabf1e942db816efb540e542f0c8afc073b5dbd58": {
+  "status": "done",
+  "chars": 202812,
+  "pages_ok": 190,
+  "pages_total": 190,
+  "file": "欧易生物响应文件.pdf",
+  "sha": "50000fc870bb5cc0"
+ },
+ "a7e85366282e83a4770c94c55d9e932bdc5dbdd8f62f2c67aecf7a118a950e09": {
+  "status": "done",
+  "chars": 323268,
+  "pages_ok": 248,
+  "pages_total": 248,
+  "file": "转基因小鼠结直肠癌肠肿瘤组织10x Visium HD空间转录组检测采购项目+上海欧易生物医学科技有限公司.pdf",
+  "sha": "817bedfac0743c8f"
+ },
+ "69c8c7c27a759bbcd8b054a3c7b9a7f0fa68256a5bae162a1d1ee8ef1ac20817": {
+  "status": "done",
+  "chars": 346225,
+  "pages_ok": 248,
+  "pages_total": 248,
+  "file": "响应文件2.pdf",
+  "sha": "011461606df0d2b2"
+ },
+ "d7caf646a2ff2254037d973e6e87f4961dacd44b525c280ae4ec4deffcaf1be7": {
+  "status": "done",
+  "chars": 138393,
+  "pages_ok": 187,
+  "pages_total": 187,
+  "file": "上海欧易生物医学科技有限公司投标文件.pdf",
+  "sha": "498446faaa356a7b"
+ },
+ "608722faa50dd7a7af781824b285005a00c46d797917be837523b86a4bc6f0d3": {
+  "status": "done",
+  "chars": 181537,
+  "pages_ok": 128,
+  "pages_total": 128,
+  "file": "上海欧易生物医学科技有限公司响应文件.pdf",
+  "sha": "818490ede6e2109d"
+ },
+ "2bb24cd169c3349329415b2771bde93db91e66e81581bff74211973d9d6db4f7": {
+  "status": "done",
+  "chars": 500433,
+  "pages_ok": 396,
+  "pages_total": 396,
+  "file": "复旦大学附属肿瘤医院肾癌组织空间转录组学检测服务项目+上海欧易生物医学科技有限公司.pdf",
+  "sha": "d40fcec26565fcee"
+ },
+ "a64545d2b64c794b52a2afc14ede3313ee664186a1e605b5a869880e6b073da6": {
+  "status": "done",
+  "chars": 505484,
+  "pages_ok": 395,
+  "pages_total": 395,
+  "file": "欧易响应文件_20260912151213.pdf",
+  "sha": "36475e17a408f26d"
  }
 }

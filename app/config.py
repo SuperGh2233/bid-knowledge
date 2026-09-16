@@ -62,6 +62,11 @@ MINERU_API_TOKEN = os.environ.get("MINERU_API_TOKEN", "")
 # 只授权候选行短文本）。启用前须另立授权记录。本地机械件（召回/聚类/证据包）不需要它。
 PROPOSAL_GEN_ENABLED = os.environ.get("PROPOSAL_GEN_ENABLED", "false").lower() == "true"
 PROPOSAL_GEN_TIMEOUT = int(os.environ.get("PROPOSAL_GEN_TIMEOUT", "300"))
+# LLM **查询意图识别**（2026-09-16 用户选择「调 LLM 做意图识别」）。
+# 授权记录：`docs/llm-intent-authorization.md`（只发**用户那一句查询**，不含任何文档正文）。
+# **默认 false** —— 关闭时走本地确定性识别，与改前行为一致，且不会有任何外发。
+INTENT_LLM_ENABLED = os.environ.get("INTENT_LLM_ENABLED", "false").lower() == "true"
+INTENT_LLM_TIMEOUT = int(os.environ.get("INTENT_LLM_TIMEOUT", "20"))
 # 提示词预算（字符）。方案模块全开时证据正文合计可达 5 万字量级，可能超模型上下文；
 # 超预算时按比例收缩每条摘录，并在 payload.truncation 里如实记录（见 packs_to_payload）。
 PROPOSAL_GEN_MAX_PROMPT_CHARS = int(os.environ.get("PROPOSAL_GEN_MAX_PROMPT_CHARS", "40000"))

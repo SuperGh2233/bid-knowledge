@@ -29,3 +29,6 @@ tmp_probe/
 # 系统
 Thumbs.db
 .DS_Store
+# data/ 下的**脚本写前备份**（安全副本，非项目数据）—— 不入库
+# （由 scripts/backfill_missing_contracts.py 等产生）
+data/*.bak-*.json

@@ -274,7 +274,9 @@ button[disabled] { opacity: .55; cursor: default; }
 .draft th, .draft td { border: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
 .draft code { color: var(--seal); }
 .draft-para { margin: 0 0 6px; }
-.draft-para .cite-ref { color: var(--seal); font-weight: 600; }
+/* ⚠️ `user-select: none`：页面拖选/全选时不得把 [E4] 编号带进剪贴板（2026-09-14 用户反馈）。
+   引用是**阅读锚点**、不是正文的一部分；正文复制是干净的，出处靠「复制全部来源文件位置」单独取。 */
+.draft-para .cite-ref { color: var(--seal); font-weight: 600; user-select: none; -webkit-user-select: none; }
 .draft-cite { margin: 0 0 14px; padding-left: 2px; color: var(--muted); font-size: 12px; }
 .cite-list summary { cursor: pointer; color: var(--ink); }
 .cite-list ul { margin: 8px 0 0; padding-left: 1.2em; }

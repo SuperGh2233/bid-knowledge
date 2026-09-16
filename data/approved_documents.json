@@ -663,5 +663,292 @@
   "role": "contract_evidence",
   "file": "BOE2026010800-10x Genomics 单细胞转录组测序（GEM-X）-四川大学华西医院-292000.00.pdf",
   "basis": "已建 CTL 服务明细的合同（人工核准 2 份 + OCR 批量 93 份）"
+ },
+ {
+  "document_id": "d29fff654d4ba621ac8bc43d88bc6b60092e4bad044222c65ebaa1da27c9153e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2026011108-10×Xenium 组织原位分析5000（FFPE样本）-临港国家实验室-172000.00_01.png",
+  "basis": "已建 CTL 服务明细的合同（脚本补登）"
+ },
+ {
+  "document_id": "c5d3b6834bddbc578ffd4319319887618f1e0e12e0c3eb8414a31ad22718b89a",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025010662-10×Xenium 组织原位分析5000（冰冻样本）-南京亿科安悦生物技术有限公司-270,000.00_01.png",
+  "basis": "已建 CTL 服务明细的合同（脚本补登）"
+ },
+ {
+  "document_id": "f6ad7a4f008b4eaefb6c08c9121f4720898815482e5a6a8a2cb4ee2edbed3607",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025070643-10×Xenium 组织原位分析5000（FFPE样本）-中国农业科学院上海兽医研究所-176000.00(1)_01.png",
+  "basis": "已建 CTL 服务明细的合同（脚本补登）"
+ },
+ {
+  "document_id": "18e565987e2ab879f951e8c2765c7b3877e238f88634e876534f03cc11bf9b81",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024091404-10x Genomics 单细胞转录组测序-首都医科大学附属北京同仁医院-38,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "487980e81162c9389941b65424211b0be7f9467a60374f8824b8d2db9049ec7c",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2025112005-10x Genomics 单细胞及免疫组库测序（GEM-X）-上海市胸科医院-720000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "3f675aa13da489501ebec3e0ebc350a5d2cd774de2130c3512ea8d35e04191a1",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025115124-10x Genomics 单细胞及免疫组库测序-上海交通大学医学院附属瑞金医院-148500.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "ae7ce1b3d4b9bf4cc55bf15650a0f1e89bc88a760593706e661ff63937464cc5",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2024114246-真核有参转录组测序-浙江省肿瘤医院-675,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "7685c7a9dc10463cea0d2c967f3ac11d5294bd976845072835e94634e7108a0a",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024080476-10× Visium CytAssist 冰冻样本空间转录组测序-复旦大学附属肿瘤医院-423,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "175a6925b06c44557465e2c1673df432634859b54794f97a1b8ea18d34b1e146",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024082739-多组学检测（非范本合同）-浙大城市学院-283,500.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "63ff791903f6045ced33698c65c0c6586be0ea17278654f23c43f6d93689a674",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024122075-10x Genomics 单细胞核测序-上海交通大学医学院-250,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "8795824816927242ebf208e1f8b79746d0591757367787c2c44d4a47ecf164a3",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025080349-10x Genomics 单细胞及免疫组库测序（GEM-X，SP）-中国医学科学院肿瘤医院-495000.00(1).pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "d4eb86c7e910114a20e49cab24b51e2ae4a94f6d556d154d8c7fc37f9d0af1cb",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025082428-10x Genomics 单细胞转录组测序（GEM-X）-宁波市第二医院-280000.00(1).pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "fa617f83dfa3c63f1528828f378a145a1f95aaac17c0ebae3600869695eda7cb",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024090868-LC-MS-MS脂质拟靶向检测-中国中医科学院广安门医院-90,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "cf85b67dbbe7db9006fb234bb5a6e13feccacdd511ab4ebce31e6f983f3bfc47",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2025102115-二代宏基因组测序（QDOE）-南京脑科医院-1300000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "9ce74a614cec7ea1c7e7f574b9663db6d8a77dca4481ac4ed6a6f7b4da5d4c2d",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024021181-全基因组重测序（人类）-北京师范大学-1,750,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "3b7c565224b5468b836a6492096dc94174c40cae6dc23a56c1b6da9d792a48a3",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025114939-全基因组重测序（人类）-海南省人民医院-104000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "5141a0231b29c9843ebea02f0b6274fff804745024a262218b7d8d26268c6465",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2023120776-LC-MS-MS脂质代谢组检测-深圳市前海蛇口自贸区医院-48,000.00(1).pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "92b5bb11b417ffdc53efdbac069496d6bd2708d87109c13773b6caf923f3fbb2",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2024110855-真核有参转录组测序-中国中医科学院广安门医院-100,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "ef7d639f4e3c3b6ea581f078226e653d988276ab491fe5234c89ad2dbb4b1c31",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2024114246-真核有参转录组测序-浙江省肿瘤医院-675,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "a247bd8cea6ba2e5024e40ac172518bf1a14cfb9e6d212686bb444c4b2990f33",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2026020728-中药全谱代谢组-甘肃中医药大学-46800.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "6e86ec4fcbf2e795d488f6de0f4556c286aa0dcbcc206f484d3e498b6703095e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024092475-Olink蛋白质组-宁波市第二医院-49,680.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "621691b157cab7ada8e71a943931df47c6b42b34351d79aafb2cfc14b39386b5",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025061734-Olink蛋白质组-中国中医科学院广安门医院-68425.72.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "a77bd1f5eff82fe93504de879a73654ea4a1f5737fc2e8cbdf06bddef13fa29f",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2026010483-Olink 蛋白质组（S）-上海交通大学医学院附属第九人民医院-123200.00(1).pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "fe0875f0b7b10f62fbe9b2f7c2670582cd1d588e888fd1823880c51addd7c3c0",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YLM2023081643-LC-MSMS全谱代谢组检测-厦门大学附属第一医院-975,000.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "3f33669bf7b76e02351c28efa65b63f703a7b0dc03ff339dfffb0b1506fbf04b",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2024050284-4D-DIA定量蛋白质组-泰州丰达农牧科技有限公司-55,200.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "54dd821ba24e8222e391c263487e089192f0c689cca914e23f4d9e0948a2ba8d",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025030660-Pro DIA定量蛋白质组-无锡市中医医院-106,000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "f80afbcfbdbd2549557cc434bf551a7c6fe2e9d8fca307b6f21b04c134106c28",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2026013752-Pro DIA定量蛋白质组（HT）-海南省农业科学院三亚研究院（海南省实验动物研究中心）-30000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "614ea274124354abcc13e1fc7f56d3252874b3b161db49af0acd6f1474940b1f",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025122870-MobiCube 单细胞及免疫组库测序-华中科技大学同济医学院附属协和医院-1040000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "476b9b502e9083356917684032b7cf8cac0ba401c5b69e9743f76141b3d597e7",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2026012996-MobiNova 单细胞转录组测序-中南大学湘雅医院-900000.00(1).pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "f53feac5636d068a8f31ffc8923a2ef33d7907cd0a7220648ce431b31298a0e3",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2026021842-MobiCube 单细胞及免疫组库测序-华中科技大学同济医学院附属协和医院-420000.00(1).pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "44caaa375c9122a594d79ce01a137554a11e0a5ed87d5fb612ab8e644ae615d1",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "BOE2025110208-多组学检测（非范本合同）-上海市皮肤病医院-2720000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "08b4915d9d8e511c323b193fe1b81817a005651440dec5cf030e88a41ab2e1f7",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2024030080-多组学检测（非范本合同）-北京仁诚神经肿瘤生物技术工程研究中心有限公司-1,968,800.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "60bebbdaacd51d4f974d6a09a9b04c8d1c87734a05c4e0108663eafd7cf04e52",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "·BOE2023081556-Illumina甲基化芯片检测-厦门大学附属第一医院-954,400.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "8ede010ff803be5c852b2f261f7beb445537ab34587430614086ea135813136c",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2026011765-全外显子捕获测序（肿瘤石蜡样本QD）-北京陈菊梅公益基金会-595400.00(1).pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "159dba3e09bf0048b2dd0117b6d0304e3ec155c23fb5a3c2ce6acf9399f4f389",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025121104-动植物基因组-全外显子捕获测序（非肿瘤样本）-上海市精神卫生中心（上海市心理咨询培训中心）-180000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "aaa1bf06a9c4a12044184e407149e47e6038f1a64b4ccb695979b650bba7896b",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2026014409-10x Genomics 单细胞转录组测序（GEM-X）-中国人民解放军海军军医大学第二附属医院-200000.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "b14d2f4cafe761057115ae64373a89fc2bc662a91507e7fc0abe67247d66bd21",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2025100503-10x Genomics 单细胞转录组测序（GEM-X，SP）-中国科学院广州生物医药与健康研究院-90900.00(1).pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "adba77f8ee8d10feae661adc684fcc919df9125d944d1bdafb651ec1318569f9",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2026072787-10x Genomics 单细胞转录组测序（GEM-X，3v4）-无锡市中医医院-80550.00.pdf",
+  "basis": "无明细表单产品归因合同（文件名归因，金额=合同总额）"
+ },
+ {
+  "document_id": "92b41b500a717ffd9e937f2a2152a23fed2cc173d0389dcd79ee5eef9be78ea3",
+  "content_format": "scanned_ocr",
+  "role": "unknown",
+  "file": "YOE2024051711.pdf",
+  "basis": "已建 CTL 服务明细的合同（脚本补登）"
+ },
+ {
+  "document_id": "b9295ea6786c514ab69de705a115cd53fec64f285b8acedf9e9c94afd10c7e8e",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "YOE2025040964-4D-DIA乙酰化蛋白质组-南京大学-67500.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（脚本补登）"
+ },
+ {
+  "document_id": "fdcc6667739c070d80053ebb3d83b6e81f66acf17eb13b038dc95fd8cd0263f2",
+  "content_format": "scanned_ocr",
+  "role": "contract_evidence",
+  "file": "ZOE2024113839-4D-DIA泛素化蛋白质组-华中农业大学-156,000.00.pdf",
+  "basis": "已建 CTL 服务明细的合同（脚本补登）"
  }
 ]

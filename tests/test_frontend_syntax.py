@@ -101,7 +101,7 @@ global.fetch=()=>Promise.resolve({ok:true,json:async()=>({counts:{},scope:{},mod
 global.URL.createObjectURL=()=>'b';global.URL.revokeObjectURL=()=>{};global.Blob=function(){};
 const src=fs.readFileSync(process.argv[2],'utf8');
 eval(src);
-eval('globalThis.__R={renderProjectRows,renderFactRows,renderSchemeAnswer,renderContractAnswer,fillProposalQuery,loadProposalPicker,renderMarkdown,generateDraft,conditionTags,conditionQuery};');
+eval('globalThis.__R={renderProjectRows,renderFactRows,renderSchemeAnswer,renderContractAnswer,fillProposalQuery,loadProposalPicker,renderMarkdown,generateDraft,conditionTags,conditionQuery,markdownToPlainText};');
 const R=globalThis.__R;
 // 形状 = /api/three-modules?module=项目业绩 的真实响应（含 5 条带 receipt_files 的记录）
 const perf={records:[{contract_id:'c1',contract_number:'YOE1',party_a:'A',party_b:'B',
@@ -198,6 +198,33 @@ try {
   if (!html.includes('cite-list')) { console.log('FAIL 引用来源未收进折叠块'); process.exit(1); }
   if (!html.includes('不一致')) { console.log('FAIL 冲突并列行丢失'); process.exit(1); }
 } catch (e) { console.log('FAIL renderMarkdown: ' + e.message); process.exit(1); }
+
+// —— 复制草稿全文 = 净正文，不得带证据（2026-09-14 用户反馈的核心）——
+// 原来复制的是 `data.markdown` 原始串：每个 [E4]、每段「出处：」、引用清单全被带进剪贴板。
+// markdownToPlainText 必须：去 [En]、去出处行、去引用清单、去 markdown 符号，只留可编辑正文。
+const toPlain = R.markdownToPlainText([
+  '## 培训方案', '',
+  '- 我司将提供 24 小时内响应 [E4]。',
+  '  - 出处：投标文件 正文.docx（职业培训制度）',
+  '- 针对本项目提供云端数据交付 [E1][E2]。',
+  '',
+  '---', '',
+  '## 引用来源（逐条可打开核对）', '',
+  '- `E1` 某章 — 投标文件 正文.docx',
+  '- `E2` 某章 — 欧易响应文件.docx',
+].join(String.fromCharCode(10)));
+if (R.markdownToPlainText('不应含编号').includes('[')) { console.log('FAIL 空文本剥除异常'); process.exit(1); }
+if (toPlain.includes('[E')) { console.log('FAIL 复制产物仍含引用编号：[E…]'); process.exit(1); }
+if (toPlain.includes('出处：')) { console.log('FAIL 复制产物仍含出处行'); process.exit(1); }
+if (toPlain.includes('引用来源') || toPlain.includes('`E')) { console.log('FAIL 复制产物仍含引用清单'); process.exit(1); }
+if (toPlain.includes('##') || toPlain.includes('**')) { console.log('FAIL 复制产物仍含 markdown 符号'); process.exit(1); }
+const expectHead = toPlain.split(String.fromCharCode(10))[0];
+if (expectHead !== '培训方案') { console.log('FAIL 标题应为净文字，实际="' + expectHead + '"'); process.exit(1); }
+if (!toPlain.includes('24 小时内响应')) { console.log('FAIL 正文内容丢失'); process.exit(1); }
+if (!toPlain.includes('云端数据交付')) { console.log('FAIL 第二段正文丢失'); process.exit(1); }
+// 列表项保留为「- 正文」，不是整串并成一行丢上下文
+const flat = toPlain.replace(String.fromCharCode(10), ' ');
+if (flat.includes('E4 我司')) { console.log('FAIL 编号剥除后与正文粘连'); process.exit(1); }
 
 // —— generateDraft 集成冒烟：真实形状的生成响应 → 结果区 HTML 必须包含新结构 ——
 // 2026-09-14 整理草稿结果区后补。断言：1) 警示合成一张卡（不再三张黄条叠堆）；
