@@ -360,3 +360,13 @@ footer .foot-note { display: block; margin-top: 4px; font-size: 11px; opacity: .
   color: #46566a;
   border: 1px solid rgba(122, 140, 163, 0.3);
 }
+
+/* 「正文提及」组（2026-09-17）：与明细命中**视觉可分**，但同为可操作卡片 */
+.mention-block { margin-top: 1.25rem; padding: 0.9rem 1rem;
+  border: 1px dashed var(--line, #d8d8d8); border-left: 3px solid #c9a227;
+  border-radius: 6px; background: rgba(201, 162, 39, 0.05); }
+.mention-block h4 { margin: 0 0 0.35rem; font-size: 1rem; }
+.mention-card { border-left: 3px solid #c9a227; }
+.mention-evidence { font-size: 0.85rem; color: #555; font-style: italic; }
+.tag-warn { background: rgba(201, 162, 39, 0.16); color: #7a5c00;
+  border: 1px solid rgba(201, 162, 39, 0.35); }

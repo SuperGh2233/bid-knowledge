@@ -23,7 +23,8 @@ from app.api import (BASE_DIR, PRODUCT_ALIASES, PRODUCT_MATCH_EXCLUDE,
                      resolve_instrument_query, scope_filter_note)
 from app.intent import recognize_intent
 from app.search import DEFAULT_ROOTS as MATERIAL_ROOTS
-from app.search import locate_by_product_amount, locate_track_records, search_scheme_sections
+from app.search import (locate_by_product_amount, locate_mention_contracts,
+                        locate_track_records, search_scheme_sections)
 
 router = APIRouter()
 
@@ -91,6 +92,16 @@ def _contract_search_body(con, *, product, keywords, minimum, date_from, date_to
     # 用户要的是「不拿业绩金额比大小」，不是「金额查询里看不到这些响应文件」。
     ledger = _ledger_for(con, minimum=minimum, keywords=keywords)
     resp["ledger"] = ledger
+    # —— 「正文提及」合同组（2026-09-17）——
+    # 明细里没有该产品、但**合同正文写着**的合同。**永不进 hits**（那是产品明细的地盘），
+    # **不参与金额筛选**（金额只作合同总额展示）。排除条件按合同级作用于正文。
+    resp["mention_contracts"] = locate_mention_contracts(
+        con, product=product, keywords=tuple(keywords or ()),
+        date_from=date_from, date_to=date_to, party_include=party_inc, party_exclude=party_exc,
+        product_exclude=tuple(prod_exc), exclude_document_ids={r["document_id"] for r in rows})
+    resp["mention_note"] = ("这一组的合同**明细里没有该产品**，但**正文写着** —— "
+                            "金额为**合同总额**（该产品未单列），**不参与金额筛选**；"
+                            "属线索，需人工打开合同确认。")
     return resp
 
 

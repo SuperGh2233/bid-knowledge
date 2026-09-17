@@ -156,6 +156,7 @@ def test_contract_search_body_wires_ledger(monkeypatch):
     monkeypatch.setattr(R, "live_scope", lambda con: {"queryable_contracts": 136})
     monkeypatch.setattr(R, "locate_by_product_amount", lambda *a, **k: [])
     monkeypatch.setattr(R, "_ledger_for", lambda con, **k: {"records": [{"contract_id": "L1"}], "count": 1})
+    monkeypatch.setattr(R, "locate_mention_contracts", lambda *a, **k: [])
 
     out = R._contract_search_body(None, product="代谢组", keywords=("代谢组",), minimum=0.0,
                                   date_from=None, date_to=None, party_inc=(), party_exc=(),
@@ -173,6 +174,7 @@ def test_contract_search_body_keeps_ledger_out_of_hits(monkeypatch):
     monkeypatch.setattr(R, "_ledger_for", lambda con, **k: {
         "records": [{"contract_id": "LEDGER-x-1", "source_label": "业绩清单声明（我方响应文件）"}],
         "count": 1, "amount_condition": True})
+    monkeypatch.setattr(R, "locate_mention_contracts", lambda *a, **k: [])
 
     out = R._contract_search_body(None, product="单细胞", keywords=("单细胞",), minimum=50000.0,
                                   date_from=None, date_to=None, party_inc=(), party_exc=(),

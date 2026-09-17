@@ -334,6 +334,51 @@ function ledgerCardOf(r, amountCondition) {
   </article>`;
 }
 
+/**
+ * 「正文提及」合同组（2026-09-17）。
+ *
+ * 明细里**没有**该产品、但**合同正文写着**的合同 —— 它是**线索**，不是产品明细：
+ * 合同正文里「空间转录组及代谢组测序」这样的句子说明它确实做了代谢组，
+ * 但明细表里没有这一项，所以**金额只能是合同总额**、且**不参与金额筛选**。
+ * 故：单独一组、带来源标记、金额旁写明口径、原文依据上屏（供人工核对）。
+ */
+function mentionBlock(data) {
+  const list = data.mention_contracts || [];
+  if (!list.length) return "";
+  const CAP = 10;
+  const cards = list.slice(0, CAP).map(r => `
+    <article class="result-card mention-card">
+      <div class="card-top">
+        <div class="file-head">
+          <p class="file-project">${esc(r.project_folder || "（项目未登记）")}</p>
+          <h3>${esc(r.file_name || "（文件名缺失）")}</h3>
+        </div>
+        <span class="amount">${r.total_amount == null ? "金额未记载"
+          : "¥ " + Number(r.total_amount).toLocaleString("zh-CN")}
+          <small class="derived">（合同总额）</small></span>
+      </div>
+      <span class="tag tag-warn">正文提及</span>
+      <span class="tag">合同 ${esc(r.contract_number || "（未登记）")}</span>
+      <span class="tag">${esc(r.contract_date || "签订日期未提取到")}</span>
+      <dl class="metadata">
+        <dt>甲乙方</dt><dd>${esc([r.party_a, r.party_b].filter(Boolean).join(" / ") || "（未登记）")}</dd>
+        <dt>为什么在这里</dt><dd>合同**明细表里没有**「${esc(r.product || "")}」，但**正文写着**它 ——
+          属线索，需打开合同确认；金额是<b>合同总额</b>、<b>不参与金额筛选</b></dd>
+        <dt>正文依据</dt><dd class="mention-evidence">${esc(clip(r.evidence_snippet, 180))}</dd>
+        <dt>打开文件</dt><dd>${fileActions(r)}</dd>
+      </dl>
+    </article>`).join("");
+  const more = list.length > CAP
+    ? `<div class="boundary-note">这里只列前 ${CAP} 份，共 ${list.length} 份。</div>` : "";
+  return `<section class="mention-block">
+    <h4>另有 ${list.length} 份合同的正文提到「${esc(list[0].product || "")}」
+      <span class="tag tag-warn">正文提及</span></h4>
+    <div class="boundary-note">${esc(data.mention_note || "")}</div>
+    ${cards}
+    ${more}
+  </section>`;
+}
+
 /** 业绩行卡片组（同一列表用；不再单独成段） */
 function ledgerCards(data) {
   const l = data && (data.ledger || (data.ledger_records
@@ -437,6 +482,7 @@ function renderContractAnswer(data, target) {
     <div class="boundary-note">${esc(data.scope_note)}</div>
     ${batchBar(data.hits, CONTRACT_CSV)}
     ${hitCards || "<div class='result-card'>当前已准备的样本里没有这个产品的记录。</div>"}
+    ${mentionBlock(data)}
     ${ledgerCards(data)}
     ${excludedBlock}`;
   bindCopyButtons(target);

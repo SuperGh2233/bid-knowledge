@@ -592,3 +592,132 @@ def locate_track_records(con, *, party: str = "", products: tuple = (), year: st
                          "其金额为**合同总额**、非产品明细金额；需要精确金额请以合同原件为准。")
                       + "同一份响应文件被复制到多个项目文件夹时**只展示一次**，其余副本位置见 `also_in`。",
     }
+
+
+# ============================================================================
+# 「正文提及」合同组 —— 明细里没有该产品、但合同正文写着（2026-09-17）
+# ============================================================================
+# 由来：金标准 Recall 未达标的根因是 5 份合同「在库/在白名单/指纹一致/资格门槛通过」
+# 却一条结果都不产出 —— 其 contract_items 明细里没有目标产品，而**正文里明确写着**
+# （如「18 例冰冻样本进行空间转录组及代谢组测序」）。方案 C 只让它们有了金额，
+# 产品键仍是文件名那一个。
+#
+# ️ 三条硬约束（与 PLAN-20260917 §8 一致）：
+#   ① **不改 `amount`/门槛通路** —— 本组只在明细金额缺失时展示合同总额，且**不参与金额筛选**
+#      （红线：产品金额=同产品明细行之和；`contracts.total_amount` 不得替代）；
+#   ② **永不进 `hits`** —— 它是"正文提及"而非产品明细，混进去会污染折叠/导出/计数；
+#   ③ 排除条件（`不要蛋白组`）**按合同级作用于正文**（实测把 G05 误返从 10 降到 1）。
+MENTION_CTX_WORDS = ("测序", "检测", "分析", "服务", "组学", "样本", "项目",
+                     "实验", "建库", "上机", "合同", "委托")
+MENTION_CTX_WINDOW = 12
+MENTION_SOURCE = "正文提及"
+
+
+def _mention_in_context(text: str, aliases: tuple) -> tuple[bool, str]:
+    """产品词是否出现在**业务上下文**中；命中则连同依据原文一起返回。
+
+    为什么要上下文（实测 2026-09-17）：全文提及会把「舌苔菌群-**鞘脂代谢**-宿主免疫互作研究」
+    （研究主题）、「**蛋白编码基因**表达水平分析」（生物学名词）也当成产品。
+    要求产品词 ±12 字内有业务词，可挡掉这类；复验结果 Recall 37/37、误返 1（该 1 条经查是
+    金标准自相矛盾，见 docs/evals/EVAL-20260917-*）。
+    """
+    for a in aliases:
+        if not a:
+            continue
+        for m in re.finditer(re.escape(a), text):
+            lo, hi = max(0, m.start() - MENTION_CTX_WINDOW), m.end() + MENTION_CTX_WINDOW
+            seg = text[lo:hi]
+            if any(w in seg for w in MENTION_CTX_WORDS):
+                # 依据取**包含该词的那一行**（便于人工核对），并限长
+                ls = text.rfind("\n", 0, m.start()) + 1
+                le = text.find("\n", m.end())
+                line = text[ls: le if le > 0 else m.end() + 60].strip()
+                return True, line[:200]
+    return False, ""
+
+
+def locate_mention_contracts(con, *, product: str, keywords: tuple, date_from=None, date_to=None,
+                             party_include: tuple = (), party_exclude: tuple = (),
+                             product_exclude: tuple = (), match_exclude: tuple = (),
+                             exclude_document_ids: set[str] | None = None,
+                             limit: int = 30) -> list[dict]:
+    """检索**正文提及**目标产品的合同（明细命中之外的那一组）。
+
+    ⚠️ **刻意不接受金额门槛参数** —— 本组不参与金额筛选（见本段顶部约束①）；
+    金额只作为**合同总额**展示，供人工判断。
+    """
+    if not keywords:
+        return []
+    skip = exclude_document_ids or set()
+    out: list[dict] = []
+    for row in con.execute(
+            """SELECT c.contract_id, c.contract_number, c.party_a, c.party_b, c.contract_date,
+                      c.total_amount, c.document_id, d.relative_path, d.source_root_id,
+                      d.project_folder, d.content_format, d.document_role, d.parse_status,
+                      d.doc_subtype, d.canonical_document_id
+               FROM contracts c JOIN documents d ON d.document_id = c.document_id
+               WHERE c.contract_id LIKE 'CTL-%'"""):
+        rec = dict(row)
+        if rec["document_id"] in skip:
+            continue
+        # 与明细命中同一套资格门槛：角色/状态/子类（复用 `_qualification_gate` 的前半段判据）
+        if rec["document_role"] not in VALID_ROLES:
+            continue
+        if rec["parse_status"] in BLOCKED_STATUSES:
+            continue
+        if (rec["doc_subtype"] or "") in BLOCKED_SUBTYPES:
+            continue
+        if not any(str(rec["document_id"]).startswith(p) for p in APPROVED_DOCUMENT_IDS):
+            continue
+        parties = (rec.get("party_a") or "") + "|" + (rec.get("party_b") or "")
+        if party_include and not any(k in parties for k in party_include):
+            continue
+        if party_exclude and any(k in parties for k in party_exclude):
+            continue
+        cdate = (rec.get("contract_date") or "").strip()
+        if date_from or date_to:
+            if not cdate:
+                continue
+            if date_from and cdate < date_from:
+                continue
+            if date_to and cdate > date_to:
+                continue
+        art = con.execute("SELECT text FROM parse_artifacts WHERE canonical_document_id=?",
+                          (rec["canonical_document_id"],)).fetchone()
+        text = (art["text"] if art else "") or ""
+        if not text:
+            continue
+        # 排除条件**按合同级作用于正文**（实测 G05 误返 10 → 1）
+        if product_exclude and any(x in text for x in product_exclude):
+            continue
+        hit, snippet = _mention_in_context(text, keywords)
+        if not hit:
+            continue
+        # 该合同**明细里**已有该产品 → 属明细命中，不进本组
+        raws = [r["product_raw"] or "" for r in con.execute(
+            "SELECT product_raw FROM contract_items WHERE contract_id=? AND row_type='detail'",
+            (rec["contract_id"],))]
+        if raws and any(any(k in raw for k in keywords) for raw in raws):
+            continue
+        out.append({
+            "contract_id": rec["contract_id"], "contract_number": rec["contract_number"],
+            "party_a": rec["party_a"], "party_b": rec["party_b"],
+            "contract_date": rec["contract_date"], "total_amount": rec["total_amount"],
+            "document_id": rec["document_id"], "relative_path": rec["relative_path"],
+            "project_folder": rec["project_folder"], "content_format": rec["content_format"],
+            "document_role": rec["document_role"],
+            "file_name": (rec["relative_path"] or "").rsplit("/", 1)[-1],
+            "source_path": str(Path(str(DEFAULT_ROOTS.get(rec["source_root_id"], Path(""))))
+                               .joinpath(*(rec["relative_path"] or "").split("/"))),
+            "product": product,
+            "mention_source": MENTION_SOURCE,
+            # ⚠️ 金额的语义必须同屏：这是**合同总额**，不是该产品的金额
+            "amount_note": "合同总额（该产品未列明细，不参与金额筛选）",
+            "evidence_snippet": snippet,
+        })
+        if len(out) >= limit:
+            break
+    # 排序：金额大 → 签订日新 → 合同号（确定性，与明细命中同一套直觉）
+    out.sort(key=lambda r: (-(r["total_amount"] or 0), -_date_ord(r["contract_date"]),
+                            r["contract_id"]))
+    return out
