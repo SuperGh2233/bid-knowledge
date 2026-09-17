@@ -36,9 +36,13 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"      # 演示/测试库；正�
 依赖：`pip install -r requirements.txt`（版本已钉）；Elasticsearch 8.x 在 `http://localhost:9200`
 （索引 `bid_scheme_sections_v1`）；`.env` 从 `.env.example` 复制（密钥只从环境变量读）。
 
-**两个必踩的坑**：
+**三个必踩的坑**：
 - 改完代码**必须重启服务**再验证；重启前 `netstat -ano | grep :8000` 核对 PID 与启动时间
   —— 旧进程残留时新进程 bind 失败但 curl 照样 200（**旧代码的 200**）。
+- **前端改动后，浏览器可能仍在用缓存的旧 JS**（服务端按请求实时读取，但浏览器会启发式缓存）——
+  实测用户看到"数据是新的、标签是旧的"的混合页面。服务端已加 `Cache-Control: no-cache`
+  （`app/api.py::_NoCacheStatic`）；**首次仍需用户硬刷新一次**（Ctrl+F5）才会拿到新 JS。
+  验证方法是直接读服务下发的文件：`GET /static/app.js` 里搜关键字，别假设用户看到的就是新的。
 - Windows 上 curl 传中文参数会被 GBK 编码 → 验接口用 Python `urllib.parse.urlencode`。
 
 ## 不可破坏的红线

@@ -740,7 +740,22 @@ def home():
     return FileResponse(STATIC_DIR / "index.html")
 
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+class _NoCacheStatic(StaticFiles):
+    """静态文件**禁止浏览器缓存**（2026-09-17）。
+
+    为什么必须：前端（`static/*.js|css|html`）是**按请求实时读取**的，改了立刻生效；
+    但浏览器会按启发式规则缓存旧的 JS —— 实测用户看到的是**旧界面文案**（数据已是新的、
+    标签还是旧版），与"旧进程返回 200"是同一类坑的**前端版**。演示前尤其致命。
+    产物无构建步骤、体积很小，禁缓存不增加可观开销，换来"改了就是改了"。
+    """
+
+    def file_response(self, *args, **kwargs):
+        resp = super().file_response(*args, **kwargs)
+        resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+        return resp
+
+
+app.mount("/static", _NoCacheStatic(directory=STATIC_DIR), name="static")
 
 # —— 路由拆分（2026-09-14 APIRouter 整理）——
 # ⚠️ include **必须放在文件最底部**：三个路由文件顶部 `from app.api import ...` 取的都是
