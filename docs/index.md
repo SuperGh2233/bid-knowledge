@@ -40,8 +40,9 @@
 | `authorizations/llm-generation-authorization.md` | 生效 | 方案生成正文外发（2026-09-11 建立，§9 首次真实生成记录） |
 | `authorizations/llm-classification-authorization.md` | 生效 | 材料来源语义分类的 LLM 外发 |
 | `authorizations/llm-intent-authorization.md` | 生效 | 查询意图识别（2026-09-16；**只发用户那一句查询**，本地优先、判不出才外发） |
+| `authorizations/llm-contract-mention-authorization.md` | 生效 | **合同正文语义复核**（2026-09-17；发**候选合同正文全文** 68 份 / 51.9 万字，判「该合同是否真的含某产品」+ 依据逐字回溯）|
 
-> ⚠️ 新增数据源/角色须先取得用户书面授权并在此登记。
+> ⚠️ 新增数据源/角色须先取得用户书面授权并在此登记。**现有 6 份**。
 
 ## Evaluations（评测）
 

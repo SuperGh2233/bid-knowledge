@@ -71,7 +71,7 @@
 - **端点 12 个**（`/api/{status,ask,material-search,material-facts,scheme-search,three-modules,modules,module-kb,proposal-generate,tender-check,open}`）。
 - **合同定位第一道闸** = `data/approved_documents.json`（136 份），**import 期载入 → 改它必须重启服务**。
 - **业绩行**：走**独立闸**（角色 `our_response`/`final_signed`），**不进白名单**；`/api/status` 的 `queryable_contracts` **不含**它们。
-- 资格门槛**顺序不得改**（`app/search.py`）；NAS 只读；外发授权 5 份不可自行扩大。
+- 资格门槛**顺序不得改**（`app/search.py`）；NAS 只读；外发授权 **6 份**不可自行扩大。
 
 ## 7. Tests and Verification
 

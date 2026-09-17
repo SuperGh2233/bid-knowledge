@@ -56,7 +56,7 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"      # 演示/测试库；正�
 
 **数据合规（外发）**
 - LLM/OCR 网关（`newapi.oebiotech.com`）是**外部网关，会外发正文**。每一份外发都有独立授权记录
-  （`docs/authorizations/`，共 5 份），**范围不可自行扩大**；新数据源/新角色须先取得用户书面授权。
+  （`docs/authorizations/`，共 **6** 份），**范围不可自行扩大**；新数据源/新角色须先取得用户书面授权。
 - 服务端硬开关默认全 `false`：`OCR_ENABLED`、`PROPOSAL_GEN_ENABLED`、`INTENT_LLM_ENABLED`、
   `OPEN_EXTERNAL_ENABLED`。未授权路径必须**明确报错（403），不静默降级、不外发**。
 - 日志与错误信息**不得**打印 API key 与敏感正文。
@@ -107,7 +107,7 @@ tests/                 # pytest 回归（含前端渲染冒烟）
 | 查接口契约 | `docs/specs/api.md` |
 | 看**已发布**了什么（版本变更） | `CHANGELOG.md`（仓库根；每条对应一个 tag） |
 | 查需求与验收口径 | `docs/plans/active/`（活跃计划）；`docs/plans/legacy/`（旧系统路线，已冻结） |
-| 确认某类外发是否已授权 | `docs/authorizations/`（5 份，范围不可扩大） |
+| 确认某类外发是否已授权 | `docs/authorizations/`（**6 份**，范围不可扩大） |
 | 查评测结论 | `docs/evals/`（现役）；`docs/evals/archive/`（R5/D1/D2a 历史证据，只查不改） |
 | 给业务/需求方的材料 | `docs/business/` |
 
