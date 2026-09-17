@@ -117,7 +117,9 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
 2. ~~打 tag `v1.2`~~ → **已完成**（打在 `4168be4`，两个远程均已推）。
 3. **唯一未决（用户裁定「暂不决定」，勿主动开工）**：`/api/three-modules` 业绩段是否也加提及组（§8 第 3 条）。
    若将来要做，按 `PLAN-20260917-contract-product-mention.md` §6 走。
-4. 本轮**无剩余动作**；下一个任务从需求方反馈或用户指示开始。
+4. ~~本轮无剩余动作~~ → **新任务已立项**：第二次需求对接（可复制正文段落 / 仪器空壳行 / 纳税社保总金额 /
+   生成 outline 标题约束）—— 权威计划 `docs/plans/active/PLAN-20260917-round2-feedback.md`
+   （四项口径用户已拍板，按其 §5 实施顺序开工，下一步 = 步 1「空壳行沉底」）。
 
 ## 10. Do Not Repeat / Do Not Change
 
