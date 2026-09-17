@@ -22,7 +22,11 @@
 - **生成标题严格约束**（需求2）：`POST /api/proposal-generate` 支持可选 `outline`
   （大标题 + 小标题清单，对象或 Markdown 文本两种形态）→ 模型**逐字**按该结构输出；
   生成后校验**如实报出漂移**（缺小标题 / 大标题不符 / 自造小节）。不传 `outline` 时行为**完全不变**。
-- 回归：`pytest` **305 passed**（新增 7 条：锚点裁段、空壳行 SQL 等价性、金额判据正反例、查询映射、outline 解析/注入/校验）。
+- 修复（实施期自查）：说明性长文（`scope_note`/`mention_note`/`filter_note`/`amount_note`）里的
+  `**强调**` 原先原样显示星号 → 改走项目既有的 `inline()` 渲染；`finance_amount` 行补
+  `amount_note` 口径说明（非合同金额、不参与金额筛选）。
+- 回归：`pytest` **307 passed**（新增 9 条：锚点裁段、空壳行 SQL 等价性、金额判据正反例、
+  查询映射、outline 解析/注入/校验、金额口径说明、说明文渲染护栏）。
 - 契约：`docs/specs/api.md` §4 / §4A / §5 已同步。
 
 ## v1.2 — 2026-09-17

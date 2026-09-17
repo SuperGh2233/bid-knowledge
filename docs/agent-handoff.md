@@ -12,7 +12,7 @@
 `docs/plans/active/PLAN-20260917-round2-feedback.md`）：
 ① 材料定位给「可复制正文段」+ 仪器空壳行治理 + 新增纳税社保总金额检索；
 ② 方案生成支持 `outline` **逐字标题结构约束**。
-代码已提交 `faeebc8` 并推送两个远程；`pytest` **305 passed**；服务已重启（PID 见 §7）。
+代码已提交 `faeebc8` + `0e4daf4`（实施期自查修复）并推送两个远程；`pytest` **307 passed**；服务已重启（PID 见 §7）。
 
 退出门槛（需求一累计）：Recall **37/37 = 100%**（明细 + 提及两组）／真实路径 100%／
 金额条件 100%／覆盖率 8/8；本轮新增验收全部达标（见 §3 与计划 §8 验收总表）。
@@ -48,8 +48,16 @@
   （缺小标题 / 大标题不符 / 自造小节），容忍模型自加序号。**不传 outline → 行为与 v1.2 逐字节一致**。
 - **前端**：卡片「复制这段」按钮（`navigator.clipboard`）+ CSV「可复制正文」列 +
   金额按元显示 + 标题结构输入框（含一键示例）+ `outline_used` 回显。
-- `pytest tests -q` → **305 passed**（原 298 + 新 7）。
+- `pytest tests -q` → **307 passed**（原 298 + 新 9）。
 - 上一轮「正文提及」组仍在（Recall 37/37 = 100%、误返 0、零外发）—— 本轮未触碰。
+
+**实施期自查发现并修掉（`0e4daf4`）**
+- **说明长文的 Markdown 星号上屏**：`scope_note` / `mention_note` / `filter_note` / `amount_note`
+  这些服务端下发的说明文里用了 `**强调**`，但渲染位点走的是 `esc()` → 页面上原样显示星号。
+  改用项目既有的 `inline()`（先 esc 再转 `<strong>`，无 XSS）；JS 字面量里那些不经过渲染器的
+  `**` 一并去掉。**新增护栏测试**：说明文不得走 `esc()`，且 `inline()` 必须先转义后替换。
+- **`amount_note` 补全**：`finance_amount` 行原先没有口径说明 —— 与业绩行同一诚实性原则，
+  凭证合计数字必须写清「非合同金额、不参与金额筛选」（否则会被读成合同金额）。
 
 **In progress**：无。
 **Not started**：tag `v1.3`（**待用户点头**）；`PLAN-20260917-round2-feedback.md` §9 第二阶段
@@ -57,7 +65,7 @@
 **Rejected（勿重开）**：LLM 外发复核；位置规则（前 1/3）；「邻近词过滤无效」结论（口径算错）；
 three-modules 业绩段加提及组（用户裁定暂不决定）。
 
-## 4. Changes Made（本轮，已提交 `faeebc8`）
+## 4. Changes Made（本轮，已提交 `faeebc8` + `0e4daf4`）
 
 | 文件 | 改了什么 |
 |---|---|
@@ -103,12 +111,12 @@ three-modules 业绩段加提及组（用户裁定暂不决定）。
 ```bash
 CONDA="C:\Users\hao.guo\AppData\Local\miniconda3\envs\langchain-dev\python.exe"
 export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
-"$CONDA" -m pytest tests -q            # 305 passed（本轮实测）
+"$CONDA" -m pytest tests -q            # 307 passed（本轮实测）
 "$CONDA" -m app.api                    # → http://127.0.0.1:8000
 "$CONDA" scripts/backfill_finance_amounts.py --dry-run   # 金额回填预览（零写库）
 node --check static/app.js             # 前端语法（有护栏测试，但手改后先自查更快）
 ```
-- **服务**：PID **86272** 在跑（含本轮新代码；旧 PID 102300 已 kill）。
+- **服务**：PID **97656** 在跑（含本轮全部新代码；旧进程已按 §7 教训逐个 kill）。
   `GET /api/status` → `合同 136 / 可查 136 / 业绩行 408`。
 - **实测口径（本轮）**：仪器清单 645 条中 0 条空壳行排前、636 条带正文段；
   「纳税社保总金额」返回 29 条；概览卡 136/1283/645 与点进去的 `total_available` 同源。
@@ -163,7 +171,7 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 12. Git State
 
-- **分支** `main`；**HEAD** `faeebc8`（本轮实现，**已推 origin + github**）。
+- **分支** `main`；**HEAD** `0e4daf4`（本轮实现 + 实施期自查修复，**均已推 origin + github**）。
 - **工作区**：干净（除禁提交项）。
 - **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / `minimal-rebuild-r1-20260907`；
   **`v1.3` 待打**（§9 第 1 条）。
@@ -176,8 +184,8 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 13. Recovery Command
 
-> **当前状态**：第二次需求对接的两条需求**已全部实现、验收并推送**（`faeebc8`；pytest 305 passed；
-> 服务 PID 86272 含新代码）。剩余动作只有：**打 tag `v1.3`（待用户点头）+ 请需求方实机验收**。
+> **当前状态**：第二次需求对接的两条需求**已全部实现、验收并推送**（`0e4daf4`；pytest 307 passed；
+> 服务 PID 97656 含新代码）。剩余动作只有：**打 tag `v1.3`（待用户点头）+ 请需求方实机验收**。
 > 第二阶段（表格结构化 / 金额汇总 / 固定模板）用户未要求，**勿主动开工**。
 
 `Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
