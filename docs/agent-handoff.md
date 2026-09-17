@@ -18,7 +18,7 @@
 |---|---|
 | `AGENTS.md`（仓库根） | 环境、命令、红线、代码地图、文档导航（`CLAUDE.md` 是其一行指针） |
 | `docs/index.md` | 文档地图 + 状态列 + 「新文档纪律」5 条 |
-| `docs/plans/active/PLAN-20260916-track-record-search.md` | **completed**。业绩清单检索与金额覆盖的权威记录：§5.2–5.6 六轮修订与**八类根因**、§8 口径（含 2026-09-16 金额筛选**改判**）、§11 验收终态、§12 三项候选**已结案** |
+| `docs/plans/completed/PLAN-20260916-track-record-search.md` | **completed**。业绩清单检索与金额覆盖的权威记录：§5.2–5.6 六轮修订与**八类根因**、§8 口径（含 2026-09-16 金额筛选**改判**）、§11 验收终态、§12 三项候选**已结案** |
 | `docs/plans/active/PLAN-20260915-demo-feedback-issues.md` | **active**。需求方 5 条反馈的权威记录 |
 | `docs/specs/api.md` | HTTP 契约（§1A `recognition`、§2A 业绩清单段、§8 `tender-check`）|
 | `docs/authorizations/` ×5 | 外发授权（OCR×2、方案生成、材料分类、意图识别），**范围不可自行扩大** |
@@ -63,7 +63,7 @@
   「合同总额、非产品明细金额」；未达门槛只报数、未记载单列。
 - **可疑解析的写入策略**：`synced_partial` = **允许 upsert、禁止删除**。删除仍只在完整解析时发生
   （保护"别在可疑解析下丢数据"的本意不变）。
-- **文档债**：无阻塞项。低优先：`CHANGELOG.md` 仍未建（已有 tag `v1.0.0`/`v1.1`/`v1.1.1` 三个发布点）。
+- **文档债**：**已清零**（2026-09-17 补建 `CHANGELOG.md`，登记进 `index.md` 与 `AGENTS.md`；活计划已迁 `plans/completed/`）。
 
 ## 6. Contracts and Constraints
 
@@ -103,8 +103,8 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
 ## 9. Next Actions
 
 1. **业务相关（须用户/业务发起）**：把 `docs/business/demo-feedback-open-questions.md` 带给需求方复核；发起方案质量人工评审（指引 `docs/business/proposal-quality-review.md`）。
-2. **打 tag（待用户点头）**：`v1.1.1` 之后已有 9 个提交（金额 95%、口径改判、文案清理、候选结案）—— 建议 `v1.1.2` 封版。
-3. **可选**：补 `CHANGELOG.md`（已有三个 tag 发布点）；`refresh_catalog.bat` 挂计划任务；GitLab 令牌轮换。
+2. ~~打 tag~~ → **已完成**：`v1.1.2`（`dc67caa`）已推两远端，覆盖「金额 95% + 口径改判 + 文案清理 + 候选结案」。
+3. **可选（仅剩两项）**：`refresh_catalog.bat` 挂计划任务（需定时间与运行账号）；GitLab 令牌轮换（用户操作）。
 4. **演示前**：`netstat -ano | grep :8000` 核 PID → 重启 → `GET /api/status` 应返回 `queryable_contracts=136`。
 
 ## 10. Do Not Repeat / Do Not Change
@@ -117,15 +117,15 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
 ## 11. Minimum Recovery Context
 
 1. 本文件 + `AGENTS.md` + `docs/index.md`
-2. `docs/plans/active/PLAN-20260916-track-record-search.md`（业绩链路的全部决策与证据）
+2. `docs/plans/completed/PLAN-20260916-track-record-search.md`（业绩链路的全部决策与证据）
 3. 最后活跃实现：`app/extract.py`、`app/search.py`、`app/routes_search.py`、`static/app.js`
 4. `docs/specs/api.md`（契约）、`docs/authorizations/llm-intent-authorization.md`（外发边界）
 
 ## 12. Git State
 
 - **分支**：`main`（工作分支 `feat/info-architecture-rework` 停在 `deda794`，已无独立价值）。
-- **HEAD**：`9cd68e5`（`docs: 业绩清单第二步三项候选用证据结案（勿重做）`）。
-- **tag**：`v1.0.0`（deda794）、`v1.1`（972d06e）、`v1.1.1`（8148343）、`minimal-rebuild-r1-20260907`。
+- **HEAD**：见 `git log -1`（本文件所在提交 = 文档生命周期整理）。上一检查点 `9cd68e5`。
+- **tag**：`v1.0.0`（deda794）、`v1.1`（972d06e）、`v1.1.1`（8148343）、**`v1.1.2`（dc67caa）**、`minimal-rebuild-r1-20260907`。
 - `git status --short`：**0 行**（干净）。
 - **远端**（`git ls-remote` 一致）：`origin` = GitLab `ai-project/bid-ai`（HTTPS+令牌免交互）；`github` = `SuperGh2233/bid-knowledge`（**私有**）。
 - **禁提交**：`.env`、`*.db`（含 `bid_ai_clean_reg.bak-*.db` 26 个/441MB）、`outputs/`（真实投标正文）、`tmp/`、`tmp_probe/`、`data/*.bak-*.json`、`*.log`。**别整体打包外发**（会带上 `.git/config` 里的令牌）。
