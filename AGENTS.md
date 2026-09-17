@@ -64,6 +64,10 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"      # 演示/测试库；正�
 **业务语义**
 - 九类文档角色；**方案生成证据只允许 `our_response` / `final_signed`**（招标要求、竞品、空模板、
   未知文件一律不得作为我方承诺）。
+- **「正文提及」合同组**（2026-09-17）：明细里没有目标产品、但合同**正文**在业务上下文里写着
+  → 单独一组展示（本地规则、零外发）。三条铁律：**永不进 `hits`**、**不参与金额筛选**
+  （只展示合同总额）、必须带正文依据上屏。契约见 `docs/specs/api.md` §2B，
+  决策见 `docs/plans/active/PLAN-20260917-contract-product-mention.md`。
 - **合同金额口径**：产品金额 = 同产品明细行 `contract_items.line_amount` 之和；
   **`contracts.total_amount` 不得参与产品金额判断**。提不到就不参与金额过滤，宁缺毋滥。
 - 数字/时限冲突**只并列不择一**；证据不足明确标记；`[E1]` 等引用编号由系统生成，模型不得编造。
@@ -82,7 +86,7 @@ app/
 ├── routes_proposal.py # 需求二：/api/{modules, module-kb, proposal-generate} + /api/tender-check（已暂停）
 ├── routes_status.py   # /api/status
 ├── routes_open.py     # /api/open（唯一会启动外部程序的端点，默认关闭）
-├── search.py          # 资格门槛（顺序不得改）、排序、行级负向过滤
+├── search.py          # 资格门槛（顺序不得改）、排序、行级负向过滤、「正文提及」组（locate_mention_contracts）
 ├── extract.py         # 确定性抽取（合同头/金额/材料期间/仪器）
 ├── parser.py / ocr.py # 原生解析 / 本地 RapidOCR
 ├── proposal.py        # 证据包 + 受约束生成（唯一外发正文处）

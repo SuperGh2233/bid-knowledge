@@ -17,6 +17,7 @@
 
 | 文档 | 状态 | 何时读 |
 |---|---|---|
+| `plans/active/PLAN-20260917-contract-product-mention.md` | **active（行为已上线）** | 「正文提及」合同组（明细没有、正文写着的产品）：12 条决策 + 四条硬约束（永不进 hits / 不参与金额筛选 / 排除按合同级 / 带依据上屏）+ 验收 Recall 37/37；零外发 |
 | `plans/active/PLAN-20260915-demo-feedback-issues.md` | **active** | 需求方试用反馈 5 条问题的**权威记录**：§6 需求 / §8 已定口径 / §9 实现与遗留 / §11 验证证据 / §12 状态 |
 | `plans/completed/PLAN-20260916-track-record-search.md` | **completed** | **业绩清单**（响应文件内的历史合同声明）进入检索：**29→408 条 / 4→51 份 / 带金额 50→388 条（95%）**；与合同原件同一列表 + 小标记、独立闸、**金额参与筛选**（口径改判）。§5.2–5.6 记六轮金额修订与**八类根因**、§11 验收终态、§12 三项候选**已结案**（勿重做）|
 | `plans/legacy/MINIMAL_REBUILD_PLAN.md` | legacy（冻结） | 旧系统最小重建路线（§2 金额口径修订 / §10 执行记录 / §11A 门槛）。2026-09-16 自旧系统仓库逐字复制入仓 |
@@ -40,7 +41,7 @@
 | `authorizations/llm-generation-authorization.md` | 生效 | 方案生成正文外发（2026-09-11 建立，§9 首次真实生成记录） |
 | `authorizations/llm-classification-authorization.md` | 生效 | 材料来源语义分类的 LLM 外发 |
 | `authorizations/llm-intent-authorization.md` | 生效 | 查询意图识别（2026-09-16；**只发用户那一句查询**，本地优先、判不出才外发） |
-| `authorizations/llm-contract-mention-authorization.md` | 生效 | **合同正文语义复核**（2026-09-17；发**候选合同正文全文** 68 份 / 51.9 万字，判「该合同是否真的含某产品」+ 依据逐字回溯）|
+| `authorizations/llm-contract-mention-authorization.md` | **暂缓启用** | **合同正文语义复核**（2026-09-17 建立；本地规则已达同等召回 → 用户裁定**暂缓**，代码**无任何触发路径**；将来启用前必须补脱敏）|
 
 > ⚠️ 新增数据源/角色须先取得用户书面授权并在此登记。**现有 6 份**。
 
@@ -48,7 +49,7 @@
 
 | 文档 | 状态 | 何时读 |
 |---|---|---|
-| `evals/EVAL-20260917-gold-recall-regression.md` | active | **金标准召回 92.3% → 75.7% 的复测与根因**（方案 C 单产品归因未同步到 `contract_items`）；含三个修法选项，**待用户裁定** |
+| `evals/EVAL-20260917-gold-recall-regression.md` | active（**§7 为最新结论**）| 金标准召回复测：~~92.3%→75.7% 退化~~ **已证伪**（分母 26→37 口径变化）；§7 修法落地后 **Recall 37/37=100% / 误返 0**（1 条系金标准瑕疵，G05 两条对照证据在 §7.3）|
 | `evals/success5-precision10-clarification.md` | active | Success@5 / Precision@10 门槛口径（给需求方的确认请求） |
 | `evals/archive/`（9 份） | archived | R5 留出集/结构化评测（`r5-*`×6）与 D1/D2a 阶段清单（`d1-*`、`d2a-*`×2）。**历史证据，只查不改**；其中的路径引用是归档时点的位置 |
 

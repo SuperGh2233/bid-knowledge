@@ -1,7 +1,7 @@
 # bid-ai-clean HTTP 接口契约
 
-> 2026-09-13 起，**最近更新 2026-09-16**（新增 §1A 的 `recognition` 回显、§4/§4A 的 `files`/`file_count`、
-> §8 `POST /api/tender-check`；§0 外发声明与 §1 计数字段同步实测）。
+> 2026-09-13 起，**最近更新 2026-09-17**（新增 §2B「正文提及」合同组；§0 外发声明按 6 份授权更正。
+> 2026-09-16：新增 §1A 的 `recognition` 回显、§4/§4A 的 `files`/`file_count`、§8 `POST /api/tender-check`）。
 > **只读预览服务**（`readonly: true`）——所有端点都不写库、不改动任何原始文件。
 > 供外部系统接入与联调使用。启动：
 
@@ -18,7 +18,7 @@ BID_AI_CLEAN_DB=<测试库路径> python -m app.api      # → http://127.0.0.1:
 | 字符编码 | **全部 UTF-8**。请求体必须声明 `Content-Type: application/json; charset=utf-8` |
 | 中文查询参数 | 走 GET 的 `q`/`modules` 时必须 **UTF-8 percent-encode** |
 | 错误格式 | FastAPI 标准 `{"detail": "..."}`；`detail` 是**中文业务说明**，可直接展示给用户 |
-| 外发 | **仅两处会外发，其余端点零外发**：① §5 方案生成（外发我方响应正文）；② §1A 的**意图识别兜底**（只外发**用户自己敲的那一句查询**，且**本地优先、判不出才发**，默认关闭）。两处均有独立授权记录（`docs/authorizations/`），**范围不可自行扩大** |
+| 外发 | **三条外发路径，服务端硬开关默认全 `false`，未授权路径明确 403（不静默降级）**：① §5 方案生成（外发我方响应正文）；② §1A 的**意图识别兜底**（只外发**用户自己敲的那一句查询**，且**本地优先、判不出才发**）；③ 白名单 OCR（扫描件，`OCR_ENABLED`；本地 RapidOCR 后端 `OCR_BACKEND=local` 零外发、不受此闸约束）。**其余端点零外发** —— 特别注意 §2B「正文提及」组是**纯本地规则**。每条外发路径均有独立授权记录（`docs/authorizations/`，共 **6** 份，其中第 6 份「合同正文 LLM 语义复核」**暂缓启用、代码无触发路径**），**范围不可自行扩大** |
 | 只读 | **无任何写接口**：数据变更走离线脚本，不经 HTTP。⚠️ 唯一的例外是 §7 `POST /api/open` —— 它**不改任何数据**，但会在**服务端所在机器上**启动外部程序（资源管理器／默认程序），默认关闭 |
 
 ### ⚠️ 实测踩过的坑（别重犯）
@@ -178,6 +178,32 @@ GET /api/ask?q=2024年12月之后，代谢组服务金额4万元以上的合同
 ⚠️ **两条已知语义**：① 业绩行**没有合同编号**（实测 0/126），**无法与合同原件自动对账** ——
 不要按合同号去 join；② 查询里的「乙方」**不用于筛业绩行**（查询里乙方=供应商/我方，
 业绩行的 `party_a`=采购人/客户，角色不同名同义会误杀）。
+
+---
+
+## 2B. 「正文提及」合同组（`mention_contracts`）—— 2026-09-17 新增，**展示线索、不参与筛选**
+
+明细里没有目标产品、但**合同正文写着**的合同（判据：产品词 ±12 字内有业务上下文词
+测序/检测/分析/服务/组学/样本/项目/实验/建库/上机/合同/委托 之一）。**本地规则、零外发。**
+背景与 12 条决策见 `docs/plans/active/PLAN-20260917-contract-product-mention.md`。
+
+**出现的位置**：`POST /api/material-search` 与 `GET /api/ask`（合同路径）→
+`mention_contracts: [...]` + `mention_note`（口径说明，接入方应原样展示）。
+
+**三条红线（接入方必须遵守的展示口径）**：
+
+| 红线 | 说明 |
+|---|---|
+| **永不进 `hits`** | 提及组是独立字段；把它并进合同命中列表 = 放宽门槛造命中 |
+| **不参与金额筛选** | 查询里的金额门槛**不作用于**这一组；`total_amount` 是**合同总额**（该产品未单列），必须随 `amount_note` 展示 |
+| **必须带依据上屏** | 每条含 `evidence_snippet`（正文依据原文）与可打开的 `source_path`；这是「需人工确认」的线索，不是系统背书的命中 |
+
+**每条字段**：`{contract_id, contract_number, party_a, party_b, contract_date, total_amount,
+document_id, relative_path, project_folder, content_format, document_role, file_name,
+source_path, product, mention_source, amount_note, evidence_snippet}`。
+
+**排除语义**：`product_exclude` 按**合同级作用于正文**（排除词在正文出现 → 整份合同不进提及组）；
+已在 `hits` 命中的 `document_id` 不重复进提及组。
 
 ---
 
