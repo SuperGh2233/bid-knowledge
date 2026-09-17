@@ -320,3 +320,23 @@ Promise.resolve(R.loadProposalPicker()).then(()=>console.log('OK'),
     assert "欧易" in parse_scope_conditions(queries[2])[0]        # 机构包含
     assert "宏基因组" in parse_scope_conditions(queries[3])[2]     # 产品排除
     assert "鹿明" in parse_scope_conditions(queries[4])[1]        # 机构排除
+
+
+# —— 说明性长文必须走 `inline()` 而不是 `esc()`（2026-09-17，需求2 实施期实测踩到）——
+# 由来：`mention_note` / `scope_note` / `filter_note` / `amount_note` 这些**服务端下发的
+# 说明长文**里用了 Markdown 强调（`**合同总额**`），而渲染位点原先走 `esc()` →
+# 页面上**原样显示星号**（实测确认）。项目里本就有 `inline()`（先 `esc` 再转 `**`→<strong>、
+# `` ` ``→<code>，无 XSS 风险），说明文该用它。此测试钉住，防止改回去。
+def test_prose_notes_render_through_inline_not_esc():
+    js = APP_JS.read_text(encoding="utf-8")
+    for field in ("data.scope_note", "data.mention_note", "data.filter_note"):
+        assert f"esc({field}" not in js, (
+            f"{field} 走了 esc() → 服务端说明文里的 `**强调**` 会在页面上显示成星号；应用 inline()")
+    assert "inline(data.scope_note" in js and "inline(data.mention_note" in js
+    # 金额口径说明同理（材料卡片两处）
+    assert js.count("esc(r.amount_note") == 0 and js.count("esc(f.amount_note") == 0
+    assert "esc(r.amount_note)" not in js
+    # `inline()` 必须先转义再替换强调标记（否则 `**<script>**` 会成 XSS）
+    # ⚠️ 断言用 `replace(` 而不是 `**` —— 正则源码里是 `\\*\\*`（转义形态），找不着裸星号。
+    body = js.split("function inline(text)")[1].split("}")[0]
+    assert body.index("esc(text)") < body.index("replace("), body

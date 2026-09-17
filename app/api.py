@@ -665,6 +665,13 @@ def _annotate_fact_role(r: dict) -> None:
     r["evidence_is_filename"] = bool(stripped) and stripped == (r.get("file_name") or "").strip()
     if r["evidence_is_filename"]:
         r["evidence_text"] = ""      # 只给了文件名 → 不是证据，不要当成证据上屏
+    # `finance_amount`（凭证「合计金额」）**必须带口径说明**：那是**凭证上的合计数字**，
+    # 与合同金额完全无关，也不参与任何金额筛选。不给说明就会被读成「合同金额」。
+    if r.get("fact_type") == "finance_amount":
+        # ⚠️ **纯文本、不带 Markdown 标记** —— 前端用 `esc()` 转义后直接上屏，
+        # `**x**` 会原样显示成星号（实测）。
+        r["amount_note"] = ("凭证上的合计金额（完税证明/社保完税凭证明写的合计行），"
+                            "非合同金额、不参与金额筛选；社保缴费记录表无合计行，抽不到即不产出。")
 
 
 # SQL 版的「空壳行」判据 —— **与 `_annotate_fact_role` 的 Python 判据逐行等价**（实测 1,986 行零错分）。

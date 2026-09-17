@@ -358,3 +358,21 @@ def test_finance_amount_query_maps_before_social_security():
     # 既有的期间类问法一条不动
     assert parse_fact_query("2025年的社保")[0] == "social_security_month"
     assert parse_fact_query("找仪器照片")[0] == "instrument_photo"
+
+
+def test_finance_amount_rows_carry_amount_note():
+    """`finance_amount` 行**必须带 `amount_note`** —— 不给口径说明会被读成「合同金额」。
+
+    与业绩行（`amount_note` 写明「合同总额、非产品明细金额」）同一诚实性原则：
+    凭证上的合计数字与合同金额**毫无关系**，上屏时必须说清楚。
+    """
+    from app.api import _annotate_fact_role
+    r = {"document_role": "qualification_evidence", "evidence_text": "[qualification_evidence] 完税证明.pdf",
+         "file_name": "完税证明.pdf", "fact_type": "finance_amount", "fact_value": "272310.44"}
+    _annotate_fact_role(r)
+    assert "amount_note" in r and "非合同金额" in r["amount_note"] and "不参与金额筛选" in r["amount_note"]
+    # 其他材料类型**不得**被加上这条（口径说明只对金额类有意义）
+    r2 = {"document_role": "our_response", "evidence_text": "[our_response] 社保.docx",
+          "file_name": "社保.docx", "fact_type": "social_security_month", "fact_value": "2025-02"}
+    _annotate_fact_role(r2)
+    assert "amount_note" not in r2

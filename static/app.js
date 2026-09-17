@@ -211,7 +211,7 @@ function conditionTagBar(parsed) {
   if (!tags.length) return "";
   const items = tags.map(t => t.fill
     ? `<button type="button" class="tag cond-tag" data-cond-fill="${esc(t.fill)}"
-         title="点一下：把全部条件填回搜索框，并**选中**这一条，直接改写即可">${esc(t.label)}</button>`
+         title="点一下：把全部条件填回搜索框，并选中这一条，直接改写即可">${esc(t.label)}</button>`
     : `<span class="tag cond-tag-static">${esc(t.label)}</span>`).join("");
   return `<div class="cond-tags">
     <span class="cond-hint">系统识别到的条件（点标签 = 把全部条件填回搜索框并选中该条，<strong>直接改写</strong>即可，不会丢其它条件）：</span>
@@ -324,7 +324,7 @@ function ledgerCardOf(r, amountCondition) {
     ${amountCondition ? "<span class='tag'>金额为合同总额</span>" : ""}
     ${r.also_in && r.also_in.length ? `<div class="boundary-note">同一份业绩声明另存于 ${r.also_in.length} 处`
       + `（共 ${r.copy_count} 份副本，多为同一标的不同批次/项目文件夹各存一份）—— `
-      + `**只展示一次**，不重复计入结果。</div>` : ""}
+      + `只展示一次，不重复计入结果。</div>` : ""}
     <dl class="metadata">
       <dt>项目</dt><dd>${esc(r.project || "（项目名未识别）")}</dd>
       <dt>来源</dt><dd>我方响应文件里的业绩清单 —— <b>不是合同原件</b>；金额是<b>业绩表所列合同总额</b>
@@ -374,7 +374,7 @@ function mentionBlock(data) {
   return `<section class="mention-block">
     <h4>另有 ${list.length} 份合同的正文提到「${esc(list[0].product || "")}」
       <span class="tag tag-warn">正文提及</span></h4>
-    <div class="boundary-note">${esc(data.mention_note || "")}</div>
+    <div class="boundary-note">${inline(data.mention_note || "")}</div>
     ${cards}
     ${more}
   </section>`;
@@ -393,8 +393,8 @@ function ledgerCards(data) {
   const below = Number(l.excluded_below_amount || 0);
   const naCount = Number(l.excluded_no_amount_count || 0);
   const notes = [];
-  if (below) notes.push(`另有 ${below} 条业绩声明的合同总额**未达你给的门槛**，已排除`);
-  if (naCount) notes.push(`另有 ${naCount} 条**金额未记载**（业绩表未列金额），无法参与金额筛选 —— 见下方折叠，可打开文件自行核对`);
+  if (below) notes.push(`另有 ${below} 条业绩声明的合同总额未达你给的门槛，已排除`);
+  if (naCount) notes.push(`另有 ${naCount} 条金额未记载（业绩表未列金额），无法参与金额筛选 —— 见下方折叠，可打开文件自行核对`);
   const noteHtml = notes.length ? `<div class="boundary-note">${notes.join("；")}。</div>` : "";
   const naList = (l.excluded_no_amount || []).slice(0, 10).map(r =>
     `<li>${esc(r.party_a || "（采购人未识别）")} · ${esc((r.relative_path || "").split("/").pop())}
@@ -467,7 +467,7 @@ function renderContractAnswer(data, target) {
     ? `<details class="excluded-block"><summary>另有 ${data.excluded.length} 条被排除，查看原因</summary>
          ${excludedCards}</details>`
     : "";
-  const filterNote = data.filter_note ? `<div class="boundary-note">${esc(data.filter_note)}</div>` : "";
+  const filterNote = data.filter_note ? `<div class="boundary-note">${inline(data.filter_note)}</div>` : "";
   const ledgerN = (data.ledger && data.ledger.records ? data.ledger.records.length : 0);
   const hitLine = data.hits.length
     ? `找到 ${data.hits.length} 份符合条件的文件`
@@ -480,7 +480,7 @@ function renderContractAnswer(data, target) {
   target.innerHTML = `<div class="summary"><h3>${hitLine}</h3></div>
     ${conditionTagBar(p)}
     ${filterNote}
-    <div class="boundary-note">${esc(data.scope_note)}</div>
+    <div class="boundary-note">${inline(data.scope_note)}</div>
     ${batchBar(data.hits, CONTRACT_CSV)}
     ${hitCards || "<div class='result-card'>当前已准备的样本里没有这个产品的记录。</div>"}
     ${mentionBlock(data)}
@@ -508,6 +508,7 @@ function renderFactAnswer(data, target) {
     <span class="tag">${esc(f.role_label || ROLE_LABEL[f.role_scope] || "")}</span>
     ${(f.record_count || 1) > 1 ? `<span class="tag">本文件 ${f.record_count} 条</span>` : ""}
     ${metaBlock(f)}
+    ${f.amount_note ? `<div class="evidence">金额口径：${inline(f.amount_note)}</div>` : ""}
     ${f.evidence_text ? `<div class="evidence">文件中对应文字：${esc(f.evidence_text)}</div>`
       : `<div class="evidence">这份文件本身只登记了文件名，正文里没有可引用的原句 —— 请打开文件确认。</div>`}
     ${snippetBlock(f)}
@@ -532,7 +533,7 @@ function renderFactAnswer(data, target) {
     ${roleNote}
     ${data.truncated ? `<div class="boundary-note">⚠️ 库内共 <strong>${data.total_available}</strong> 条，
       本次显示前 ${facts.length} 条（已截断）—— <strong>没显示出来的不代表没有</strong>。</div>` : ""}
-    <div class="boundary-note">${esc(data.scope_note || "")}</div>
+    <div class="boundary-note">${inline(data.scope_note || "")}</div>
     ${batchBar(facts, FACT_CSV, "条材料")}
     ${cards || "<div class='result-card'>已入库的文件里没有这一类。</div>"}
     ${rel}`;
@@ -553,7 +554,7 @@ function renderSchemeAnswer(data, target) {
   </article>`).join("");
   target.innerHTML = `<div class="summary"><h3>${sections.length ? `找到 ${sections.length} 个写过「${esc(data.query)}」的章节` : `没有找到写过「${esc(data.query)}」的章节`}</h3>
     <p>这是**需求一**的用法：找出历史上写过该小节的文件，供你取原文。</p></div>
-    <div class="boundary-note">${esc(data.scope_note || "")}</div>
+    <div class="boundary-note">${inline(data.scope_note || "")}</div>
     ${batchBar(sections, SCHEME_CSV, "个章节")}
     ${cards || "<div class='result-card'>已入库的文件里没有写过这个小节。</div>"}`;
   bindCopyButtons(target);
@@ -756,7 +757,7 @@ async function generateDraft(mode) {
       ${alerts ? `<div class="result-card warning"><ul class="fact-list">${alerts}</ul></div>` : ""}
       <article class="draft">${renderMarkdown(data.markdown || "")}</article>
       <details class="cite-list" style="margin-top:14px"><summary><strong>用稿须知</strong></summary>
-        <p style="margin:8px 0 0;font-size:12px;color:var(--muted)">${esc(data.scope_note || "")}</p></details>
+        <p style="margin:8px 0 0;font-size:12px;color:var(--muted)">${inline(data.scope_note || "")}</p></details>
       ${cites ? `<details class="cite-list" style="margin-top:10px"><summary><strong>引用来源 ${(data.citations || []).length} 条（逐条可核对）</strong></summary>
         <ul class="fact-list">${cites}</ul></details>` : ""}
       <div class="scheme-actions" style="margin-top:14px">
@@ -828,7 +829,7 @@ const snippetBlock = (r) => {
       <pre class="snippet-body">${esc(r.content_snippet)}</pre></div>`;
   }
   return r.snippet_missing
-    ? `<div class="evidence">这份文件的正文里**没有找到该类材料的段落**（可能是扫描件未做 OCR，
+    ? `<div class="evidence">这份文件的正文里没有找到该类材料的段落（可能是扫描件未做 OCR，
        或正文只有目录/页码）—— 请打开文件确认，系统不猜。</div>` : "";
 };
 // 兜底也要是中文 —— 不能让新枚举（如日后新增的 fact_type）直接上屏（评审 P1）
@@ -891,6 +892,7 @@ function renderFactRows(rows) {
       <span class="amount">${esc(shown)}</span></div>
     <span class="tag">${esc(ROLE_LABEL[r.role_scope] || "")}</span>${more}
     ${metaBlock(r)}
+    ${r.amount_note ? `<div class="evidence">金额口径：${inline(r.amount_note)}</div>` : ""}
     ${r.evidence_text ? `<div class="evidence">文件中对应文字：${esc(r.evidence_text)}</div>` : ""}
     ${snippetBlock(r)}
   </article>`; }).join("");
@@ -988,7 +990,7 @@ async function loadModule(name) {
       ${chips ? `<div class="type-chips">各类别存量：${chips}</div>` : ""}
       ${truncNote}
       ${roleNote}
-      <div class="boundary-note">${esc(data.scope_note || "")}</div>
+      <div class="boundary-note">${inline(data.scope_note || "")}</div>
       ${batchBar(rows, MODULE_CSV[name], "条记录")}
       ${cards || "<div class='result-card'>这一类暂无可展示的记录。</div>"}
       ${name === "项目业绩" ? ledgerCards(data) : ""}`;
