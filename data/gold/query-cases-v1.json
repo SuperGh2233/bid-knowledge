@@ -1,0 +1,258 @@
+{
+ "version": "query-cases-v1",
+ "count": 30,
+ "cases": [
+  {
+   "query_id": "G01",
+   "query_text": "找50万以上的代谢组合同",
+   "category": "contract/业绩",
+   "origin": "r0_migrated_229",
+   "manual_verified": true,
+   "expected_count": 29
+  },
+  {
+   "query_id": "G02",
+   "query_text": "找代谢组项目业绩，要求有合同和收款凭证",
+   "category": "contract/业绩",
+   "origin": "r0_migrated_229",
+   "manual_verified": true,
+   "expected_count": 3
+  },
+  {
+   "query_id": "G03",
+   "query_text": "代谢合同",
+   "category": "contract/业绩",
+   "origin": "r0_migrated_229",
+   "manual_verified": true,
+   "expected_count": 64
+  },
+  {
+   "query_id": "G04",
+   "query_text": "找我方代谢业绩",
+   "category": "contract/业绩",
+   "origin": "r0_migrated_229",
+   "manual_verified": true,
+   "expected_count": 64
+  },
+  {
+   "query_id": "G05",
+   "query_text": "代谢合同，不要蛋白组和宏基因组合同",
+   "category": "contract/业绩",
+   "origin": "r0_migrated_229",
+   "manual_verified": true,
+   "expected_count": 64
+  },
+  {
+   "query_id": "G06",
+   "query_text": "查找已采购的高分辨质谱设备合同及现场照片",
+   "category": "contract/业绩",
+   "origin": "r0_migrated_229",
+   "manual_verified": true,
+   "expected_count": 5
+  },
+  {
+   "query_id": "R0ADD-SCHEME-01",
+   "query_text": "找历史项目里写过「售后方案」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-SCHEME-02",
+   "query_text": "找历史项目里写过「培训方案」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-SCHEME-03",
+   "query_text": "找历史项目里写过「应急预案」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-SCHEME-04",
+   "query_text": "找历史项目里写过「保密方案」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-SCHEME-05",
+   "query_text": "找历史项目里写过「质量控制方案」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-SCHEME-06",
+   "query_text": "找历史项目里写过「风险识别与措施」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-SCHEME-07",
+   "query_text": "找历史项目里写过「样本接收及物流方案」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-SCHEME-08",
+   "query_text": "找历史项目里写过「对项目的理解与需求分析」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-SCHEME-09",
+   "query_text": "找历史项目里写过「项目管理与实施方案」的我方响应文件",
+   "category": "九类方案",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-FINANCE-01",
+   "query_text": "找响应文件里包含 2025年12月 财务/社保月份的资料",
+   "category": "财务社保",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-FINANCE-02",
+   "query_text": "找响应文件里包含 2026年1月 财务/社保月份的资料",
+   "category": "财务社保",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-FINANCE-03",
+   "query_text": "找响应文件里包含 2025年6月 财务/社保月份的资料",
+   "category": "财务社保",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-INS-01",
+   "query_text": "找历史投标里的「高分辨质谱」及其采购合同/发票/照片材料",
+   "category": "仪器",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-INS-02",
+   "query_text": "找历史投标里的「流式细胞仪」及其采购合同/发票/照片材料",
+   "category": "仪器",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-INS-03",
+   "query_text": "找历史投标里的「超低温冰箱」及其采购合同/发票/照片材料",
+   "category": "仪器",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-BOUNDARY-01",
+   "query_text": "50万以上代谢组合同",
+   "category": "合同边界",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-BOUNDARY-02",
+   "query_text": "华大竞品响应不得返回",
+   "category": "合同边界",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0ADD-BOUNDARY-03",
+   "query_text": "乙方为欧易的合同",
+   "category": "合同边界",
+   "origin": "r0_added",
+   "manual_verified": false,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0NEW-AMT-01",
+   "query_text": "验证产品明细金额达到阈值，而非合同总额（代谢总额80万但代谢明细27万应排除）",
+   "category": "金额边界",
+   "origin": "r0_new_6",
+   "manual_verified": false,
+   "expected_empty": null,
+   "expected_empty_note": "expected_empty_after_manual",
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0NEW-DATE-01",
+   "query_text": "验证合同签订日期「之后/以来」的包含关系（2024年12月之后、非当日）",
+   "category": "日期边界",
+   "origin": "r0_new_6",
+   "manual_verified": false,
+   "expected_empty": null,
+   "expected_empty_note": null,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0NEW-ALIAS-01",
+   "query_text": "验证LC+GC、双平台、全谱代谢组归一到「代谢组」",
+   "category": "产品别名",
+   "origin": "r0_new_6",
+   "manual_verified": false,
+   "expected_empty": null,
+   "expected_empty_note": null,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0NEW-COMP-01",
+   "query_text": "竞品响应或竞品合同不得污染我方结果（华大/吉凯供应商须排除）",
+   "category": "竞品排除",
+   "origin": "r0_new_6",
+   "manual_verified": false,
+   "expected_empty": null,
+   "expected_empty_note": null,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0NEW-VENDOR-01",
+   "query_text": "正文乙方命中欧易/鹿明时判为我方合同",
+   "category": "我方供应商",
+   "origin": "r0_new_6",
+   "manual_verified": false,
+   "expected_empty": null,
+   "expected_empty_note": null,
+   "expected_count": 0
+  },
+  {
+   "query_id": "R0NEW-NEG-01",
+   "query_text": "确认库中确实不存在匹配结果才设置 expected_empty=true（当前为 null）",
+   "category": "无结果负例",
+   "origin": "r0_new_6",
+   "manual_verified": false,
+   "expected_empty": null,
+   "expected_empty_note": null,
+   "expected_count": 0
+  }
+ ]
+}

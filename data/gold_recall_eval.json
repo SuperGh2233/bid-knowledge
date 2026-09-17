@@ -2,36 +2,44 @@
  "per_query": [
   {
    "query": "G01",
-   "relevant_queryable": 3,
+   "relevant_queryable": 5,
    "retrieved": 2,
-   "recall": 0.6667,
-   "irrelevant_queryable": 6,
+   "recall": 0.4,
+   "irrelevant_queryable": 14,
    "false_positives": 0,
    "missed": [
+    "YOE2024021181",
+    "BOE2025110208",
     "YOE2025010758"
    ],
    "fp_contracts": []
   },
   {
    "query": "G03",
-   "relevant_queryable": 14,
-   "retrieved": 13,
-   "recall": 0.9286,
+   "relevant_queryable": 20,
+   "retrieved": 15,
+   "recall": 0.75,
    "irrelevant_queryable": 0,
    "false_positives": 0,
    "missed": [
-    "YOE2025010758"
+    "YOE2025010758",
+    "YOE2024021181",
+    "YOE2024080476",
+    "YOE2024082739",
+    "BOE2025110208"
    ],
    "fp_contracts": []
   },
   {
    "query": "G05",
-   "relevant_queryable": 9,
-   "retrieved": 9,
-   "recall": 1.0,
-   "irrelevant_queryable": 5,
+   "relevant_queryable": 12,
+   "retrieved": 11,
+   "recall": 0.9167,
+   "irrelevant_queryable": 8,
    "false_positives": 0,
-   "missed": [],
+   "missed": [
+    "YOE2024082739"
+   ],
    "fp_contracts": []
   },
   {
@@ -40,9 +48,9 @@
   }
  ],
  "summary": {
-  "relevant": 26,
-  "retrieved": 24,
+  "relevant": 37,
+  "retrieved": 28,
   "false_positives": 0,
-  "recall": 0.9231
+  "recall": 0.7568
  }
 }

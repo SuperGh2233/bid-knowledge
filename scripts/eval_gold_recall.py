@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import io
+import pathlib
 import json
 import sys
 from collections import defaultdict
@@ -24,7 +25,16 @@ from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 CLEAN = Path(r"C:\Users\hao.guo\Desktop\标书文库\bid-ai-clean")
-GOLD = Path(r"C:\Users\hao.guo\Desktop\标书文库\bid-ai-r0-snapshot\gold")
+# 评测基准（gold）**随仓库走**：2026-09-17 起优先读仓库内 `data/gold/`。
+# 原因：R0 快照目录已按用户要求移出工作区归档，硬编码旧路径会让评测**直接跑不起来**
+# （实测 FileNotFoundError）—— 退出门槛的评测不能依赖仓库外的目录。
+_ARCHIVE_GOLD = pathlib.Path.home() / "Desktop" / "标书文库-旧系统归档" / "bid-ai-r0-snapshot" / "gold"
+_CANDIDATES = [CLEAN / "data" / "gold", _ARCHIVE_GOLD, CLEAN.parent / "bid-ai-r0-snapshot" / "gold"]
+GOLD = next((p for p in _CANDIDATES if (p / "expected-records-v1.json").exists()), None)
+if GOLD is None:
+    raise SystemExit("找不到评测基准 expected-records-v1.json；候选路径：" +
+                     "；".join(str(p) for p in _CANDIDATES))
+
 sys.path.insert(0, str(CLEAN))
 
 import sqlite3  # noqa: E402

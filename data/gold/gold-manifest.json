@@ -1,0 +1,50 @@
+{
+ "version": "r0-05a-corrected",
+ "created_at": "2026-09-07",
+ "query_case_count": 30,
+ "expected_record_count": 229,
+ "hist_6": [
+  "G01",
+  "G02",
+  "G03",
+  "G04",
+  "G05",
+  "G06"
+ ],
+ "hist_expected_by_query": {
+  "G01": 29,
+  "G03": 64,
+  "G05": 64,
+  "G04": 64,
+  "G02": 3,
+  "G06": 5
+ },
+ "r0_added_18_queries": 18,
+ "new_6_queries": 6,
+ "smoke_query_count": 16,
+ "seed_stage_counts": {
+  "2": 1936,
+  "3": 177,
+  "1": 47
+ },
+ "seed_project_ref_unique": 2160,
+ "seed_rows": 2160,
+ "files": {
+  "query-cases-v1.json": {
+   "size": 7698,
+   "sha256": "a57e7a2e8019ee873b2bfc73700d2d2bb9945e5b419fd013a0cfb381b3f43dc2"
+  },
+  "expected-records-v1.json": {
+   "size": 173335,
+   "sha256": "9af0d2a9ad96d16c4f2f98fb7084198e0bf352dd90a1ed275a561ffccde7d2d6"
+  },
+  "retrieval-smoke-gold-v1.json": {
+   "size": 4608,
+   "sha256": "5c217ad33fe6b7d3f272b526424dffbf456108d0f3cb06e75e94e0a1f3fb52a2"
+  },
+  "seed_priority.csv": {
+   "size": 690595,
+   "sha256": "0bd47e99bb5fd25f61aa667886b31435b1012fcf901743b101d9156b728857b5"
+  }
+ }
+}

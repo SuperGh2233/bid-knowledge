@@ -47,6 +47,7 @@
 
 | 文档 | 状态 | 何时读 |
 |---|---|---|
+| `evals/EVAL-20260917-gold-recall-regression.md` | active | **金标准召回 92.3% → 75.7% 的复测与根因**（方案 C 单产品归因未同步到 `contract_items`）；含三个修法选项，**待用户裁定** |
 | `evals/success5-precision10-clarification.md` | active | Success@5 / Precision@10 门槛口径（给需求方的确认请求） |
 | `evals/archive/`（9 份） | archived | R5 留出集/结构化评测（`r5-*`×6）与 D1/D2a 阶段清单（`d1-*`、`d2a-*`×2）。**历史证据，只查不改**；其中的路径引用是归档时点的位置 |
 

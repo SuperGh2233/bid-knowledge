@@ -80,7 +80,7 @@ CONDA="C:\Users\hao.guo\AppData\Local\miniconda3\envs\langchain-dev\python.exe"
 export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
 "$CONDA" -m pytest tests -q              # 298 passed
 "$CONDA" scripts/backfill_track_records.py   # 业绩清单重跑（写前自动备份）
-"$CONDA" scripts/eval_gold_recall.py         # Recall 92.3% / 误返 0
+"$CONDA" scripts/eval_gold_recall.py         # ️ 实测 Recall **75.7%**（未达标，见下）；误返 0
 "$CONDA" -m app.api                          # → http://127.0.0.1:8000
 ```
 
@@ -93,6 +93,11 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
 ### Confirmed problems（已知、未修）
 - **OCR 混扫召回污染**：几份扫描 PDF 把合同/财报与响应文件扫进同一文件（新增章节中 17% 命中方案关键词、32% 含噪声词）。**数据源特性**，治本要「OCR 后按页归属拆分」（独立课题）。
 - **无金额的 20 条业绩行**：8 条「表未设金额列」、11 条「表内有金额列但本行未取到」、1 条未标注 —— 已在结果里如实标注；再往上只能靠合同原件/OCR。
+- **⚠️ 金标准 Recall 掉到 75.7%（未达标）** —— 2026-09-17 复测发现，根因已定位：
+  方案 C 的单产品归因（`filename_product_total`）只让这些合同**有了金额**，产品键仍是文件名那一个，
+  **不是正文里真实包含的产品**；这些合同的明细行**服务名段为空**、类别又不含「代谢」→ 检索一条都不产出。
+  **分母 59 条里 22 条（37%）属此类**。另有一条金标准语义存疑（`YOE2025010758` 产品是蛋白组却标代谢相关）。
+  **修法三选项已写入 `docs/evals/EVAL-20260917-gold-recall-regression.md`，待用户裁定**；未动检索逻辑。
 - **`华大` 查不到是数据事实**（该词在本语料里既非甲乙方也非产品文本）；**泛问「找仪器」**仍映射 `instrument`（存期间），有意不改（有测试钉住）。
 
 ### Unverified risks / assumptions
