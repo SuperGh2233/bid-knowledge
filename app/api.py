@@ -514,6 +514,11 @@ def _fold_by_contract(rows: list[dict]) -> list[dict]:
 
 # 自然问句 → fact_type 的粗映射（业务同事不会说「social_security_month」）
 _FACT_KW = (
+    # ⚠️ 「总金额/总额」类**必须排在社保/财务之前**：这里取第一个命中，而
+    # 「纳税社保总金额」同时含「社保」与「纳税」——排在后面会落到 `social_security_month`
+    # 那一类（**期间**），而用户问的是**金额**。实测需求方第二次对接的原话就是这个问法。
+    (("纳税社保总金额", "社保总金额", "纳税总额", "完税总额", "缴税总额",
+      "社保金额", "纳税金额", "完税金额", "社保缴费金额"), "finance_amount"),
     (("社保", "社会保障", "社会保险"), "social_security_month"),
     (("财务", "审计报告", "资信"), "finance_period"),
     (("纳税", "税收", "完税"), "finance_period"),
@@ -662,6 +667,96 @@ def _annotate_fact_role(r: dict) -> None:
         r["evidence_text"] = ""      # 只给了文件名 → 不是证据，不要当成证据上屏
 
 
+# SQL 版的「空壳行」判据 —— **与 `_annotate_fact_role` 的 Python 判据逐行等价**（实测 1,986 行零错分）。
+# 用途：在 SQL 里把空壳行排到后面（`ORDER BY`），否则 `ORDER BY fact_type, fact_value` 会让
+# 211 条无型号无正文的 `instrument` 行**排在有内容行之前**（2026-09-17 需求方实测的「仪器定位有问题」）。
+# ⚠️ 改这里**必须同时改** `_annotate_fact_role` —— 两处判据分叉正是本仓库反复踩的坑
+# （概览卡 546 vs 点进去 722 就是分开写死造成的）。`tests/test_material_facts.py` 有等价性回归。
+SHELL_ROW_SQL = (
+    "CASE WHEN instr(COALESCE(f.evidence_text,''), '] ') > 0 "
+    "AND length(trim(substr(f.evidence_text, instr(f.evidence_text, '] ') + 2))) > 0 "
+    "AND d.relative_path LIKE '%' || trim(substr(f.evidence_text, instr(f.evidence_text, '] ') + 2)) "
+    "THEN 1 WHEN instr(COALESCE(f.evidence_text,''), '] ') = 0 "
+    "AND (trim(COALESCE(f.evidence_text,'')) = '' "
+    "OR d.relative_path LIKE '%' || trim(COALESCE(f.evidence_text,''))) THEN 1 ELSE 0 END"
+)
+
+# 空壳行的**锚点**：正文里找它来裁「可复制段落」。顺序 = 优先级（先具体后宽泛）。
+# ⚠️ 一律**只用材料自身的标题/表名**，不用泛词 —— 松锚点会把「招标要求句」「资格承诺句」
+# 当成材料（实测：`财务报告` 泛词命中的是采购人的资格要求段，那是**放宽条件造命中**）。
+SNIPPET_ANCHORS: dict[str, tuple[str, ...]] = {
+    "social_security_month": ("社会保险费缴费记录", "社会保障记录", "社会保险费缴费",
+                              "单位参保证明", "社会保险参保", "社保缴费明细", "社会保险", "社保"),
+    "finance_period": ("完税证明", "税收完税证明", "纳税证明", "审计报告", "财务报告",
+                       "资产负债表", "利润表", "资信证明", "完税", "纳税"),
+    "finance_amount": ("金额合计", "合计金额", "价税合计", "准予扣除", "缴纳", "金额"),
+    "instrument": ("仪器设备清单", "主要仪器设备", "检测设备仪器", "仪器清单", "设备清单",
+                   "实验设备", "仪器型号", "仪器", "设备"),
+    "instrument_name": ("仪器型号", "设备型号", "型号"),
+    "invoice": ("发票号码", "增值税专用发票", "增值税普通发票", "发票代码", "发票"),
+    "purchase_contract": ("仪器采购合同", "设备采购合同", "购销合同", "采购合同"),
+    "instrument_photo": ("仪器实拍", "设备实拍", "仪器照片", "设备照片", "实拍图", "实拍"),
+    "qualification": ("资质证书", "认证证书", "营业执照", "证书"),
+}
+
+
+def cut_snippet(text: str, anchors: tuple[str, ...], *, before: int = 60,
+                after: int = 520) -> str:
+    """按锚点在 `text` 里裁一段**可复制的原样正文**；找不到锚点返回空串（不猜）。
+
+    这是需求方第二次对接的核心诉求（「定位到文件里**整理后的、可以复制**的内容」）：
+    事实行只说明「有这类材料」，用户要的是能直接粘进标书的**那段原文**。
+
+    `after` 给得比 `before` 大：材料标题之后才是内容（表头 + 数据行），前面只是目录/页码。
+    起止点尽量对齐换行边界，避免把半句话切出来。
+    """
+    if not text:
+        return ""
+    for a in anchors:
+        if not a:
+            continue
+        i = text.find(a)
+        if i < 0:
+            continue
+        s = max(0, i - before)
+        nl = text.find("\n", s)
+        if 0 <= nl < i:
+            s = nl + 1
+        return text[s:min(len(text), s + before + after + len(a))].strip()
+    return ""
+
+
+def attach_snippets(con, rows: list[dict], *, max_chars: int = 600) -> None:
+    """给材料事实行补 `content_snippet`（正文里可复制的那一段）+ `snippet_source`。
+
+    **只读、零外发、不改库**：查询时实时从 `parse_artifacts.text` 裁段。
+    锚点按 `fact_value`（型号/期间）→ `SNIPPET_ANCHORS[fact_type]` 逐级回落；
+    **裁不到就留空并置 `snippet_missing=True`**，由前端如实说明，不用文件名冒充内容。
+
+    同一 `canonical_document_id` 只读一次正文（一次查询里一份文件常有多行事实）。
+    """
+    if not rows:
+        return
+    cache: dict[str, str] = {}
+    for r in rows:
+        doc = r.get("document_id")
+        if doc not in cache:
+            cache[doc] = ""
+            if doc:
+                try:
+                    got = con.execute(
+                        "SELECT a.text FROM parse_artifacts a JOIN documents d "
+                        "ON d.canonical_document_id = a.canonical_document_id "
+                        "WHERE d.document_id = ? LIMIT 1", (doc,)).fetchone()
+                    cache[doc] = (got[0] or "") if got else ""
+                except sqlite3.Error:      # noqa: PERF203 —— 正文缺失不阻断事实返回
+                    cache[doc] = ""
+        anchors = ((r.get("fact_value"),) if r.get("fact_value") else ()) \
+            + SNIPPET_ANCHORS.get(r.get("fact_type") or "", ())
+        snip = cut_snippet(cache[doc], anchors)
+        r["content_snippet"] = snip[:max_chars]
+        r["snippet_source"] = "正文原样摘录（可复制）" if snip else ""
+        r["snippet_missing"] = not snip
 
 
 # —— 用户 2026-09-13 明确的**三类**定位（其余类别不在此列）——
@@ -686,7 +781,7 @@ THREE_MODULES = {
 # 实测（B2B 评审 P2）：概览卡原用 4 类（漏了 `instrument_name` / `instrument_purchase_contract`），
 # 于是卡上写「仪器设备清单 546 条」、点进去 722 条 —— 同一屏两个数互相打架，
 # 而这种矛盾会被读成「数据不可信」。类型表只此一份，两处引用同一常量。
-_FINANCE_FACT_TYPES = ("finance_period", "social_security_month")
+_FINANCE_FACT_TYPES = ("finance_period", "social_security_month", "finance_amount")
 _INSTRUMENT_FACT_TYPES = ("instrument_name", "instrument", "purchase_contract",
                           "instrument_purchase_contract", "invoice", "instrument_photo")
 

@@ -370,3 +370,28 @@ footer .foot-note { display: block; margin-top: 4px; font-size: 11px; opacity: .
 .mention-evidence { font-size: 0.85rem; color: #555; font-style: italic; }
 .tag-warn { background: rgba(201, 162, 39, 0.16); color: #7a5c00;
   border: 1px solid rgba(201, 162, 39, 0.35); }
+
+/* —— 可复制正文段（2026-09-17 需求方第二次对接主诉：要「整理后可复制的内容」）—— */
+.snippet { margin-top: 12px; border: 1px solid var(--line); background: var(--sheet); }
+.snippet-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 8px 12px; border-bottom: 1px solid var(--line);
+  font-size: 12px; color: var(--muted);
+}
+.snippet-head .copy { margin-left: 0; padding: 4px 10px; font-size: 12px; }
+.snippet-body {
+  margin: 0; padding: 12px 14px; max-height: 260px; overflow: auto;
+  white-space: pre-wrap; word-break: break-word;
+  font: 12px/1.75 "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  color: var(--ink);
+}
+
+/* —— 标题结构输入（需求2：让模型严格按大/小标题写）—— */
+.outline-box { margin-top: 14px; }
+.outline-box summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+.outline-box textarea {
+  width: 100%; margin-top: 8px; padding: 10px 12px; resize: vertical;
+  border: 1px solid var(--line); background: var(--sheet); color: var(--ink);
+  font: 12px/1.7 "Microsoft YaHei UI", "PingFang SC", sans-serif;
+}
+.outline-box .copy { margin-top: 8px; padding: 6px 11px; font-size: 12px; }

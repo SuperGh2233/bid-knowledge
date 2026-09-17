@@ -277,3 +277,84 @@ def test_fold_facts_by_file_merges_periods():
     assert out[0]["fact_values"] == ["2026-04", "2026-05"]                 # 期间按时间序
     assert out[0]["record_count"] == 2
     assert out[1]["fact_values"] == [None]                                 # 期间未知如实保留
+
+
+# ============================================================================
+# 2026-09-17 第二次需求对接新增：可复制正文段 / 空壳行沉底 / 凭证合计金额
+# ============================================================================
+
+def test_cut_snippet_uses_strong_anchor_and_returns_original():
+    """`content_snippet` 必须**按材料自身标题**裁原文；找不到锚点如实返回空。"""
+    from app.api import cut_snippet, SNIPPET_ANCHORS
+    text = "目录\n第一章 …\n社会保险费缴费记录\n缴费人名称：某公司\n2025-10至2025-10 351,727.90\n" + "x" * 800
+    snip = cut_snippet(text, SNIPPET_ANCHORS["social_security_month"])
+    # 锚点必须在段内；起点对齐**换行边界**（允许带一行上文，避免把半句话切出来）
+    assert "社会保险费缴费记录" in snip and "351,727.90" in snip
+    assert snip.startswith("第一章") or snip.startswith("社会保险费缴费记录")
+    assert "目录" not in snip                       # 不会从头吞整篇
+    assert cut_snippet(text, ("根本不存在的锚点",)) == ""  # 找不到 → 空（不猜）
+
+
+def test_shell_row_sql_matches_python_predicate():
+    """**两处判据必须等价**：SQL `SHELL_ROW_SQL` vs `_annotate_fact_role` 的 Python 判据。
+
+    分开写死过正是本仓库反复踩的坑（概览卡 546 vs 点进去 722）。这里用合成库钉住等价性。
+    """
+    import sqlite3
+    from app.api import SHELL_ROW_SQL, _annotate_fact_role
+    con = sqlite3.connect(":memory:")
+    con.executescript(
+        "CREATE TABLE documents (document_id TEXT, relative_path TEXT, document_role TEXT);"
+        "CREATE TABLE material_facts (document_id TEXT, fact_type TEXT, fact_value TEXT,"
+        " evidence_text TEXT);")
+    con.execute("INSERT INTO documents VALUES ('d1','P/甲.docx','our_response')")
+    con.executemany("INSERT INTO material_facts VALUES (?,?,?,?)", [
+        ("d1", "instrument", None, "[our_response] 甲.docx"),        # 空壳
+        ("d1", "social_security_month", None, "[our_response] 甲.docx"),  # 空壳
+        ("d1", "instrument_name", "Q Exactive", "[our_response] 型号 Q Exactive 2台"),  # 有内容
+        ("d1", "qualification", None, "[our_response] 营业执照编号 123"),             # 有内容
+    ])
+    sql = list(con.execute(
+        f"SELECT {SHELL_ROW_SQL} FROM material_facts f JOIN documents d "
+        "ON d.document_id=f.document_id"))
+    py = []
+    for ev, ft, fv in con.execute("SELECT evidence_text, fact_type, fact_value FROM material_facts"):
+        r = {"document_role": "our_response", "evidence_text": ev, "file_name": "甲.docx",
+             "fact_type": ft, "fact_value": fv}
+        _annotate_fact_role(r)
+        py.append(int(bool(r["evidence_is_filename"])))
+    assert [s[0] for s in sql] == py == [1, 1, 0, 0], (sql, py)
+    con.close()
+
+
+def test_find_voucher_total_is_conservative():
+    """凭证合计金额判据：**必须有税务机关痕迹 + 合计锚点**，否则不产出（宁缺毋滥）。
+
+    ⚠️ 反例（实测漏网）：高德打车电子发票同样有 `价税合计`，但**没有税务机关痕迹** ——
+    不挡就会把打车费当成「纳税金额」。明细行的数字（`4,226.88`）也不得被当合计。
+    """
+    from app.extract import find_voucher_total
+    # 形态①：税务完税证明（¥ 紧邻）
+    a = "税种 … 实缴（退）金额\n1,000.00\n金额合计\n（大写）人民币贰拾柒万贰仟叁佰壹拾圆肆角肆分\n¥272310.44\n税务机关"
+    assert find_voucher_total(a) == ("272310.44", "¥")
+    # 形态②：社保完税凭证（大写行换行后取数）
+    b = "金额合计（大写）叁万肆仟肆佰贰拾元零玖角贰分\n34,420.92\n税务机关"
+    assert find_voucher_total(b) == ("34,420.92", "大写行")
+    # 反例①：普通发票（无税务机关/社保痕迹）→ 不产出
+    c = "价税合计（大写）壹佰贰拾柒圆叁角肆分\n¥ 127.34\n开票人：张玲"
+    assert find_voucher_total(c) is None
+    # 反例②：有机构痕迹但无合计锚点（社保缴费记录表，只有明细）→ 不产出，**不按明细求和**
+    d = "社会保险费缴费记录\n基本医疗保险费 2025-10 ¥ 351,727.90\n企业职工基本养老保险费 ¥331,037.60\n上海市社会保险事业管理中心"
+    assert find_voucher_total(d) is None
+    assert find_voucher_total("") is None
+
+
+def test_finance_amount_query_maps_before_social_security():
+    """「纳税社保总金额」必须落到 `finance_amount`（**金额**），不能被「社保」抢先归到**期间**类。"""
+    from app.api import parse_fact_query
+    assert parse_fact_query("纳税社保总金额")[0] == "finance_amount"
+    assert parse_fact_query("社保总金额")[0] == "finance_amount"
+    assert parse_fact_query("完税总额")[0] == "finance_amount"
+    # 既有的期间类问法一条不动
+    assert parse_fact_query("2025年的社保")[0] == "social_security_month"
+    assert parse_fact_query("找仪器照片")[0] == "instrument_photo"

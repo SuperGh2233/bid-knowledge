@@ -800,3 +800,58 @@ def test_tender_material_pool_uses_index_not_row_factory():
     pools = T.material_pools(con)
     assert pools["qualification"]["count"] == 2 and pools["qualification"]["documents"] == 1
     assert pools["contracts"]["count"] == 0
+
+
+# ============================================================================
+# 2026-09-17 需求方第二次对接的需求2：**严格按指定标题结构生成**
+# ============================================================================
+
+_OUTLINE = {"title": "售后解决方案",
+            "sections": ["售后服务团队", "售后服务方式", "整体技术支持服务方案", "服务质量承诺"]}
+
+
+def test_parse_outline_accepts_dict_and_markdown():
+    """outline 两种形态都收；**规整不出标题 → 空 dict**（调用方据此不施加约束，不猜）。"""
+    assert P.parse_outline(_OUTLINE) == _OUTLINE
+    md = P.parse_outline("# 售后解决方案\n## 售后服务团队\n## 售后服务方式")
+    assert md == {"title": "售后解决方案", "sections": ["售后服务团队", "售后服务方式"]}
+    plain = P.parse_outline("售后解决方案\n售后服务团队")
+    assert plain == {"title": "售后解决方案", "sections": ["售后服务团队"]}
+    assert P.parse_outline(None) == {} and P.parse_outline("") == {}
+    assert P.parse_outline({"title": "  ", "sections": []}) == {}
+
+
+def test_outline_block_is_injected_into_prompt():
+    """提示词里必须出现**硬性结构块**（大标题 + 逐条小标题 + 顺序要求）。"""
+    prompt = P.build_gen_prompt(_payload(), "", None, outline=_OUTLINE)
+    assert "必须逐字遵守的标题结构" in prompt
+    assert "售后解决方案" in prompt
+    for s in _OUTLINE["sections"]:
+        assert s in prompt
+    # 不传 outline → 提示词里**不得**出现结构块（行为与加此参数前一致）
+    assert "必须逐字遵守的标题结构" not in P.build_gen_prompt(_payload(), "")
+
+
+def test_validate_outline_catches_drift_and_passes_on_exact():
+    """漂移必须被报出来；逐字遵守（含模型自加的序号前缀）不得误报。"""
+    payload = _payload()
+    good = ("# 售后解决方案\n## 售后服务团队\n30 分钟响应 [E1]\n## 售后服务方式\n略\n"
+            "## 整体技术支持服务方案\n略\n## 服务质量承诺\n略")
+    assert P.validate_generation(good, payload, "", _OUTLINE) == []
+    # 容忍模型自加序号（实测常见）：`## 1. 售后服务团队`
+    numbered = good.replace("## 售后服务团队", "## 1、售后服务团队")
+    assert P.validate_generation(numbered, payload, "", _OUTLINE) == []
+
+    bad = "# 售后解决方案\n## 售后服务\n30 分钟响应 [E1]\n## 自造小节\n略"
+    problems = P.validate_generation(bad, payload, "", _OUTLINE)
+    assert any("缺少小标题" in p for p in problems)
+    assert any("结构外的二级标题" in p for p in problems)
+
+    wrong_title = good.replace("# 售后解决方案", "# 售后服务方案")
+    assert any("大标题" in p for p in
+               P.validate_generation(wrong_title, payload, "", _OUTLINE))
+    no_title = good.replace("# 售后解决方案\n", "")
+    assert any("缺少大标题" in p for p in
+               P.validate_generation(no_title, payload, "", _OUTLINE))
+    # 不传 outline → 校验器行为不变（不报结构类问题）
+    assert not any("标题结构" in p for p in P.validate_generation(bad, payload, ""))

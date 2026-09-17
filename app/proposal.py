@@ -612,6 +612,10 @@ GEN_SYSTEM = """你是投标方案撰写助手。你**只能**使用下面给出
 5. 证据状态为 insufficient 的小节，直接写「历史材料未覆盖本小节」。
 6. **不要**写评分标准、招标文件要求、竞品做法的内容。
 7. 输出 Markdown；每个小节用二级标题，标题必须包含小节名。
+   ⚠️ **若提示里给了【必须逐字遵守的标题结构】，则以它为准**：大标题用一级标题 `#`、
+   小标题用二级标题 `##`，**逐字照抄、顺序一致、不得增删改名、不得再加别的同级标题**。
+   未给该结构时，按上面这句的默认写法（每个模块小节一个二级标题）。
+   两种情况下**标题只是骨架**，标题下的内容仍必须遵守规则 1–6、8、9。
 8. 每条证据行给出的【项目简介】/【文件用途】只用于**判断该证据是否适用于本方案**；
    **不得**把这两项的内容当作可引用的原文或承诺。
 9. 若提示里指定了【本次方案的产品线】，而证据中**并列了多个产品线**的条目
@@ -644,8 +648,45 @@ def _gen_client():
                   timeout=config.PROPOSAL_GEN_TIMEOUT, max_retries=2), model
 
 
+def parse_outline(raw) -> dict:
+    """把用户给的 outline（dict 或 Markdown 文本）规整成 `{"title": str, "sections": [...]}`。
+
+    **两种形态都收**（前端给文本框，同事可能直接粘一份 Markdown）：
+      · dict：`{"title": "售后解决方案", "sections": ["售后服务团队", ...]}`
+      · 文本：`# 售后解决方案` + `## 售后服务团队` …（`#` 数量不敏感，**层级由出现顺序定**：
+        第一个标题是大标题，其余是小标题；没有 `#` 时**首行**当大标题）
+    规整不出任何标题 → 返回空 dict（调用方据此**不施加约束**，不猜）。
+    """
+    if isinstance(raw, dict):
+        title = str(raw.get("title") or "").strip()
+        secs = [str(s).strip() for s in (raw.get("sections") or []) if str(s).strip()]
+        return {"title": title, "sections": secs} if (title or secs) else {}
+    text = str(raw or "").strip()
+    if not text:
+        return {}
+    heads = [ln.lstrip("#").strip() for ln in text.splitlines() if ln.strip().startswith("#")]
+    if heads:
+        return {"title": heads[0], "sections": heads[1:]}
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    return {"title": lines[0], "sections": lines[1:]} if lines else {}
+
+
+def format_outline_block(outline: dict) -> str:
+    """outline → 提示词里的**硬性结构块**（生成时逐字遵守）。"""
+    title = (outline.get("title") or "").strip()
+    secs = [s for s in (outline.get("sections") or []) if s]
+    lines = ["【必须逐字遵守的标题结构】（本次方案的输出骨架，**不得增删改名、不得调整顺序**）"]
+    if title:
+        lines.append(f"大标题（一级标题 `#`）：{title}")
+    if secs:
+        lines.append("小标题（二级标题 `##`），按此顺序各一节：")
+        lines += [f"  {i}. {s}" for i, s in enumerate(secs, 1)]
+    lines.append("每个小标题下的**内容**仍必须遵守下面的引用与证据规则（标题是骨架，不是内容）。")
+    return "\n".join(lines) + "\n"
+
+
 def build_gen_prompt(payload: dict, constraints: str = "", kb: list[dict] | None = None,
-                     product: str = "") -> str:
+                     product: str = "", outline: dict | None = None) -> str:
     """把**模块化经验** + 证据包 + 用户约束(+产品线) 拼成提示词。
 
     两段分工明确（R7-05 的范围未变：仍然只放命中原文、来源、约束）：
@@ -657,8 +698,16 @@ def build_gen_prompt(payload: dict, constraints: str = "", kb: list[dict] | None
     `product`（2026-09-15 加，见 PLAN-20260915 §8-3）：**方案按产品线裁剪**。
     用户裁定"全部模块都按产品特异处理、调用时交给 LLM 区分" —— 故这里只**如实告知产品线**
     并给一条裁剪规则（`GEN_SYSTEM` 规则 9），**不做人工的通用/特异清单**。
+
+    `outline`（2026-09-17 加，需求方第二次对接的需求2）：用户**指定的标题结构**
+    `{"title": "售后解决方案", "sections": ["售后服务团队", ...]}` ——
+    模型必须**逐字**按它输出（大标题一级、小标题二级、顺序一致、不得增删改名）。
+    只约束**输出结构**，不改变证据召回（召回仍按 `MODULE_KEYWORDS` 的模块名走）。
+    `None`/空 = 不约束，行为与加此参数前**完全一致**。
     """
     lines: list[str] = []
+    if outline and (outline.get("title") or outline.get("sections")):
+        lines.append(format_outline_block(outline))
     if product:
         lines.append(f"【本次方案的产品线】{product}"
                      f"（证据里若并列了其它产品线的条目，只保留与本产品线相关的）\n")
@@ -905,7 +954,8 @@ def detect_conflicts(payload: dict) -> list[dict]:
     return out
 
 
-def validate_generation(markdown: str, payload: dict, constraints: str = "") -> list[str]:
+def validate_generation(markdown: str, payload: dict, constraints: str = "",
+                        outline: dict | None = None) -> list[str]:
     """R7-07 生成后校验。返回问题列表（空=通过）。**只报问题，不改写正文**。
 
     **小节覆盖判据**（实测修正）：模型会按用户要求改小节标题 —— 用户说「必须包含服务周期」，
@@ -938,6 +988,12 @@ def validate_generation(markdown: str, payload: dict, constraints: str = "") -> 
             if len(cand) >= 2 and cand not in other_mods:
                 c_tokens.add(cand)
     for m in payload.get("modules", []):
+        # ⚠️ **给了 outline 时跳过模块名覆盖检查** —— outline 是**用户钦定的骨架**：
+        # 逐字标题由 `_validate_outline` 负责校验；模块名与用户标题**本就不同名**
+        # （「售后解决方案」vs 模块名「售后方案」），继续按模块名判必然误报（实测踩到）。
+        # 且用户未列进结构的小节，其证据不被引用是**合规**的，不该报「缺少小节」。
+        if outline and (outline.get("title") or outline.get("sections")):
+            continue
         labels = {m["module"], *MODULE_KEYWORDS.get(m["module"], ())} | c_tokens
         if not any(lbl in (markdown or "") for lbl in labels):
             problems.append(f"缺少必要小节：{m['module']}")
@@ -965,6 +1021,48 @@ def validate_generation(markdown: str, payload: dict, constraints: str = "") -> 
                           if n not in evidence_nums and len(n) >= 2})
     if untraceable:
         problems.append(f"无法回溯到证据的数字：{untraceable}")
+    problems.extend(_validate_outline(markdown or "", outline))
+    return problems
+
+
+_HEADING_RE = re.compile(r"^(#{1,6})\s*(.+?)\s*$", re.M)
+
+
+def _validate_outline(markdown: str, outline: dict | None) -> list[str]:
+    """校验输出标题结构是否**逐字**符合用户指定的 outline（只报问题，不改写）。
+
+    需求方 2026-09-17 明确要求「严格按那个标题来生成」—— 提示词已下硬约束，
+    但**模型漂移必须被报出来**（一个不报的校验器等于没有校验）。
+
+    报三类问题：缺小标题 / 大标题不符或缺失 / 出现 outline 之外的二级标题。
+    标题比对**容忍编号前缀与空白**（`1. 售后服务团队` / `## 1、售后服务团队` 都算命中）——
+    实测模型会自己加序号，那是合规的排版，不是漂移。
+    """
+    if not outline or not (outline.get("title") or outline.get("sections")):
+        return []
+    heads = _HEADING_RE.findall(markdown or "")
+    lvl1 = [h[1] for h in heads if len(h[0]) == 1]
+    lvl2 = [h[1] for h in heads if len(h[0]) == 2]
+
+    def norm(s: str) -> str:
+        return re.sub(r"^[（(]?[\d一二三四五六七八九十]+[）)、.．\s]*", "", (s or "").strip())
+
+    problems: list[str] = []
+    title = (outline.get("title") or "").strip()
+    if title:
+        if not lvl1:
+            problems.append(f"标题结构不符：缺少大标题（一级标题）「{title}」")
+        elif not any(norm(h) == norm(title) or norm(title) in h for h in lvl1):
+            problems.append(f"标题结构不符：大标题应逐字为「{title}」，实际为 {lvl1}")
+    want = [s for s in (outline.get("sections") or []) if s]
+    missing = [s for s in want
+               if not any(norm(h) == norm(s) or norm(s) in h for h in lvl2)]
+    if missing:
+        problems.append(f"标题结构不符：缺少小标题 {missing}（要求逐字使用，不得改名）")
+    extra = [h for h in lvl2
+             if not any(norm(h) == norm(s) or norm(s) in h for s in want)]
+    if want and extra:
+        problems.append(f"标题结构不符：出现了结构外的二级标题 {extra}（不得自行增补小节）")
     return problems
 
 
@@ -1050,7 +1148,7 @@ def assemble_proposal(payload: dict, constraints: str = "") -> dict:
 
 
 def generate_proposal(payload: dict, constraints: str = "", kb: list[dict] | None = None,
-                      product: str = "") -> dict:
+                      product: str = "", outline: dict | None = None) -> dict:
     """R7-05/06/07：证据包 → 方案正文 + 引用清单 + 冲突/缺口警告 + 校验结果。
 
     `kb` 为「模块化经验」（`build_module_kb` 产出），由调用方从库里整理后传入 ——
@@ -1061,7 +1159,7 @@ def generate_proposal(payload: dict, constraints: str = "", kb: list[dict] | Non
     """
     _guard()
     client, model = _gen_client()
-    prompt = build_gen_prompt(payload, constraints, kb, product=product)
+    prompt = build_gen_prompt(payload, constraints, kb, product=product, outline=outline)
     try:
         resp = client.chat.completions.create(
             model=model, temperature=0,
@@ -1094,7 +1192,7 @@ def generate_proposal(payload: dict, constraints: str = "", kb: list[dict] | Non
                        "heading": avail[r].get("heading")} for r in used if r in avail],
         "warnings": warnings,
         "gaps": gaps,
-        "validation": validate_generation(markdown, payload, constraints),
+        "validation": validate_generation(markdown, payload, constraints, outline),
         "usage": {"prompt_chars": len(prompt), "model": model},
     }
 

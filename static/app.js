@@ -77,10 +77,11 @@ const CONTRACT_CSV = {
 };
 // 需求一另两类问法的导出列（与卡片上显示的一致）
 const FACT_CSV = {
-  headers: ["材料类别", "期间", "项目", "文件", "文件内文字", "文件位置"],
+  headers: ["材料类别", "期间", "项目", "文件", "文件内文字", "可复制正文", "文件位置"],
   // 期间用 `factValuesText`（折叠后多值一并导出）—— 与卡片上显示的**同一口径**
-  rowOf: (r) => [FACT_LABEL[r.fact_type] || r.fact_type, factValuesText(r),
-                 r.project_folder, r.file_name, r.evidence_text, r.source_path],
+  rowOf: (r) => [FACT_LABEL[r.fact_type] || r.fact_type, factValueText(r),
+                 r.project_folder, r.file_name, r.evidence_text,
+                 r.content_snippet || "", r.source_path],
 };
 const SCHEME_CSV = {
   headers: ["章节标题", "相关度", "格式", "项目", "文件", "原文摘录", "文件位置"],
@@ -503,12 +504,13 @@ function renderFactAnswer(data, target) {
   const related = data.related || [];
   const cards = facts.map(f => `<article class="result-card ${f.role_scope === "tender" ? "warning" : ""}">
     <div class="card-top"><h3>${esc(factLabel(f.fact_type))}</h3>
-      <span class="amount">${esc(factValuesText(f))}</span></div>
+      <span class="amount">${esc(factValueText(f))}</span></div>
     <span class="tag">${esc(f.role_label || ROLE_LABEL[f.role_scope] || "")}</span>
     ${(f.record_count || 1) > 1 ? `<span class="tag">本文件 ${f.record_count} 条</span>` : ""}
     ${metaBlock(f)}
     ${f.evidence_text ? `<div class="evidence">文件中对应文字：${esc(f.evidence_text)}</div>`
       : `<div class="evidence">这份文件本身只登记了文件名，正文里没有可引用的原句 —— 请打开文件确认。</div>`}
+    ${snippetBlock(f)}
   </article>`).join("");
   // `related` 是**期间语义为「起始」**的条目（如「自2021年起」），不能混进主列表 —— 它只能说明
   // 「至该时点可能仍有效」，不能断言某月一定有材料。分开列，如实标注。
@@ -664,6 +666,14 @@ function renderMarkdown(markdown) {
 // 那 3 个按钮已在 2026-09-14 的示例瘦身中移除（改由 `#proposal-picker` 的模块按钮填入输入框），
 // 绑定成了死代码，已删。示例只保留在页签 01 的折叠里。
 
+// 标题结构示例（一键填入，省得同事手敲）——与 `placeholder` 同一个例子。
+const OUTLINE_DEMO = "售后解决方案\n售后服务团队\n售后服务方式\n整体技术支持服务方案\n服务质量承诺";
+$("#outline-demo")?.addEventListener("click", () => {
+  const box = $("#proposal-outline");
+  box.value = OUTLINE_DEMO;
+  box.closest("details")?.setAttribute("open", "");
+});
+
 $("#proposal-form").addEventListener("submit", event => {
   event.preventDefault();
   // 需求二只保留**模型生成**路径（2026-09-14 用户指令）。
@@ -703,9 +713,16 @@ async function generateDraft(mode) {
   // ⚠️ 之前这个计时器指向一个**永不存在**的 `.elapsed` 元素（空转）—— 现已把该元素放进加载卡。
   target.innerHTML = `<div class='result-card'>正在起草方案… <span class="elapsed"></span></div>`;
   try {
+    // 标题结构（可选）：按行读 —— 第一行大标题、其余小标题。空 → 不传（不约束结构）。
+    const outlineLines = ($("#proposal-outline")?.value || "")
+      .split("\n").map(t => t.replace(/^#+\s*/, "").trim()).filter(Boolean);
     const data = await request("/api/proposal-generate", {
       method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({query: $("#proposal-query").value, mode})
+      body: JSON.stringify({
+        query: $("#proposal-query").value, mode,
+        outline: outlineLines.length
+          ? {title: outlineLines[0], sections: outlineLines.slice(1)} : null,
+      })
     });
     const warn = (data.warnings || []).map(w => `<li>⚠️ ${esc(w.message)}</li>`).join("");
     const gaps = (data.gaps || []).map(g => `<li>证据不足：${esc(g.module)}（${esc(g.status)}）</li>`).join("");
@@ -731,6 +748,10 @@ async function generateDraft(mode) {
       `<li><b>${esc(c.ref)}</b> · ${esc(c.heading || "（无标题）")} <span class="excerpt">${esc(c.file_name)}</span></li>`).join("");
     target.innerHTML = `<div class="summary"><h3>方案草稿（不是最终稿）</h3>
       <p><strong>本次产物：</strong>${esc(MODE_LABEL[data.mode] || data.mode)}</p></div>
+      ${data.outline_used ? `<div class="cond-tags"><span class="cond-hint">标题结构（要求逐字遵守）：</span>`
+        + `<span class="tag cond-tag-static">${esc(data.outline_used.title || "（未指定大标题）")}</span>`
+        + (data.outline_used.sections || []).map(x => `<span class="tag cond-tag-static">${esc(x)}</span>`).join("")
+        + `</div>` : ""}
       ${modTags ? `<div class="cond-tags"><span class="cond-hint">识别到的方案小节${covLine ? `（${esc(covLine)}）` : ""}：</span>${modTags}</div>` : ""}
       ${alerts ? `<div class="result-card warning"><ul class="fact-list">${alerts}</ul></div>` : ""}
       <article class="draft">${renderMarkdown(data.markdown || "")}</article>
@@ -784,10 +805,31 @@ const ROLE_LABEL = {
 };
 const yuan = (v) => (v == null ? "金额未确认" : `¥ ${Number(v).toLocaleString("zh-CN")}`);
 const FACT_LABEL = {
-  finance_period: "财务期间", social_security_month: "社保月份", instrument: "列有仪器设备",
+  finance_period: "财务期间", social_security_month: "社保月份", finance_amount: "社保/纳税金额",
+  instrument: "列有仪器设备",
   instrument_name: "仪器", instrument_purchase_contract: "仪器采购合同",
   purchase_contract: "采购合同", invoice: "发票", instrument_photo: "仪器照片",
   qualification: "资质证书",
+};
+
+/** 金额类事实显示成钱（元），其余原样。**两处共用**（卡片 + CSV）。 */
+const factValueText = (r) => (r.fact_type === "finance_amount" && r.fact_value
+  ? yuan(Number(String(r.fact_value).replace(/,/g, ""))) : factValuesText(r));
+
+/** 「可复制正文段」块 —— 需求方第二次对接的**主诉**：
+ *  「原件都有，但想要定位到文件里整理后的、可以复制的内容」。
+ *  后端按锚点从响应文件正文裁段（`content_snippet`），**原样摘录、可逐字核对**。
+ *  ⚠️ 裁不到（`snippet_missing`）时如实说明，**不用文件名冒充内容**。 */
+const snippetBlock = (r) => {
+  if (r.content_snippet) {
+    return `<div class="snippet">
+      <div class="snippet-head">可复制正文（${esc(r.snippet_source || "原样摘录")}）
+        <button class="copy" data-copy="${esc(r.content_snippet)}">复制这段</button></div>
+      <pre class="snippet-body">${esc(r.content_snippet)}</pre></div>`;
+  }
+  return r.snippet_missing
+    ? `<div class="evidence">这份文件的正文里**没有找到该类材料的段落**（可能是扫描件未做 OCR，
+       或正文只有目录/页码）—— 请打开文件确认，系统不猜。</div>` : "";
 };
 // 兜底也要是中文 —— 不能让新枚举（如日后新增的 fact_type）直接上屏（评审 P1）
 const factLabel = (k) => FACT_LABEL[k] || "其他材料";
@@ -842,7 +884,7 @@ function factValuesText(r) {
 
 function renderFactRows(rows) {
   return rows.map(r => {
-    const shown = factValuesText(r);
+    const shown = factValueText(r);
     const more = (r.record_count || 1) > 1 ? `<span class="tag">本文件 ${r.record_count} 条</span>` : "";
     return `<article class="result-card ${r.role_scope === "tender" ? "warning" : ""}">
     <div class="card-top"><h3>${esc(FACT_LABEL[r.fact_type] || r.fact_type)}</h3>
@@ -850,6 +892,7 @@ function renderFactRows(rows) {
     <span class="tag">${esc(ROLE_LABEL[r.role_scope] || "")}</span>${more}
     ${metaBlock(r)}
     ${r.evidence_text ? `<div class="evidence">文件中对应文字：${esc(r.evidence_text)}</div>` : ""}
+    ${snippetBlock(r)}
   </article>`; }).join("");
 }
 
@@ -864,15 +907,15 @@ const MODULE_CSV = {
               PAY_LABEL[r.payment_status] || r.payment_status, r.source_path];
     }),
   "财务社保数据": csvSpec(
-    ["类别", "期间", "角色", "项目", "文件", "格式", "文件内文字", "文件位置"],
-    (r) => [FACT_LABEL[r.fact_type] || r.fact_type, r.fact_value, ROLE_LABEL[r.role_scope],
+    ["类别", "期间", "角色", "项目", "文件", "格式", "文件内文字", "可复制正文", "文件位置"],
+    (r) => [FACT_LABEL[r.fact_type] || r.fact_type, factValueText(r), ROLE_LABEL[r.role_scope],
             r.project_folder, r.file_name, formatLabel(r.content_format),
-            r.evidence_text, r.source_path]),
+            r.evidence_text, r.content_snippet || "", r.source_path]),
   "仪器设备清单": csvSpec(
-    ["类别", "期间", "角色", "项目", "文件", "格式", "文件内文字", "文件位置"],
-    (r) => [FACT_LABEL[r.fact_type] || r.fact_type, r.fact_value, ROLE_LABEL[r.role_scope],
+    ["类别", "期间", "角色", "项目", "文件", "格式", "文件内文字", "可复制正文", "文件位置"],
+    (r) => [FACT_LABEL[r.fact_type] || r.fact_type, factValueText(r), ROLE_LABEL[r.role_scope],
             r.project_folder, r.file_name, formatLabel(r.content_format),
-            r.evidence_text, r.source_path]),
+            r.evidence_text, r.content_snippet || "", r.source_path]),
 };
 
 function bindCopyButtons(target) {

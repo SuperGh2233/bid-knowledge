@@ -1230,6 +1230,80 @@ def scan_periods_near(text: str, markers: tuple[str, ...], *,
     return sorted(got)
 
 
+# ============================================================================
+# 凭证「合计金额」提取（2026-09-17 需求方第二次对接：要能查「纳税社保总金额」）
+# ============================================================================
+# 判据**必须保守**（宁缺毋滥是项目红线）：只认**凭证自己的合计行**，不认明细列、不推算。
+# 实测两种形态（各取 1 例人工核对过）：
+#   ① 税务完税证明：`金额合计 \n （大写）人民币… \n ¥272,310.44`      → 取 ¥ 后面的数
+#   ② 社保完税凭证：`金额合计（大写）万肆仟肆佰贰拾元零玖角贰分 \n 34,420.92` → 取大写行后的数
+# ⚠️ **不能只按「数字+元」扫全文**：实测那样会把明细行的 `4,226.88`、缴费基数 `109200`、
+#    个人账户余额 `108026.29` 全抓进来 —— 都不是「缴纳总额」。
+# ️ 社保**缴费记录表**（`社会保险费缴费记录`，217 行/份的那种）**没有合计行** → 一律抽不到，
+#    如实返回「未提取到金额」，**不按明细求和**（求和是推测，且同一份表里各险种不可加总）。
+_FA_ANCHORS = ("金额合计", "价税合计", "合计金额", "总金额")
+_FA_YEN = re.compile(r"[¥￥]\s*([\d,]{3,}(?:\.\d{1,2})?)")
+# 大写行 → **换行后**的数字（完税凭证的「大写金额」与「小写数字」常被 OCR 拆成两行）
+_FA_UPPER = re.compile(r"[（(]\s*大写\s*[）)]?[^\n]{0,60}\n\s*([\d,]{3,}(?:\.\d{1,2})?)")
+_FA_WINDOW = 120
+
+
+# 凭证**身份判据**：正文里必须有税务机关/社保经办机构的痕迹 —— 否则是普通发票
+# （实测漏网：高德打车电子发票也有 `价税合计`，会被抽成「纳税金额」）。
+_FA_VOUCHER_MARKS = ("税务机关", "税务局", "社会保险", "社会保障", "社会保障局",
+                     "完税证明", "税收完税", "纳税证明", "电子税务局")
+
+
+def find_voucher_total(text: str) -> tuple[str, str] | None:
+    """从凭证正文里取「合计金额」——返回 `(金额字符串, 判据说明)`；取不到返回 `None`。
+
+    **四条保守准则**（都可被人工逐条核对）：
+      1. 正文必须含**税务/社保机构痕迹**（`_FA_VOUCHER_MARKS`）——否则是普通发票，
+         打车/餐饮发票也有 `价税合计`（实测漏网 2 份）；
+      2. 必须先命中**合计锚点**（`金额合计`/`价税合计`/…），锚点周围 ±120 字内取数；
+      3. 优先取 `¥/￥` 紧邻的数（税务凭证形态）；其次取**大写行换行后**的数（社保凭证形态）；
+      4. 两者都没有 → `None`。**不扫全文找数字、不按明细求和** —— 那是猜。
+
+    `判据说明` 如实回传（`"¥"` / `"大写行"`），供页面上屏与人工复核。
+    """
+    t = text or ""
+    if not any(mk in t for mk in _FA_VOUCHER_MARKS):
+        return None
+    for a in _FA_ANCHORS:
+        start = 0
+        while True:
+            i = t.find(a, start)
+            if i < 0:
+                break
+            start = i + len(a)
+            seg = t[i:i + _FA_WINDOW]
+            m = _FA_YEN.search(seg)
+            if m:
+                return m.group(1), "¥"
+            m = _FA_UPPER.search(t[max(0, i - _FA_WINDOW):i + 60])
+            if m:
+                return m.group(1), "大写行"
+    return None
+
+
+def extract_finance_amounts(text: str, document_id: str, *, source_label: str = "") -> list[dict]:
+    """凭证正文 → `finance_amount` 事实行（`fact_value` = 金额字符串）。
+
+    与 `extract_material_facts` 一样**不判 source**；调用方负责角色标注（`[role] ` 前缀）。
+    `source_label` 非空时写进 `evidence_text` 前缀后的说明位（如文件名）。
+    """
+    got = find_voucher_total(text)
+    if got is None:
+        return []
+    amount, how = got
+    i = text.find(amount)
+    ctx = text[max(0, i - 60): i + len(amount) + 20].replace("\n", " ").strip()
+    return [{"document_id": document_id, "fact_type": "finance_amount",
+             "fact_value": amount.replace(",", ""),
+             "evidence_text": f"{source_label}｜合计金额（判据：{how}）：…{ctx}…",
+             "amount_basis": how}]
+
+
 def extract_material_facts(text: str, document_id: str) -> list[dict]:
     """从「现附上…」声明句提取材料事实。
 

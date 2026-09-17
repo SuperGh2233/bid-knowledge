@@ -31,6 +31,14 @@ class GenerateRequest(BaseModel):
     # 需求二只保留**模型起草**（2026-09-14 用户指令）；`mode=local`（本地抽取式装配）
     # 已从产品入口下线 —— API 不再接受，历史调用方会收到明确 400。
     mode: str = "llm"
+    # **输出标题结构**（2026-09-17 加，需求方第二次对接的需求2）：
+    # 用户指定「大标题 + 固定小标题清单」，模型必须**逐字**按它输出。
+    # 接受两种形态：`{"title": "售后解决方案", "sections": ["售后服务团队", ...]}`
+    #   或一份 Markdown 文本（`# 大标题` + `## 小标题`…）。
+    # **可选**：不传 = 不约束，行为与加此参数前逐字节一致。
+    # ⚠️ 只约束**输出结构**，不改变证据召回（召回仍按 `MODULE_KEYWORDS` 的模块名走）。
+    # 外发面不变：这是**用户自己敲的标题文本**，无正文，仍在既有生成授权范围内。
+    outline: dict | str | None = None
 
 
 # MODE_DEPRECATED_MSG 定义在 `app.api`（权威一份），本模块从顶部 import —— 不在此重复。
@@ -99,7 +107,8 @@ def proposal_generate(request: GenerateRequest):
     from app.proposal import (MODULE_KEYWORDS, ProposalGenError, ProposalGenNotAuthorized,
                               unrecognized_requirements,
                               build_evidence_packs, build_module_kb,
-                              extract_required_sections, generate_proposal, packs_to_payload)
+                              extract_required_sections, generate_proposal, packs_to_payload,
+                              parse_outline)
 
     if request.mode != "llm":
         raise HTTPException(400, MODE_DEPRECATED_MSG)
@@ -121,8 +130,11 @@ def proposal_generate(request: GenerateRequest):
     # 识别不出 → 空串 → 提示词不加裁剪规则（不猜、不误裁）。
     from app.api import detect_product
     product = request.product.strip() or detect_product(f"{request.query} {request.modules}")
+    # 标题结构：规整不出任何标题 → 空 dict → **不施加约束**（不猜、不误裁结构）。
+    outline = parse_outline(request.outline)
     try:
-        result = generate_proposal(payload, request.constraints, kb, product=product)
+        result = generate_proposal(payload, request.constraints, kb,
+                                   product=product, outline=outline)
     except ProposalGenNotAuthorized as exc:
         raise HTTPException(403, str(exc)) from exc
     except ProposalGenError as exc:
@@ -130,6 +142,7 @@ def proposal_generate(request: GenerateRequest):
     result["modules"] = payload["modules"]
     result["coverage"] = payload["coverage"]
     result["kb_used"] = bool(kb)
+    result["outline_used"] = outline or None
     # ⚠️ 用户**点名要求**、但没被识别成小节的 → 如实告警，不静默丢（项目红线）。
     # 实测：`售后服务方案，必须包含质控要求` 只认出「售后方案」，「质控要求」被丢掉且无任何提示。
     _missed = unrecognized_requirements(request.query or request.modules or "", mods)

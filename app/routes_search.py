@@ -16,7 +16,8 @@ from fastapi import APIRouter, HTTPException
 
 from app.api import (BASE_DIR, PRODUCT_ALIASES, PRODUCT_MATCH_EXCLUDE,
                      SearchRequest, _FACT_KW, _FINANCE_FACT_TYPES,
-                     _INSTRUMENT_FACT_TYPES, THREE_MODULES, _annotate_fact_role,
+                     _INSTRUMENT_FACT_TYPES, SHELL_ROW_SQL, THREE_MODULES,
+                     _annotate_fact_role, attach_snippets,
                      _approved_contract_ids, _count_material_facts, _fold_by_contract,
                      _MONTHISH, _fold_facts_by_file, live_scope, parse_demo_query, parse_fact_query,
                      parse_scope_conditions, period_covers, readonly_db,
@@ -280,8 +281,12 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
         # 必须在 `finally: con.close()` **之前**算，否则用已关闭的连接会 500（那个坑踩过一次）。
         total_available = con.execute("SELECT COUNT(*)" + _FROM + where, args).fetchone()[0]
         rows = [dict(r) for r in con.execute(
-            _SELECT + where + " ORDER BY d.relative_path LIMIT ?", args + [cap])]
+            _SELECT + where + " ORDER BY " + SHELL_ROW_SQL + ", d.relative_path LIMIT ?",
+            args + [cap])]
         truncated = len(rows) < total_available
+        # ️ `content_snippet` 必须**在连接关闭前**取（要读 `parse_artifacts.text`）——
+        # 同上，用了已关闭的连接会 500。裁段本身只读、零外发。
+        attach_snippets(con, rows)
         # 「起始/区间式覆盖」单列一组：只在查询值精确到年/月时才做
         related: list[dict] = []
         if fact_value and _MONTHISH.match(fact_value.strip()):
@@ -300,6 +305,7 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
             related = [dict(r) for r in con.execute(rq, rargs)
                        if period_covers(fact_value, r["fact_value"])
                        and (r["relative_path"], r["evidence_text"]) not in exact]
+            attach_snippets(con, related)
     finally:
         con.close()
     for r in rows + related:
@@ -523,7 +529,7 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
                        d.document_id
                 FROM material_facts f JOIN documents d ON d.document_id=f.document_id
                 WHERE f.fact_type IN ({','.join('?' * len(types))})
-                ORDER BY f.fact_type, f.fact_value LIMIT ?""",
+                ORDER BY {SHELL_ROW_SQL}, f.fact_type, f.fact_value LIMIT ?""",
             (*types, max(1, min(limit, 1000))))]
         # ⚠️ 分类计数**必须**回传：`ORDER BY fact_type, fact_value LIMIT ?` 会让排在后头的类别
         # 被**整类截掉**。实测 `instrument_purchase_contract` 库内 44 条，limit=400 时返回 0 条
@@ -532,6 +538,8 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
         type_counts: dict[str, int] = {
             t: con.execute("SELECT COUNT(*) FROM material_facts WHERE fact_type=?",
                            (t,)).fetchone()[0] for t in types}
+        # 「可复制正文段」——同上，必须在连接关闭前取（2026-09-17 需求方第二次对接主诉）。
+        attach_snippets(con, rows)
     finally:
         con.close()
     for r in rows:

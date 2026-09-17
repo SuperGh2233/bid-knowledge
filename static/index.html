@@ -95,6 +95,16 @@
                这是需求二的第一步，不该藏在折叠里。点一下只填入输入框，不自动生成。 -->
           <p class="example-group">选择方案类型（点一下填进输入框）</p>
           <div class="examples" id="proposal-picker"></div>
+
+          <!-- 标题结构（2026-09-17 需求方第二次对接的需求2）：要求模型**逐字**按给定大/小标题输出。
+               留空 = 不约束（按模块名自由成节），行为与加这项前一致。 -->
+          <details class="outline-box">
+            <summary>指定标题结构（可选：让模型严格按大标题/小标题来写）</summary>
+            <p class="example-group">大标题填第一行，小标题一行一个。留空则不限制结构。</p>
+            <textarea id="proposal-outline" rows="6"
+              placeholder="售后解决方案&#10;售后服务团队&#10;售后服务方式&#10;整体技术支持服务方案&#10;服务质量承诺"></textarea>
+            <button type="button" class="copy" id="outline-demo">填入上面这个例子</button>
+          </details>
         </form>
         <div id="gen-result" class="result-area empty-state">
           <p>输入方案名或内容，点「模型起草方案」。</p>
