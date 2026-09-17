@@ -7,10 +7,10 @@
 
 交付两个能力（**只这两个**）：**需求一** 历史材料定位；**需求二** 模块级方案生成。
 
-**当前任务**：「正文提及」组本轮已全部收口 —— **行为上线（用户已拿去演示）+ 代码已提交推送
-（`de4c0d8`）+ 全部文档债已清**（计划文档、评测更正、api.md、CHANGELOG、AGENTS.md、`.env.example`）。
-剩余仅两件事：**① 文档同步提交 + 打 tag `v1.2`（待用户点头）；② `/api/three-modules` 业绩段
-是否也加提及组（待用户确认，见 §8）**。
+**当前任务**：「正文提及」组本轮**全部收口** —— 行为上线（用户已拿去演示）+ 代码提交 `de4c0d8` +
+文档同步提交 `4168be4`（均已推 origin/github）+ **tag `v1.2` 已打并推送**。
+剩余唯一未决：`/api/three-modules` 业绩段是否也加提及组（用户 2026-09-17 **裁定「暂不决定」**，
+保留在 §8 待确认清单，**勿主动开工**）。
 
 退出门槛：**Recall 37/37 = 100%（新分母，明细 28 + 提及 9；口径与证据见 EVAL §7）**／真实路径 100%／
 金额条件 100%／覆盖率 8/8。误返 **0**（表面 1 条系金标准瑕疵，EVAL §7.3）。
@@ -39,8 +39,8 @@
   ③ 排除条件**按合同级作用于正文**（实测 G05 误返 10→1）；④ 带正文依据上屏 + 可打开文件。
 - `pytest tests -q` → **298 passed**；服务 PID **102300** 在跑（含新代码）。
 
-**In progress**：无（行为 + 文档均已收口）。
-**Not started**：文档同步提交、tag `v1.2`（**待用户点头**，见 §9）；`/api/three-modules` 业绩段加提及组（**待用户确认**，见 §8）。
+**In progress**：无（行为 + 文档 + 发布均已收口）。
+**Not started**：`/api/three-modules` 业绩段加提及组（用户**暂不决定**，见 §8）。
 **Rejected（勿重开）**：LLM 外发复核（本地规则已达同等召回，代价不值，授权已标暂缓）；
 位置规则（前 1/3）；"邻近词过滤无效"这一结论（**我口径算错**，已证伪）。
 
@@ -49,7 +49,7 @@
 **已提交推送**：`de4c0d8`「feat(检索): 「正文提及」合同组上线（本地规则，零外发）」
 （代码 6 文件 + 本交接文档第一轮版；origin/GitLab 与 github 均已推成功）。
 
-**工作区未提交（第二轮：文档同步）**：
+**第二轮已提交推送**：`4168be4`「docs: 「正文提及」轮文档同步」（tag `v1.2` 打在此提交上）：
 
 | 文件 | 改了什么 |
 |---|---|
@@ -108,20 +108,16 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
 - `_mention_in_context` 的上下文词表是手写的（12 词）—— 与"手写词表会漂移"的历史教训同源；
   将来若发现漏挡，**应改成按句判定，而不是往表里加词**。
 - `/api/three-modules` 的「项目业绩」段**未加**提及组（该段无产品维度）。用户此前希望三处都有，
-  **这一条与实现不一致，待用户确认**（未决，不阻塞；确认要做则按 PLAN §6 走）。
+  与实现不一致 —— **用户 2026-09-17 裁定「暂不决定」**：维持现状，勿主动开工；将来若做，
+  按 `PLAN-20260917-contract-product-mention.md` §6 走。
 
 ## 9. Next Actions
 
-1. **提交并推送文档同步**（第二轮改动，§4 表；无代码变更、不需重启服务）：
-   ```bash
-   cd "C:/Users/hao.guo/Desktop/标书文库/bid-ai-clean"
-   git add docs/ CHANGELOG.md AGENTS.md .env.example
-   git commit -m "docs: 「正文提及」轮文档同步 —— 计划落档、评测口径更正、api §2B、v1.2 条目、.env.example"
-   git push origin main && git push github main
-   ```
-2. **打 tag `v1.2`**（CHANGELOG 条目已写好；**按惯例 tag 对应已发布变更**，提交后打）：
-   `git tag v1.2 && git push origin v1.2 && git push github v1.2`
-3. **待用户确认**：`/api/three-modules` 业绩段是否也加提及组（§8 第 3 条）。
+1. ~~提交并推送文档同步~~ → **已完成**（`4168be4`，origin + github 均已推）。
+2. ~~打 tag `v1.2`~~ → **已完成**（打在 `4168be4`，两个远程均已推）。
+3. **唯一未决（用户裁定「暂不决定」，勿主动开工）**：`/api/three-modules` 业绩段是否也加提及组（§8 第 3 条）。
+   若将来要做，按 `PLAN-20260917-contract-product-mention.md` §6 走。
+4. 本轮**无剩余动作**；下一个任务从需求方反馈或用户指示开始。
 
 ## 10. Do Not Repeat / Do Not Change
 
@@ -142,17 +138,16 @@ export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
 
 ## 12. Git State
 
-- **分支** `main`；**HEAD** `de4c0d8`（「正文提及」组上线，**已推 origin + github**）。
-- **未提交**：第二轮**文档同步**（§4 第二张表：2 新建 + 6 修改，均为 docs/CHANGELOG/AGENTS/.env.example，**无代码**）。
-- **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `minimal-rebuild-r1-20260907`；**`v1.2` 待打**（§9 第 2 条）。
+- **分支** `main`；**HEAD** `4168be4`（文档同步，**已推 origin + github**）；工作区**干净**（除禁提交项）。
+- **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / **`v1.2`（本轮，打在 `4168be4`）** / `minimal-rebuild-r1-20260907`。
 - **禁提交**：`.env`、`*.db`、`bid_ai_clean_reg.bak-*.db`（26 个）、`outputs/`（真实投标正文）、`tmp/`、`*.log`。
   **`tmp/` 下有本轮 20 余个探针脚本**（`probe_*.py` / `verify_*.py` / `diagnose_*.py`）—— 一次性产物，不入库
   （其中 `verify_rules_g05.py` 是 EVAL §7.2 复测数字的来源，报告里已注明）。
 
 ## 13. Recovery Command
 
-> **当前状态**：正文提及组**已上线、已提交推送**（`de4c0d8`；Recall 37/37=100% / 误返 0 / 零外发），
-> 文档债**已全清**（第二轮，未提交）。剩余动作只有：提交文档同步 → 打 tag `v1.2` →
-> 用户确认 three-modules 业绩段是否加提及组。
+> **当前状态**：正文提及组本轮**全部收口** —— 上线验证（Recall 37/37=100% / 误返 0 / 零外发）、
+> 代码 `de4c0d8` + 文档 `4168be4` 均已提交推送、tag `v1.2` 已打。**无剩余动作**；
+> 唯一未决 = three-modules 业绩段是否加提及组（用户暂不决定，勿主动开工）。
 
 `Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
