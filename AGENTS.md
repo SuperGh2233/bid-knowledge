@@ -101,6 +101,7 @@ tests/                 # pytest 回归（含前端渲染冒烟）
 | 看**已知问题与风险** | `docs/agent-handoff.md` 的「Problems and Risks」；各计划自己的 Risks/遗留段 |
 | 看**持久决策**（为什么这么做） | `docs/plans/legacy/MINIMAL_REBUILD_PLAN-DECISIONS.md`（D1–D15）与各计划文档；本仓库暂无 ADR 目录，**新决策写进对应计划文档** |
 | 查接口契约 | `docs/specs/api.md` |
+| 看**已发布**了什么（版本变更） | `CHANGELOG.md`（仓库根；每条对应一个 tag） |
 | 查需求与验收口径 | `docs/plans/active/`（活跃计划）；`docs/plans/legacy/`（旧系统路线，已冻结） |
 | 确认某类外发是否已授权 | `docs/authorizations/`（5 份，范围不可扩大） |
 | 查评测结论 | `docs/evals/`（现役）；`docs/evals/archive/`（R5/D1/D2a 历史证据，只查不改） |
