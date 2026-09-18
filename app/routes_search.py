@@ -547,17 +547,14 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
             MATERIAL_ROOTS.get(r.pop("source_root_id"), Path("")).joinpath(
                 *r["relative_path"].split("/")))
         r["file_name"] = r["relative_path"].rsplit("/", 1)[-1]
-        # ⚠️ 角色分层**必须**回传。需求一的问法是「某份**响应文件**是否包含…」，
-        # 而 material_facts 的来源角色混杂：实测「财务社保数据」254 条里只有 58 条来自
-        # our_response/final_signed，另有 9 条来自 `tender_requirement`（**那是采购人的要求，
-        # 不是我方已附材料**），其余来自资质附件 / 过程材料 / 待复核。
-        # 不区分就会把「招标文件要求交社保」说成「我方响应文件里有社保」——事实性误导。
-        r["role_scope"] = ("our" if r["document_role"] in ("our_response", "final_signed")
-                           else "tender" if r["document_role"] == "tender_requirement"
-                           else "other")
-        r["role_label"] = {"our": "我方响应/最终版",
-                           "tender": "招标要求（采购人要求，非我方已附）",
-                           "other": "其它来源文件"}[r["role_scope"]]
+        # ⚠️ **必须调用共享的 `_annotate_fact_role`，不得在此就地重写**（2026-09-18 实测踩到）：
+        # 原先这里手写了一遍「角色分层」，与 `material-facts` 那份**分叉** —— 后果是
+        #   ① `evidence_text` 里的内部枚举前缀（`[our_response] …`）**没被剥掉**，
+        #      645/645 条仪器行的正文证据都带着英文枚举上屏（同 2026-09-14 评审 P0 的老问题）；
+        #   ② `finance_amount` 行的 `amount_note`（金额口径说明，明确「非合同金额」）**整段丢失** ——
+        #      这条正是本轮新加、且是防误读为「合同金额」的关键说明。
+        # 角色分层必须**一处实现、两处调用**（本仓库反复踩的正是"分开写死"）。
+        _annotate_fact_role(r)
     # ⚠️ type_counts 已在上面（连接关闭前）算好
     total_available = sum(type_counts.values())
     truncated = len(rows) < total_available

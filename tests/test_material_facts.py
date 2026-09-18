@@ -376,3 +376,65 @@ def test_finance_amount_rows_carry_amount_note():
           "file_name": "社保.docx", "fact_type": "social_security_month", "fact_value": "2025-02"}
     _annotate_fact_role(r2)
     assert "amount_note" not in r2
+
+
+def test_both_fact_endpoints_annotate_identically(monkeypatch):
+    """**两个端点必须用同一套行标注** —— 分叉过一次，后果很具体（2026-09-18 实测）。
+
+    由来：`/api/three-modules` 原先**就地手写**了一遍角色分层，与 `/api/material-facts`
+    调用的 `_annotate_fact_role` 分叉，后果是
+      ① `evidence_text` 里的内部枚举前缀（`[our_response] …`）**没被剥掉** ——
+         645/645 条仪器行的正文证据带着英文枚举上屏（同 2026-09-14 评审 P0 的老问题）；
+      ② `finance_amount` 行的 `amount_note`（「非合同金额」口径说明）**整段丢失** ——
+         那正是防把凭证金额误读成合同金额的关键说明。
+    本测试用合成库钉住：两条路径产出的关键字段**逐字相同**。
+    """
+    import sqlite3
+    import app.api as A
+    app = A
+
+    db = Path(__file__).resolve().parent / "_tmp_annotate.db"
+    con = sqlite3.connect(db)
+    con.executescript(
+        "CREATE TABLE documents (document_id TEXT PRIMARY KEY, relative_path TEXT,"
+        " source_root_id TEXT, project_folder TEXT, document_role TEXT, content_format TEXT);"
+        "CREATE TABLE material_facts (document_id TEXT, fact_type TEXT, fact_value TEXT,"
+        " evidence_text TEXT);")
+    con.execute("INSERT INTO documents VALUES "
+                "('d1','P/完税证明.pdf','2026年','proj','qualification_evidence','native_pdf_text')")
+    con.executemany("INSERT INTO material_facts VALUES (?,?,?,?)", [
+        ("d1", "finance_amount", "272310.44",
+         "[qualification_evidence] 完税证明.pdf｜合计金额（判据：¥）：…¥272,310.44…"),
+        # 空壳行：evidence 只是 `[角色] 文件名` → 必须被判为「无正文证据」
+        ("d1", "instrument", None, "[qualification_evidence] 完税证明.pdf"),
+    ])
+    con.commit(); con.close()
+    monkeypatch.setattr(A, "DEMO_DB", db)
+    try:
+        from fastapi.testclient import TestClient
+        c = TestClient(A.app)
+        # 两个端点各取一次同类行：金额类用自然问句（同时验证查询映射），仪器类用精确参数
+        one = (c.get("/api/material-facts", params={"q": "纳税社保总金额"}).json()["facts"]
+               + c.get("/api/material-facts", params={"fact_type": "instrument"}).json()["facts"])
+        # 仪器那一类在「仪器设备清单」模块下（三模块按类别分端点，不多不少）
+        three = (c.get("/api/three-modules", params={"module": "财务社保数据", "limit": 50}).json()["records"]
+                 + c.get("/api/three-modules", params={"module": "仪器设备清单", "limit": 50}).json()["records"])
+        by_type_one = {r["fact_type"]: r for r in one}
+        by_type_three = {r["fact_type"]: r for r in three}
+        for ft in ("finance_amount", "instrument"):
+            a, b = by_type_one.get(ft), by_type_three.get(ft)
+            assert a and b, (by_type_one.keys(), by_type_three.keys())
+            # ① 内部枚举前缀必须被剥掉
+            assert not (a["evidence_text"] or "").startswith("[")
+            assert not (b["evidence_text"] or "").startswith("["), b["evidence_text"]
+            # ② 三个标注字段逐字一致
+            for field in ("role_scope", "role_label", "evidence_is_filename"):
+                assert a[field] == b[field], (ft, field, a[field], b[field])
+        # ③ 金额行两处都带口径说明（防误读为合同金额）
+        for r in (by_type_one["finance_amount"], by_type_three["finance_amount"]):
+            assert "非合同金额" in r.get("amount_note", ""), r.get("amount_note")
+        # ④ 空壳行两处都被判为「无正文证据」
+        assert by_type_one["instrument"]["evidence_is_filename"] is True
+        assert by_type_three["instrument"]["evidence_is_filename"] is True
+    finally:
+        db.unlink(missing_ok=True)
