@@ -672,8 +672,55 @@ const OUTLINE_DEMO = "售后解决方案\n售后服务团队\n售后服务方式
 $("#outline-demo")?.addEventListener("click", () => {
   const box = $("#proposal-outline");
   box.value = OUTLINE_DEMO;
+  _outlineDirty = true;        // 用户明确要这个例子 → 别再被自动填入覆盖
   box.closest("details")?.setAttribute("open", "");
 });
+
+// —— 标题结构**自动填入**（2026-09-18 需求方：「现在还需要用户自动填入」）——
+// 用户在上面写「售后服务方案，必须包含服务周期和应急预案」，这里**自动**列出
+// 大标题（第一行）+ 小标题（其后各行）。零外发：走 `/api/plan-outline`（本地解析，不调模型）。
+// ⚠️ 用户**手动编辑过**之后就不再自动覆盖（`_outlineDirty`）—— 不能把人家改的内容冲掉。
+let _outlineDirty = false;
+let _outlineTimer = null;
+
+async function autoFillOutline() {
+  const box = $("#proposal-outline");
+  const status = $("#outline-status");
+  if (!box || _outlineDirty) return;
+  const q = ($("#proposal-query")?.value || "").trim();
+  if (!q) {
+    box.value = "";
+    if (status) status.textContent = "在上面的输入框里写方案名与要包含的内容，这里会自动列出大标题与小标题。";
+    return;
+  }
+  try {
+    const d = await request(`/api/plan-outline?q=${encodeURIComponent(q)}`);
+    if (!d.planned) {
+      box.value = "";
+      if (status) status.textContent = "⚠️ 没能从这句话里拆出标题结构 —— 生成时会按系统模块名分节。"
+        + "想指定结构，可在下面手动写（大标题一行、小标题一行一个）。";
+      return;
+    }
+    box.value = [d.title, ...d.sections].filter(Boolean).join("\n");
+    if (status) {
+      status.textContent = `已自动拆出：大标题「${d.title}」+ ${d.sections.length} 个小标题。`
+        + (d.inferred.length ? `⚠️ 「${d.inferred.join("、")}」不在方案模块词表里，`
+            + "其证据取自归属模块，系统如实标注 —— 若不符请改措辞。" : "")
+        + (d.dropped.length ? `⚠️ 你点名但没纳入的有：${d.dropped.join("、")}。` : "")
+        + "可直接修改。";
+    }
+  } catch (e) {
+    // 拆结构失败**不阻断生成**（生成时服务端还会再拆一次）—— 如实提示即可
+    if (status) status.textContent = `（自动拆标题结构失败：${e.message}；生成时仍会尝试）`;
+  }
+}
+
+$("#proposal-query")?.addEventListener("input", () => {
+  clearTimeout(_outlineTimer);
+  _outlineTimer = setTimeout(autoFillOutline, 400);   // 防抖：边打字边请求没必要
+});
+$("#proposal-outline")?.addEventListener("input", () => { _outlineDirty = true; });
+autoFillOutline();          // 初次进页面就按输入框里的默认值填一次
 
 $("#proposal-form").addEventListener("submit", event => {
   event.preventDefault();

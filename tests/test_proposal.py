@@ -937,3 +937,66 @@ def test_custom_section_name_does_not_keyerror_in_evidence_packs(monkeypatch):
             raise AssertionError(f"自造小节名触发了异常：{type(exc).__name__}: {exc}")
     assert len(packs) == 1
     assert packs[0].module == "售后方案" and packs[0].display == "服务周期"
+
+
+# ============================================================================
+# 2026-09-18：标题结构**自动化**（需求方：「现在还需要用户自动填入」）
+# ============================================================================
+
+def test_plan_outline_endpoint_derives_from_query():
+    """`/api/plan-outline?q=` 必须返回可**直接填入预览框**的大标题 + 小标题（零外发）。"""
+    import app.api as A
+    from fastapi.testclient import TestClient
+    c = TestClient(A.app)
+    d = c.get("/api/plan-outline",
+              params={"q": "售后服务方案，必须包含服务周期和应急预案"}).json()
+    assert d["planned"] is True
+    assert d["title"] == "售后服务方案"
+    assert d["sections"] == ["服务周期", "应急预案"]
+    # 归属是系统推的必须回传（页面要如实标注）
+    assert d["inferred"] == ["服务周期"]
+    assert d["section_modules"][0] == {"name": "服务周期", "module": "售后方案"}
+    # 前端**照这个顺序拼预览**：`[title, ...sections].join("\n")`
+    assert "\n".join([d["title"], *d["sections"]]) == "售后服务方案\n服务周期\n应急预案"
+
+
+def test_plan_outline_endpoint_accepts_manual_title_sections():
+    """手选路径（`title=` + `sections=`）同样可用 —— 与自动路径共用同一响应形状。"""
+    import app.api as A
+    from fastapi.testclient import TestClient
+    c = TestClient(A.app)
+    d = c.get("/api/plan-outline", params={
+        "title": "售后解决方案",
+        "sections": "售后服务团队,售后服务方式,整体技术支持服务方案,服务质量承诺"}).json()
+    assert d["planned"] is True and d["title"] == "售后解决方案"
+    assert d["sections"] == ["售后服务团队", "售后服务方式", "整体技术支持服务方案", "服务质量承诺"]
+
+
+def test_plan_outline_endpoint_is_honest_when_nothing_derived():
+    """**拆不出就说拆不出**（`planned=false`）—— 不能假装填上了结构。
+
+    页面据此显示「没能从这句话里拆出标题结构 —— 生成时会按系统模块名分节」。
+    假装填上会让用户以为结构生效，实际没有。
+    """
+    import app.api as A
+    from fastapi.testclient import TestClient
+    c = TestClient(A.app)
+    d = c.get("/api/plan-outline", params={"q": "帮我写个投标函"}).json()
+    assert d["planned"] is False and d["sections"] == [] and d["title"] == ""
+    assert c.get("/api/plan-outline", params={}).json()["planned"] is False
+
+
+def test_auto_fill_does_not_overwrite_manual_edits():
+    """前端**不得**用自动填入冲掉用户手改的内容（`_outlineDirty` 门）。
+
+    行为级护栏：`autoFillOutline` 开头必须判 `_outlineDirty` 直接返回，
+    且手改 `#proposal-outline` 会把该门置真。
+    """
+    import re
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[1] / "static" / "app.js").read_text(encoding="utf-8")
+    body = js.split("async function autoFillOutline()")[1].split("\n}")[0]
+    assert "_outlineDirty" in body and body.index("_outlineDirty") < body.index("plan-outline"), \
+        "autoFillOutline 必须在请求之前先判「用户是否手改过」"
+    assert re.search(r'\$\("#proposal-outline"\)\?\.addEventListener\("input", \(\) => \{ _outlineDirty = true; \}\);', js), \
+        "手改 #proposal-outline 必须置 _outlineDirty"

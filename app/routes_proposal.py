@@ -61,6 +61,50 @@ def modules():
                           "点模块名只是把名字填进输入框，**不会自动生成**。"}
 
 
+@router.get("/api/plan-outline")
+def plan_outline(q: str = "", title: str = "", sections: str = ""):
+    """**标题结构预览**（2026-09-18）：把用户那句话（或手选的大/小标题）拆成结构，**不生成**。
+
+    需求：「指定标题结构能不能自动化填入 —— 现在还需要用户自动填入」。本端点就是那个自动化：
+    页面把它填进结构预览区，用户看一眼确认后再点生成；**零外发**（不调模型）。
+
+    两种输入：
+      - `?q=`            —— 自然语言，走 `plan_sections`（与生成时**同一份实现**，不另写一套）；
+      - `?title=&sections=售后,应急` —— 手选的大标题与小标题（逗号分隔）。
+
+    **拆不出任何结构时如实返回空**（`planned=false`），调用方据此**明确告诉用户「没拆出结构」**，
+    不要假装填上了（那会让用户以为结构生效，实际没有）。
+    """
+    from app.proposal import plan_sections
+
+    if q.strip():
+        plan = plan_sections(q)
+        sections_out = plan.get("sections", [])
+        title_out = plan.get("title", "")
+    else:
+        names = [s.strip() for s in sections.split(",") if s.strip()]
+        sections_out = [{"name": n, "module": ""} for n in names]
+        title_out = title.strip()
+    inferred = [s["name"] for s in sections_out if s.get("module_inferred")]
+    return {
+        "planned": bool(title_out or sections_out),
+        "title": title_out,
+        "sections": [s["name"] for s in sections_out],
+        # 逐条的归属模块（手选路径下为 `""` = 未推定，由生成时按词表再判）
+        "section_modules": [{"name": s["name"], "module": s.get("module", "")} for s in sections_out],
+        # ⚠️ 归属是**系统推的**时必须让用户看见（如「服务周期」不在模块词表里）
+        "inferred": inferred,
+        "dropped": plan.get("dropped", []) if q.strip() else [],
+        "scope_note": ("这是**标题结构预览**（零外发、不生成）：确认后再点「模型起草方案」。"
+                       + (f"⚠️ 这几个小标题的归属模块是系统推的（它们不在方案模块词表里）："
+                          f"{'、'.join(inferred)} —— 证据取自其归属模块，若不符请改措辞。"
+                          if inferred else "")
+                       + ("⚠️ 你点名但**没被纳入**结构的有："
+                          + "、".join(plan.get("dropped", [])) + "，请确认是否接受。"
+                          if q.strip() and plan.get("dropped") else "")),
+    }
+
+
 @router.get("/api/module-kb")
 def module_kb(modules: str = ""):
     """**模块化经验**：把历史响应文件按方案模块整理的「我们历史上写过什么」。
