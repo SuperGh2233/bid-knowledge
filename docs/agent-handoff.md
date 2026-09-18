@@ -140,13 +140,20 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 9. Next Actions
 
-1. **打 tag `v1.3`**（CHANGELOG 条目已写好；**待用户点头**）：
-   `git tag v1.3 && git push origin v1.3 && git push github v1.3`
+1. ~~打 tag `v1.3`~~ → **已完成**：`git tag v1.3`（打在 `fdab772`），**已推 origin/GitLab**。
+   ⚠️ **GitHub 未推成功** —— `SSL_ERROR_SYSCALL`（网络故障，连续重试 5 次均失败，
+   `git ls-remote github` 也不可达）。**恢复网络后补推**：
+   ```bash
+   git push github main && git push github v1.3
+   ```
+   （同类故障 2026-09-17 也发生过一次，当时重试即通。）
 2. **等用户/需求方验收反馈**：本轮四项都是「需求方直接提的痛点」，
    建议请需求方实机确认（尤其「可复制正文段」的措辞与粒度是否合用）。
    实机前提醒：**Ctrl+F5 一次**。
 3. **第二阶段（用户未要求，勿主动开工）**：表格结构化整理 / 金额按期间汇总 /
    金额门槛过滤 / 固定 outline 模板 —— 见计划 §9。
+   ⚠️ **金额覆盖面已由用户 2026-09-18 确认「维持现状」**（29 条，社保缴费记录表无合计行，
+   不按明细求和）——**不要**为凑条数放松判据。
 
 ## 10. Do Not Repeat / Do Not Change
 
