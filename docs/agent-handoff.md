@@ -12,7 +12,7 @@
 `docs/plans/active/PLAN-20260917-round2-feedback.md`）：
 ① 材料定位给「可复制正文段」+ 仪器空壳行治理 + 新增纳税社保总金额检索；
 ② 方案生成支持 `outline` **逐字标题结构约束**。
-代码已提交 `faeebc8` + `0e4daf4`（实施期自查修复）并推送两个远程；`pytest` **307 passed**；服务已重启（PID 见 §7）。
+代码已提交 `faeebc8` + `0e4daf4`/`5944d0a`（实施期自查修复）并推送两个远程；`pytest` **308 passed**；服务已重启（PID 见 §7）。
 
 退出门槛（需求一累计）：Recall **37/37 = 100%**（明细 + 提及两组）／真实路径 100%／
 金额条件 100%／覆盖率 8/8；本轮新增验收全部达标（见 §3 与计划 §8 验收总表）。
@@ -48,7 +48,7 @@
   （缺小标题 / 大标题不符 / 自造小节），容忍模型自加序号。**不传 outline → 行为与 v1.2 逐字节一致**。
 - **前端**：卡片「复制这段」按钮（`navigator.clipboard`）+ CSV「可复制正文」列 +
   金额按元显示 + 标题结构输入框（含一键示例）+ `outline_used` 回显。
-- `pytest tests -q` → **307 passed**（原 298 + 新 9）。
+- `pytest tests -q` → **308 passed**（原 298 + 新 10）。
 - 上一轮「正文提及」组仍在（Recall 37/37 = 100%、误返 0、零外发）—— 本轮未触碰。
 
 **实施期自查发现并修掉（`0e4daf4`）**
@@ -58,6 +58,11 @@
   `**` 一并去掉。**新增护栏测试**：说明文不得走 `esc()`，且 `inline()` 必须先转义后替换。
 - **`amount_note` 补全**：`finance_amount` 行原先没有口径说明 —— 与业绩行同一诚实性原则，
   凭证合计数字必须写清「非合同金额、不参与金额筛选」（否则会被读成合同金额）。
+- **两个端点标注分叉**（`5944d0a`）：`/api/three-modules` 原先*就地重写*了一遍角色分层，
+  与 `material-facts` 的 `_annotate_fact_role` 分叉 → ① **645/645** 条仪器行 `evidence_text`
+  带 `[our_response]` 内部枚举上屏；② `finance_amount` 的 `amount_note` 整段丢失。
+  现共用同一实现；实测前缀行 **645 → 0**，`amount_note` 恢复，空壳行 469 条里 **467 条**
+  已由 `content_snippet` 补上可复制正文。**新增跨端点一致性回归测试**。
 
 **In progress**：无。
 **Not started**：`PLAN-20260917-round2-feedback.md` §9 第二阶段
@@ -111,12 +116,12 @@ three-modules 业绩段加提及组（用户裁定暂不决定）。
 ```bash
 CONDA="C:\Users\hao.guo\AppData\Local\miniconda3\envs\langchain-dev\python.exe"
 export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
-"$CONDA" -m pytest tests -q            # 307 passed（本轮实测）
+"$CONDA" -m pytest tests -q            # 308 passed（本轮实测）
 "$CONDA" -m app.api                    # → http://127.0.0.1:8000
 "$CONDA" scripts/backfill_finance_amounts.py --dry-run   # 金额回填预览（零写库）
 node --check static/app.js             # 前端语法（有护栏测试，但手改后先自查更快）
 ```
-- **服务**：PID **97656** 在跑（含本轮全部新代码；旧进程已按 §7 教训逐个 kill）。
+- **服务**：PID **64672** 在跑（含本轮全部新代码；旧进程已按 §7 教训逐个 kill）。
   `GET /api/status` → `合同 136 / 可查 136 / 业绩行 408`。
 - **实测口径（本轮）**：仪器清单 645 条中 0 条空壳行排前、636 条带正文段；
   「纳税社保总金额」返回 29 条；概览卡 136/1283/645 与点进去的 `total_available` 同源。
@@ -142,7 +147,7 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 ## 9. Next Actions
 
 1. ~~打 tag `v1.3`~~ → **全部完成并双远程对齐**：`git tag v1.3`（打在 `fdab772`）；
-   `origin`(GitLab) 与 `github` 的 `main` **均为 `95b8477`**、tag 各 10 个、`v1.3` 指向同一 commit。
+   `origin`(GitLab) 与 `github` 的 `main` **均为 `3bba077`**、tag 各 10 个、`v1.3` 指向同一 commit。
    （过程中两个远程各遇到一次瞬时网络故障，重试后均成功 —— **不再是待办**。）
 2. **等用户/需求方验收反馈**：本轮四项都是「需求方直接提的痛点」，
    建议请需求方实机确认（尤其「可复制正文段」的措辞与粒度是否合用）。
@@ -175,8 +180,8 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 12. Git State
 
-- **分支** `main`；**HEAD** `11b5b3c`（本轮实现 `faeebc8` + 自查修复 `0e4daf4` + 文档 `aabed8e`/`fdab772`；
-  **GitLab 已全推**；**GitHub 最新几个提交待补推** —— 网络故障，见 §9 第 1 条）。
+- **分支** `main`；**HEAD** `3bba077`（本轮实现 `faeebc8` + 自查修复 `0e4daf4`/`5944d0a` + 文档若干）；
+  **两个远程均已推齐**（`origin`/GitLab 与 `github` 的 `main` 均指向 `3bba077`）。
 - **工作区**：干净（除禁提交项）。
 - **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / **`v1.3`（本轮，打在 `fdab772`）** /
   `minimal-rebuild-r1-20260907`。**两远程各 10 个 tag，`v1.3` 均已推送。**
@@ -189,8 +194,8 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 13. Recovery Command
 
-> **当前状态**：第二次需求对接的两条需求**已全部实现、验收并推送**（GitLab 到 `11b5b3c`；
-> pytest 307 passed；服务 PID 97656 含新代码）；**tag `v1.3` 已打，双远程均已推送**。
+> **当前状态**：第二次需求对接的两条需求**已全部实现、验收并推送**（双远程均到 `3bba077`；
+> pytest 308 passed；服务 PID 64672 含新代码）；**tag `v1.3` 已打，双远程均已推送**。
 > 剩余动作：**请需求方实机验收**。
 > 第二阶段（表格结构化 / 金额汇总 / 固定模板）用户未要求，**勿主动开工**。
 
