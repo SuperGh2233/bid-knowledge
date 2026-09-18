@@ -561,7 +561,8 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
                        d.document_id
                 FROM material_facts f JOIN documents d ON d.document_id=f.document_id
                 WHERE f.fact_type IN ({','.join('?' * len(types))})
-                ORDER BY {SHELL_ROW_SQL}, f.fact_type, f.fact_value LIMIT ?""",
+                ORDER BY {SHELL_ROW_SQL}, {EMPTY_VALUE_SINKS_SQL}, f.fact_type,
+                         f.fact_value LIMIT ?""",
             (*types, max(1, min(limit, 1000))))]
         # ⚠️ 分类计数**必须**回传：`ORDER BY fact_type, fact_value LIMIT ?` 会让排在后头的类别
         # 被**整类截掉**。实测 `instrument_purchase_contract` 库内 44 条，limit=400 时返回 0 条
