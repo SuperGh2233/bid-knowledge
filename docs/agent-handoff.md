@@ -16,7 +16,7 @@
 
 退出门槛（需求一累计）：Recall **37/37 = 100%**（明细 + 提及两组）／真实路径 100%／
 金额条件 100%／覆盖率 8/8；本轮新增验收全部达标（见 §3 与计划 §8 验收总表）。
-**待用户点头**：打 tag `v1.3`（CHANGELOG 条目已写好）。
+**tag `v1.3` 已打**（打在 `fdab772`，已推 GitLab；**GitHub 因网络故障待补推**，见 §9 第 1 条）。
 
 ## 2. Linked Authoritative Documents
 
@@ -60,7 +60,7 @@
   凭证合计数字必须写清「非合同金额、不参与金额筛选」（否则会被读成合同金额）。
 
 **In progress**：无。
-**Not started**：tag `v1.3`（**待用户点头**）；`PLAN-20260917-round2-feedback.md` §9 第二阶段
+**Not started**：`PLAN-20260917-round2-feedback.md` §9 第二阶段
 （表格结构化整理 / 金额汇总求和与门槛过滤 / 固定 outline 模板）——**本轮明确不做**。
 **Rejected（勿重开）**：LLM 外发复核；位置规则（前 1/3）；「邻近词过滤无效」结论（口径算错）；
 three-modules 业绩段加提及组（用户裁定暂不决定）。
@@ -92,7 +92,7 @@ three-modules 业绩段加提及组（用户裁定暂不决定）。
 2. 给 outline 时校验器跳过「模块名是否出现」——用户标题与模块名**本就不同名**
    （「售后解决方案」vs「售后方案」），继续按模块名判必然误报；结构正确性由逐字校验承担。
 
-**文档债**：**无**（api.md / CHANGELOG / 计划 / index 均已同步）。仅剩：tag `v1.3` 待用户点头。
+**文档债**：**无**（api.md / CHANGELOG / 计划 / index / 交接均已同步）。
 
 ## 6. Contracts and Constraints
 
@@ -178,10 +178,11 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 12. Git State
 
-- **分支** `main`；**HEAD** `0e4daf4`（本轮实现 + 实施期自查修复，**均已推 origin + github**）。
+- **分支** `main`；**HEAD** `11b5b3c`（本轮实现 `faeebc8` + 自查修复 `0e4daf4` + 文档 `aabed8e`/`fdab772`；
+  **GitLab 已全推**；**GitHub 最新几个提交待补推** —— 网络故障，见 §9 第 1 条）。
 - **工作区**：干净（除禁提交项）。
-- **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / `minimal-rebuild-r1-20260907`；
-  **`v1.3` 待打**（§9 第 1 条）。
+- **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / **`v1.3`（本轮，打在 `fdab772`）** /
+  `minimal-rebuild-r1-20260907`。**`v1.3` 已推 GitLab；GitHub 待补推**（同一网络故障）。
 - **禁提交**：`.env`、`*.db`（含 `*.bak-*.db` 备份）、`outputs/`（真实投标正文）、`tmp/`、`*.log`。
   ⚠️ **备份文件命名必须命中 `.gitignore` 的 `*.bak-*.db`**：写成 `<name>.db.bak-<标签>` 会
   逃过忽略规则（本轮实测踩到并已修脚本，见 `backfill_finance_amounts.py` 注释）。
@@ -191,8 +192,9 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 13. Recovery Command
 
-> **当前状态**：第二次需求对接的两条需求**已全部实现、验收并推送**（`0e4daf4`；pytest 307 passed；
-> 服务 PID 97656 含新代码）。剩余动作只有：**打 tag `v1.3`（待用户点头）+ 请需求方实机验收**。
+> **当前状态**：第二次需求对接的两条需求**已全部实现、验收并推送**（GitLab 到 `11b5b3c`；
+> pytest 307 passed；服务 PID 97656 含新代码）；**tag `v1.3` 已打并推 GitLab**。
+> 剩余动作：① **GitHub 补推**（网络故障，§9 第 1 条）；② **请需求方实机验收**。
 > 第二阶段（表格结构化 / 金额汇总 / 固定模板）用户未要求，**勿主动开工**。
 
 `Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
