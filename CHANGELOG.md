@@ -25,8 +25,12 @@
 - 修复（实施期自查）：说明性长文（`scope_note`/`mention_note`/`filter_note`/`amount_note`）里的
   `**强调**` 原先原样显示星号 → 改走项目既有的 `inline()` 渲染；`finance_amount` 行补
   `amount_note` 口径说明（非合同金额、不参与金额筛选）。
-- 回归：`pytest` **307 passed**（新增 9 条：锚点裁段、空壳行 SQL 等价性、金额判据正反例、
-  查询映射、outline 解析/注入/校验、金额口径说明、说明文渲染护栏）。
+- **修复（实施期自查·两处标注分叉）**：`/api/three-modules` 原先*就地重写*了一遍角色分层，
+  与 `/api/material-facts` 的 `_annotate_fact_role` 分叉 → ① **645/645** 条仪器行的
+  `evidence_text` 带内部枚举前缀（`[our_response] …`）上屏；② `finance_amount` 的
+  `amount_note` 整段丢失。现改为共用同一实现，实测前缀行 **645 → 0**。
+- 回归：`pytest` **308 passed**（新增 10 条：锚点裁段、空壳行 SQL 等价性、金额判据正反例、
+  查询映射、outline 解析/注入/校验、金额口径说明、说明文渲染护栏、两端点标注一致性）。
 - 契约：`docs/specs/api.md` §4 / §4A / §5 已同步。
 
 ## v1.2 — 2026-09-17
