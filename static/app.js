@@ -577,13 +577,15 @@ function inline(text) {
  *     「复制全部来源文件位置」按钮单独承担）；
  *   - 标题 `#→` 去井号、列表 `*  **x**` → `- x`、粗体/行内码去符号、分隔线删。
  */
+// ⚠️ 引用编号的括号形态**必须与后端 `app/proposal.py::_CITE` 同一口径**（认半角 `[E3]`
+// 与全角 `【E3】`/`［E3］`/`「E3」`）—— 模型实测会用全角，只认半角会让引用**原样留在正文里**。
 function markdownToPlainText(markdown) {
   const out = [];
   for (const line of (markdown || "").split(/\r?\n/)) {
-    const raw = line.replace(/\[E\d+\]/g, "");
+    const raw = line.replace(/[(（\[【［「]E\d+[)）\]】］」]/g, "");
     if (/^ {2,}- 出处：/.test(raw)) continue;   // 出处行不进复制正文
     if (/^## 引用来源/.test(raw)) break;        // 引用清单汇总不复制（页面已单独提供复制来源）
-    if (/^- `[E\d]+`/.test(raw)) continue;      // 引用清单行
+    if (/^- [`'\"]?E\d+[`'\"]?/.test(raw)) continue;   // 引用清单行（半角/全角/反引号都认）
     // 空行 → 段落分隔（复制到 Word 时保留分段，不要全挤成一行）
     if (!raw.trim()) {
       if (out.length && out[out.length - 1] !== "") out.push("");
@@ -612,8 +614,8 @@ function renderMarkdown(markdown) {
   const flush = () => {
     if (!evBlock.length) return;
     const merged = evBlock.join("\n");
-    const refs = (merged.match(/\[E\d+\]/g) || []).map(r => `<sup class="cite-ref">${r}</sup>`).join("");
-    const body = merged.replace(/\[E\d+\]/g, "").replace(/^- /, "").trim();
+    const refs = (merged.match(/[(（\[【［「]E\d+[)）\]】］」]/g) || []).map(r => `<sup class="cite-ref">${r}</sup>`).join("");
+    const body = merged.replace(/[(（\[【［「]E\d+[)）\]】］」]/g, "").replace(/^- /, "").trim();
     html += `<p class="draft-para">${inline(body)}${refs ? " " + refs : ""}</p>`;
     evBlock = [];
   };

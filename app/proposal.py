@@ -646,7 +646,14 @@ GEN_SYSTEM = """你是投标方案撰写助手。你**只能**使用下面给出
 9. 若提示里指定了【本次方案的产品线】，而证据中**并列了多个产品线**的条目
    （典型：同时列出「RNA 项目 / DNA 项目 / 单细胞项目」的异常处理），
    **只保留与该产品线相关的条目**，其余产品线的条目**不得写入**；
-   若该小节确实与产品线无关（如通用管理条款），照常写。"""
+   若该小节确实与产品线无关（如通用管理条款），照常写。
+10. **引用编号放在句末，不要放在句首**。写成「数据验收合格后，提供不少于 2 年的售后服务 [E3]。」，
+   **不要**写成「根据【E3】，提供不少于 2 年的售后服务。」—— 逐条以「根据 Ex」开头会让整篇
+   读起来像检索日志，而不是方案。同一条编号在同一句里**只出现一次**（不要 `[E3] [E3]`）。
+   编号一律用**半角方括号** `[E3]`（不要用全角的【E3】，虽然系统也认，但半角才是规范写法）。
+11. **不要输出与本次结构无关的内容**：标题结构给了几个小节就写几个，
+   不要另加「总结」「说明」「参考文献」之类的段落；不要在正文里解释你做了什么取舍
+   （如「因不属于本次产品线，不予写入」）—— 取舍直接体现为**不写那条**即可。"""
 
 
 class ProposalGenError(RuntimeError):
@@ -1002,7 +1009,13 @@ _AFTER_LOOKAHEAD = 8
 _UNIT_MINUTES = {"分钟": 1, "个小时": 60, "小时": 60,
                  "个工作日": 480, "工作日": 480, "天": 1440}
 _SLOT_WINDOW = 14
-_CITE = re.compile(r"\[E(\d+)\]")
+# 引用编号的**所有常见括号形态**都要认（2026-09-18 需求方实测）：
+# 模型会用全角【E3】而不是半角 [E3]，而原先只认半角 → 后果**成串**：
+#   ① 校验器认不出引用 → 报「正文没有任何引用编号」；
+#   ② 编号里的数字被当正文数字 → 报「无法回溯的数字：['3']」；
+#   ③ 前端 `renderMarkdown` 也只认半角 → 【E3】**原样留在正文里**，不成上标、不成可点引用。
+# 指令里已写明「形如 [E3]」，但**输出的括号形态不该由提示词一处兜底**——工具链三处必须都认。
+_CITE = re.compile(r"[(（\[【［「](E\d+)[)）\]】］」]")
 
 
 def _slot_of(text: str, start: int, end: int) -> str | None:
@@ -1143,7 +1156,7 @@ def validate_generation(markdown: str, payload: dict, constraints: str = "",
     """
     problems: list[str] = []
     avail = {e["ref"] for m in payload.get("modules", []) for e in m.get("evidence", [])}
-    used = {f"E{n}" for n in _CITE.findall(markdown or "")}
+    used = set(_CITE.findall(markdown or ""))
     fake = sorted(used - avail)
     if fake:
         problems.append(f"引用了不存在的编号（编造）：{fake}")
@@ -1183,9 +1196,9 @@ def validate_generation(markdown: str, payload: dict, constraints: str = "",
     # 都被伪报成「无法回溯的数字」**。真实九模块证据包有 29 条引用，等于真实生成必踩。
     # （对抗性复核实测复现：`[E23]` → 伪报 `['23']`；换成 `[E6]` 则无此问题。）
     prose = _CITE.sub(" ", markdown or "")
-    # 引用清单里编号写成 `` `E13` ``（反引号，便于阅读）—— `_CITE` 只剥 `[En]`，
+    # 引用清单里编号写成 `` `E13` ``（反引号，便于阅读）—— `_CITE` 只剥括号形态，
     # 不剥它会把编号里的数字（`13`）误报成「无法回溯」。实测抽取式装配上残留 2 个。
-    prose = re.sub(r"`E\d+`", " ", prose)
+    prose = re.sub(r"[`']?E\d+[`']?", " ", prose)
     # 「可回溯」的对照集合必须**含证据自身的文件名与标题** —— 它们会被合法地写进输出的出处行
     # （如 `出处：…响应文件-20250521….docx`、`（8.11 质量控制…）`）。
     # 不纳入会把出处行里的数字误报成「无法回溯」——实测抽取式装配上一报就是 7 个。
@@ -1201,6 +1214,7 @@ def validate_generation(markdown: str, payload: dict, constraints: str = "",
     if untraceable:
         problems.append(f"无法回溯到证据的数字：{untraceable}")
     problems.extend(_validate_outline(markdown or "", outline))
+    problems.extend(_style_problems(markdown or ""))
     return problems
 
 
@@ -1243,6 +1257,33 @@ def _validate_outline(markdown: str, outline: dict | None) -> list[str]:
     if want and extra:
         problems.append(f"标题结构不符：出现了结构外的二级标题 {extra}（不得自行增补小节）")
     return problems
+
+
+# 句首「根据 Ex，」的写法（需求方 2026-09-18 实测反馈：「现在的输出会显示根据【E3】 这个需要优化」）。
+# ⚠️ **只报不拦**：那是**行文风格**问题，不是事实错误 —— 拦下来会让用户拿不到草稿。
+# 由提示词（`GEN_SYSTEM` 规则 10）负责改写法，这里只如实提醒。
+_CITE_HEAD = re.compile(r"(?:^|[。；;！？\n])\s*(?:根据|依据|按照|据)\s*"
+                        r"[(（\[【［「]E\d+[)）\]】］」](?:和|与|、|及)?\s*[(（\[【［「]?E?\d*[)）\]】］」]?"
+                        r"[，,、]?")
+
+
+def _style_problems(markdown: str) -> list[str]:
+    """行文风格类提醒（**不改写正文**，只提示）。
+
+    `根据【E3】，…` 逐条开头会让整篇读起来像检索日志而不是方案；同句重复引用
+    （`[E3] [E3]`）也损伤可读性。两者都是模型输出里实测出现的。
+    """
+    md = markdown or ""
+    out: list[str] = []
+    hits = len(_CITE_HEAD.findall(md))
+    if hits >= 3:
+        out.append(f"行文风格：有 {hits} 处以「根据 Ex，」开头 —— 读起来像检索日志而非方案。"
+                   f"应把引用编号移到**句末**（如「…提供不少于 2 年的售后服务 [E3]。」）。")
+    dup = re.findall(r"([(（\[【［「]E\d+[)）\]】］」])\s*\1", md)
+    if dup:
+        out.append(f"行文风格：同一编号在同句里重复出现 {len(dup)} 处（如 {dup[0]*2}）—— "
+                   f"保留一个即可。")
+    return out
 
 
 def assemble_proposal(payload: dict, constraints: str = "") -> dict:
@@ -1353,7 +1394,7 @@ def generate_proposal(payload: dict, constraints: str = "", kb: list[dict] | Non
         raise ProposalGenError("模型未返回内容")
 
     avail = {e["ref"]: e for m in payload.get("modules", []) for e in m.get("evidence", [])}
-    used = sorted({f"E{n}" for n in _CITE.findall(markdown)},
+    used = sorted(set(_CITE.findall(markdown)),
                   key=lambda r: int(r[1:]))
     warnings = detect_conflicts(payload)
     gaps = [{"module": m["module"], "status": m["status"], "notes": m.get("notes", [])}

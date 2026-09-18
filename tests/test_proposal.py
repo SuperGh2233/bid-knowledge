@@ -1000,3 +1000,84 @@ def test_auto_fill_does_not_overwrite_manual_edits():
         "autoFillOutline 必须在请求之前先判「用户是否手改过」"
     assert re.search(r'\$\("#proposal-outline"\)\?\.addEventListener\("input", \(\) => \{ _outlineDirty = true; \}\);', js), \
         "手改 #proposal-outline 必须置 _outlineDirty"
+
+
+# ============================================================================
+# 2026-09-18：**引用编号的括号形态**（需求方实测：模型输出「根据【E3】」）
+# ============================================================================
+
+def test_cite_accepts_fullwidth_brackets():
+    """`_CITE` 必须认全角【E3】等形态 —— 模型实测就用这个写法。
+
+    ⚠️ 只认半角 [E3] 的后果**成串**（需求方 2026-09-18 报告）：
+      ① 校验器认不出引用 → 报「正文没有任何引用编号」；
+      ② 编号里的数字被当正文数字 → 报「无法回溯的数字：['3']」；
+      ③ 前端渲染也只认半角 → 【E3】**原样留在正文里**。
+    指令里已写明「形如 [E3]」，但工具链三处**必须都认**，不能靠提示词一处兜底。
+    """
+    assert P._CITE.findall("根据【E3】，另有 [E5] 与（E7）") == ["E3", "E5", "E7"]
+    assert P._CITE.findall("［E1］「E2」") == ["E1", "E2"]
+    assert P._CITE.findall("没有任何引用") == []
+
+
+def test_validate_accepts_fullwidth_and_still_catches_fabrication():
+    """全角写法的**合法引用不再误报**；**编造仍必须报出来**（两件事都要成立）。"""
+    payload = {"modules": [{"module": "售后方案", "status": "ok",
+                            "evidence": [{"ref": "E3", "text": "不少于2年", "file_name": "a.docx"}]}]}
+    # 合法全角引用 → 无问题（改前会误报「没有任何引用编号」+「无法回溯的数字 ['3']」）
+    assert P.validate_generation("根据【E3】，提供不少于2年的售后服务。", payload, "") == []
+    # 编造的全角引用 → 必须报（改前只会报成「无法回溯的数字」，不是「编造引用」）
+    problems = P.validate_generation("根据【E99】，提供2年售后。", payload, "")
+    assert any("编造" in p and "E99" in p for p in problems), problems
+
+
+def test_frontend_cite_regex_matches_backend_convention():
+    """前端引用正则与后端 `_CITE` **同一口径**（只改后端会让引用留在正文里）。"""
+    import re
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[1] / "static" / "app.js").read_text(encoding="utf-8")
+    # JS 侧的正则字面量（`[\[【［「]E\d+[\]】］」]`）与 Python 侧必须都含这四个开括号
+    # JS 侧正则字面量（含圆括号形态）与 Python 侧必须同一口径
+    assert js.count(r"[(（\[【［「]E\d+[)）\]】］」]") >= 3, "前端引用正则应全部改为认全角/中文括号"
+    assert r"/\[E\d+\]/g" not in js, "仍有只认半角的旧正则残留"
+
+
+# ============================================================================
+# 2026-09-18：输出行文风格（需求方：「会显示根据{E3} 这个需要优化」）
+# ============================================================================
+
+def test_style_flags_citation_at_sentence_head():
+    """逐条「根据 Ex，」开头 → 如实提示（**只报不改写**）。
+
+    需求方实测反馈原话：「现在的输出 会显示根据{E3} 这个需要优化」——
+    那是**行文风格**问题（整篇像检索日志），不是事实错误，所以只提示、不拦生成。
+    """
+    payload = {"modules": [{"module": "售后方案", "status": "ok",
+                            "evidence": [{"ref": "E3", "text": "2年", "file_name": "a.docx"}]}]}
+    md = ("## 服务周期\n根据【E3】，提供不少于2年的售后服务。\n"
+          "根据【E3】，结束后至少6个月的技术支持。\n根据【E3】，48h内响应。\n")
+    problems = P.validate_generation(md, payload, "")
+    assert any("行文风格" in p and "根据" in p for p in problems), problems
+    # 阈值：偶发一两次不算问题（避免在正常行文上常态误报，那样校验器会被忽略）
+    once = "## 服务周期\n数据验收合格后提供 2 年售后 [E3]。\n根据【E3】，另有技术支持。\n"
+    assert not any("行文风格" in p for p in P.validate_generation(once, payload, ""))
+
+
+def test_style_flags_duplicate_citation_in_same_spot():
+    """同句重复引用（`[E3] [E3]`）→ 提示保留一个。"""
+    payload = {"modules": [{"module": "售后方案", "status": "ok",
+                            "evidence": [{"ref": "E3", "text": "2年", "file_name": "a.docx"}]}]}
+    md = "## 服务周期\n数据验收合格后提供 2 年售后 [E3] [E3]。\n"
+    assert any("重复出现" in p for p in P.validate_generation(md, payload, ""))
+
+
+def test_gen_system_asks_for_sentence_final_citations():
+    """提示词必须**明确要求**把编号放句末、禁止「根据 Ex」开头、禁止无关内容。
+
+    ⚠️ 这是**根因修复**（提示词），校验器只是兜底提示 —— 两者都要有。
+    """
+    sys_prompt = P.GEN_SYSTEM
+    assert "引用编号放在句末" in sys_prompt
+    assert "根据【E3】" in sys_prompt and "不要" in sys_prompt          # 明写了反例
+    assert "不要输出与本次结构无关的内容" in sys_prompt
+    assert "[E3]" in sys_prompt                                        # 规范写法有示例
