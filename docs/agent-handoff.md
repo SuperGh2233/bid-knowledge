@@ -16,7 +16,7 @@
 
 退出门槛（需求一累计）：Recall **37/37 = 100%**（明细 + 提及两组）／真实路径 100%／
 金额条件 100%／覆盖率 8/8；本轮新增验收全部达标（见 §3 与计划 §8 验收总表）。
-**tag `v1.3` 已打**（打在 `fdab772`，已推 GitLab；**GitHub 因网络故障待补推**，见 §9 第 1 条）。
+**tag `v1.3` 已打并推送两个远程**（打在 `fdab772`）。
 
 ## 2. Linked Authoritative Documents
 
@@ -129,9 +129,10 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 - **无**（本轮发现的三个根因都已修 + 有回归测试；「打车发票被当纳税金额」在实现期就挡掉了）。
 
 ### Unverified risks / assumptions
-- **金额覆盖面窄且如实**：29 条 / 19 份凭证 —— 因为**社保缴费记录表没有合计行**（该表是明细，
-  各险种不可加总）。这是**刻意不猜**的结果，不是 bug；若业务要「某期间社保总额」，
-  需先定义口径（按险种分别汇总？只算单位缴纳？）——**属第二阶段，用户未要求**。
+- **金额覆盖面**：29 条 / 19 份凭证 —— 因为**社保缴费记录表没有合计行**（该表是明细，
+  各险种不可加总）。这是**刻意不猜**的结果，不是 bug。
+  ✅ **用户 2026-09-18 已确认「维持现状」**：不要为凑条数放松判据。
+  若业务将来要「某期间社保总额」，需先定义口径（按险种分别汇总？只算单位缴纳？）——属第二阶段。
 - `SNIPPET_ANCHORS` 的锚点是**手写词表**（与「手写词表会漂移」的历史教训同源）。
   实测覆盖 636/645；若发现漏挡，**优先改成按材料段落结构判定，而不是往表里加词**。
 - `cut_snippet` 是**朴素 `str.find` + 窗口裁切**（`ponytail:` 标注：未做索引/缓存）。
@@ -140,13 +141,9 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 9. Next Actions
 
-1. ~~打 tag `v1.3`~~ → **已完成**：`git tag v1.3`（打在 `fdab772`），**已推 origin/GitLab**。
-   ⚠️ **GitHub 未推成功** —— `SSL_ERROR_SYSCALL`（网络故障，连续重试 5 次均失败，
-   `git ls-remote github` 也不可达）。**恢复网络后补推**：
-   ```bash
-   git push github main && git push github v1.3
-   ```
-   （同类故障 2026-09-17 也发生过一次，当时重试即通。）
+1. ~~打 tag `v1.3`~~ → **全部完成并双远程对齐**：`git tag v1.3`（打在 `fdab772`）；
+   `origin`(GitLab) 与 `github` 的 `main` **均为 `95b8477`**、tag 各 10 个、`v1.3` 指向同一 commit。
+   （过程中两个远程各遇到一次瞬时网络故障，重试后均成功 —— **不再是待办**。）
 2. **等用户/需求方验收反馈**：本轮四项都是「需求方直接提的痛点」，
    建议请需求方实机确认（尤其「可复制正文段」的措辞与粒度是否合用）。
    实机前提醒：**Ctrl+F5 一次**。
@@ -182,7 +179,7 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
   **GitLab 已全推**；**GitHub 最新几个提交待补推** —— 网络故障，见 §9 第 1 条）。
 - **工作区**：干净（除禁提交项）。
 - **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / **`v1.3`（本轮，打在 `fdab772`）** /
-  `minimal-rebuild-r1-20260907`。**`v1.3` 已推 GitLab；GitHub 待补推**（同一网络故障）。
+  `minimal-rebuild-r1-20260907`。**两远程各 10 个 tag，`v1.3` 均已推送。**
 - **禁提交**：`.env`、`*.db`（含 `*.bak-*.db` 备份）、`outputs/`（真实投标正文）、`tmp/`、`*.log`。
   ⚠️ **备份文件命名必须命中 `.gitignore` 的 `*.bak-*.db`**：写成 `<name>.db.bak-<标签>` 会
   逃过忽略规则（本轮实测踩到并已修脚本，见 `backfill_finance_amounts.py` 注释）。
@@ -193,8 +190,8 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 ## 13. Recovery Command
 
 > **当前状态**：第二次需求对接的两条需求**已全部实现、验收并推送**（GitLab 到 `11b5b3c`；
-> pytest 307 passed；服务 PID 97656 含新代码）；**tag `v1.3` 已打并推 GitLab**。
-> 剩余动作：① **GitHub 补推**（网络故障，§9 第 1 条）；② **请需求方实机验收**。
+> pytest 307 passed；服务 PID 97656 含新代码）；**tag `v1.3` 已打，双远程均已推送**。
+> 剩余动作：**请需求方实机验收**。
 > 第二阶段（表格结构化 / 金额汇总 / 固定模板）用户未要求，**勿主动开工**。
 
 `Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
