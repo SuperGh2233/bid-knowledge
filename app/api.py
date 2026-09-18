@@ -533,17 +533,35 @@ _FACT_KW = (
 
 
 def parse_fact_query(text: str) -> tuple[str, str]:
-    """自然问句 → (fact_type, 期间)。解析不出就返回空串（不猜）。"""
+    """自然问句 → (fact_type, 期间)。**解析不出就返回空串（不猜）**。
+
+    ⚠️ 期间正则**必须同时认两位数年份**（2026-09-18 需求方实测）：
+    `25年的社保` 原先匹配不到（旧正则 `(20\\d{2})` 只认 4 位）→ **期间条件被静默丢掉**，
+    退化成搜「社保」，与「2025年的社保」（35 条）相比把 913 条全倒出来。
+    契约是「承认周期时：用原话里的年份、不猜其他」——`25年` 是 2025 的**唯一合理解读**
+    （库里没有 1925 年的材料；区间约束见 `_SCAN_YEAR_MIN/MAX`）。
+    `(?<!\\d)` 是必要的：否则 `125年` 会被抠成 `25年`（实测）。
+    """
     t = (text or "").strip()
     ft = next((v for kws, v in _FACT_KW if any(k in t for k in kws)), "")
     fv = ""
-    m = re.search(r"(20\d{2})\s*年(?:\s*(\d{1,2})\s*月)?", t)
+    m = re.search(r"(?<!\d)(20\d{2}|2\d)\s*年(?:\s*(\d{1,2})\s*月)?", t)
     if m:
-        fv = f"{m.group(1)}-{int(m.group(2)):02d}" if m.group(2) else m.group(1)
+        y = m.group(1)
+        y = y if len(y) == 4 else "20" + y        # `25` → `2025`（两位年份补世纪）
+        fv = f"{y}-{int(m.group(2)):02d}" if m.group(2) else y
     return ft, fv
 
 
 _MONTHISH = re.compile(r"^\d{4}(-\d{2})?$")
+
+# 「无值行沉底」判据（2026-09-18）：**有 value 的行排前，空值行沉底**。
+# 用途：社保/财务这类**本质带期间**的类别，用户问「社保」时 913 条里只有 134 条有月份，
+# 其余是「文件里有这类材料、但正文没有缴费记录表」的如实记录（用户裁定：**都返回**）。
+# 不排序的话 134 条有价值的行被 779 条空值行淹没（实测：按 relative_path 排时前 5 条全是空值）。
+# ⚠️ 只改**展示顺序**，一行不删 —— 见 `app/routes_search.py` 的用法与测试。
+# 对 fact_value 全空/全非空的类别（instrument 全空、instrument_name 全非空）是无副作用的稳定排序。
+EMPTY_VALUE_SINKS_SQL = "CASE WHEN TRIM(COALESCE(f.fact_value,''))='' THEN 1 ELSE 0 END"
 
 
 # —— R1-3 仪器「通称 → 型号」映射（2026-09-15）——

@@ -77,7 +77,7 @@ const CONTRACT_CSV = {
 };
 // 需求一另两类问法的导出列（与卡片上显示的一致）
 const FACT_CSV = {
-  headers: ["材料类别", "期间", "项目", "文件", "文件内文字", "可复制正文", "文件位置"],
+  headers: ["材料类别", "期间/型号", "项目", "文件", "文件内文字", "可复制正文", "文件位置"],
   // 期间用 `factValuesText`（折叠后多值一并导出）—— 与卡片上显示的**同一口径**
   rowOf: (r) => [FACT_LABEL[r.fact_type] || r.fact_type, factValueText(r),
                  r.project_folder, r.file_name, r.evidence_text,
@@ -876,11 +876,36 @@ function renderProjectRows(rows) {
   }).join("");
 }
 
-/** 材料事实的期间显示（**两处共用，勿各写一份**）：
- *  折叠后 `fact_values` 有多值就一并显示；期间未知（null）**不是缺失**，如实写「期间未提取到」。 */
+/** 各类材料事实的「值」是什么 —— **不都是期间**（2026-09-18 需求方实测反馈）。
+ *
+ *  由来：需求方查 Xenium 时满屏「期间未提取到」，质问「明明是仪器，还有什么期间」。
+ *  实测根因：`factValuesText` 只有一个无条件兜底串，而 material_facts 里
+ *  instrument / invoice / qualification / purchase_contract / instrument_photo
+ *  **这五类共 556 行的 `fact_value` 非空数为 0** —— 它们存的是「**存在性**」（有没有这类材料），
+ *  压根没有「期间」这个概念。同一句「期间未提取到」用在这五类上是纯粹的误导。
+ *  分组依据是 `scripts/extract_three_modules.py` 的实际产出（只有 social_security_month /
+ *  finance_period 会算期间，其余一律 `per=[None]`）。
+ */
+const VALUE_KIND = {
+  social_security_month: { kind: "period", empty: "期间未提取到" },
+  finance_period: { kind: "period", empty: "期间未提取到" },
+  finance_amount: { kind: "amount", empty: "金额未提取到" },
+  instrument_name: { kind: "name", empty: "未抽出型号" },
+  instrument_purchase_contract: { kind: "name", empty: "未抽出合同名" },
+  // 以下五类**存的就是「有没有」**，没有「期间/名称」可言 —— 空值不是缺失
+  instrument: { kind: "existence", empty: "本类只表示「有仪器材料」，不记型号或期间" },
+  instrument_photo: { kind: "existence", empty: "本类只表示「有仪器照片」，不记期间" },
+  invoice: { kind: "existence", empty: "本类只表示「有发票材料」，不记期间" },
+  purchase_contract: { kind: "existence", empty: "本类只表示「有采购合同材料」，不记期间" },
+  qualification: { kind: "existence", empty: "本类只表示「有资质材料」，不记期间" },
+};
+const valueKindOf = (t) => VALUE_KIND[t] || { kind: "other", empty: "未提取到" };
+
+/** 材料事实的「值」显示（**所有渲染与导出路径共用，勿各写一份**）：
+ *  折叠后 `fact_values` 有多值就一并显示；空值的说法**按材料类别取**（见 `VALUE_KIND`）。 */
 function factValuesText(r) {
   const vals = (r.fact_values || [r.fact_value]).filter(v => v !== null && v !== undefined && v !== "");
-  return vals.length ? vals.join(" / ") : "期间未提取到";
+  return vals.length ? vals.join(" / ") : valueKindOf(r.fact_type).empty;
 }
 
 function renderFactRows(rows) {
@@ -909,12 +934,12 @@ const MODULE_CSV = {
               PAY_LABEL[r.payment_status] || r.payment_status, r.source_path];
     }),
   "财务社保数据": csvSpec(
-    ["类别", "期间", "角色", "项目", "文件", "格式", "文件内文字", "可复制正文", "文件位置"],
+    ["类别", "期间/型号", "角色", "项目", "文件", "格式", "文件内文字", "可复制正文", "文件位置"],
     (r) => [FACT_LABEL[r.fact_type] || r.fact_type, factValueText(r), ROLE_LABEL[r.role_scope],
             r.project_folder, r.file_name, formatLabel(r.content_format),
             r.evidence_text, r.content_snippet || "", r.source_path]),
   "仪器设备清单": csvSpec(
-    ["类别", "期间", "角色", "项目", "文件", "格式", "文件内文字", "可复制正文", "文件位置"],
+    ["类别", "期间/型号", "角色", "项目", "文件", "格式", "文件内文字", "可复制正文", "文件位置"],
     (r) => [FACT_LABEL[r.fact_type] || r.fact_type, factValueText(r), ROLE_LABEL[r.role_scope],
             r.project_folder, r.file_name, formatLabel(r.content_format),
             r.evidence_text, r.content_snippet || "", r.source_path]),

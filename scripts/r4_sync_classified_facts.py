@@ -43,24 +43,31 @@ for x in res:
     k = next((v for kw, v in MAP if kw in x["text"]), None)
     (rows if k else unmapped).append({**x, "fact_type": k} if k else x)
 
-con = dbm.connect()
-before = con.execute("SELECT COUNT(*) FROM material_facts").fetchone()[0]
-docs = [r[0] for r in con.execute("SELECT document_id FROM documents")]
-with con:
-    for doc_id in docs:                      # 幂等：先删后插
-        con.execute("DELETE FROM material_facts WHERE document_id=?", (doc_id,))
-    for x in rows:
-        # fact_value：从条目行里抽期间/年度（**确定性、本地**）。
-        # 抽不到留 None —— 多数资质证书行本就不含期间，不臆造。
-        con.execute("INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
-                    "VALUES (?,?,?,?)",
-                    (x["document_id"], x["fact_type"], extract_period(x["text"]), x["text"][:200]))
-after = con.execute("SELECT COUNT(*) FROM material_facts").fetchone()[0]
-con.close()
+# ⚠️ **执行守卫**（2026-09-18 加）：本文件原先**模块级直接跑主流程**，`import` 一下就会写库。
+# 起因：为读一个纯函数而 importlib 执行了本文件 → 重跑了一遍抽取（幂等无损坏，但形状危险）。
+# 本脚本**只能作为脚本跑**（`python scripts/xxx.py`）；要复用其中的函数请先加守卫。
+def _main() -> int:
+    con = dbm.connect()
+    before = con.execute("SELECT COUNT(*) FROM material_facts").fetchone()[0]
+    docs = [r[0] for r in con.execute("SELECT document_id FROM documents")]
+    with con:
+        for doc_id in docs:                      # 幂等：先删后插
+            con.execute("DELETE FROM material_facts WHERE document_id=?", (doc_id,))
+        for x in rows:
+            # fact_value：从条目行里抽期间/年度（**确定性、本地**）。
+            # 抽不到留 None —— 多数资质证书行本就不含期间，不臆造。
+            con.execute("INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
+                        "VALUES (?,?,?,?)",
+                        (x["document_id"], x["fact_type"], extract_period(x["text"]), x["text"][:200]))
+    after = con.execute("SELECT COUNT(*) FROM material_facts").fetchone()[0]
+    con.close()
 
-print(f"material_facts {before} → {after}")
-print("类型分布:", dict(Counter(x["fact_type"] for x in rows)))
-print()
-print(f"映射不上、未写入的 {len(unmapped)} 条（多为资质证书，枚举里无对应值）：")
-for x in unmapped[:14]:
-    print("   ·", x["text"][:64])
+    print(f"material_facts {before} → {after}")
+    print("类型分布:", dict(Counter(x["fact_type"] for x in rows)))
+    print()
+    print(f"映射不上、未写入的 {len(unmapped)} 条（多为资质证书，枚举里无对应值）：")
+    for x in unmapped[:14]:
+        print("   ·", x["text"][:64])
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

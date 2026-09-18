@@ -16,7 +16,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.api import (BASE_DIR, PRODUCT_ALIASES, PRODUCT_MATCH_EXCLUDE,
                      SearchRequest, _FACT_KW, _FINANCE_FACT_TYPES,
-                     _INSTRUMENT_FACT_TYPES, SHELL_ROW_SQL, THREE_MODULES,
+                     _INSTRUMENT_FACT_TYPES, EMPTY_VALUE_SINKS_SQL, SHELL_ROW_SQL, THREE_MODULES,
                      _annotate_fact_role, attach_snippets,
                      _approved_contract_ids, _count_material_facts, _fold_by_contract,
                      _MONTHISH, _fold_facts_by_file, live_scope, parse_demo_query, parse_fact_query,
@@ -240,6 +240,12 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
     无 `fact_value` 表示该条目本身不含期间（如证书名），**不是缺失**。
     """
     inst_models: tuple[str, ...] = ()
+    # ⚠️ **解析不出任何条件时不得落回全表**（2026-09-18 实测发现，违反「拒绝优于静默」红线）：
+    # `q=Xenium` / `q=型号` / `q=完全不相干的词xyz` 三条都返回 **2015 条全表**（= material_facts 总数），
+    # 页面看起来像「查到了很多」，实际是**没有施加任何筛选**。用户看到「Xenium 有 2015 条结果」
+    # 会以为系统认得 Xenium —— 这是比「查不到」更危险的静默伪装。
+    # 现在：`q` 非空但解析不出 → **明确告知解析失败**，不是返回全表。
+    unresolved_q = ""
     if q and not fact_type:
         # R1-3（2026-09-15 需求方反馈）：仪器**通称**（`找质谱仪`/`测序仪`）或**型号名**
         # → 查 `instrument_name`（库里存的是具体型号）。此前 `质谱仪` **完全不被识别**、
@@ -251,10 +257,15 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
         else:
             fact_type, auto_value = parse_fact_query(q)
             fact_value = fact_value or auto_value
+            if not fact_type and not fact_value:
+                unresolved_q = q
     con = readonly_db()
     # WHERE 单独拼，供「取数」与「数总数」两条查询共用（参数也共用）
     where = " WHERE 1=1"
     args: list = []
+    if unresolved_q:
+        # 未解析出条件 → **恒空 + 如实说明**（`scope_note` 里给出可用的问法示例）
+        where += " AND 1=0"
     if fact_type:
         where += " AND f.fact_type = ?"
         args.append(fact_type)
@@ -265,6 +276,13 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
         # 通称展开成多个型号 → **OR**（`?fact_value=` 的单值 LIKE 表达不了）
         where += " AND (" + " OR ".join("f.fact_value LIKE ?" for _ in inst_models) + ")"
         args.extend(f"%{m}%" for m in inst_models)
+    # 社保/财务这类**本质带期间**的类别：按期间问（如「25年的社保」）时，
+    # 「期间未提取到」的行不该混进结果 —— 用户问的是**某个月/年**，那是收窄条件。
+    # ⚠️ 只在**查询自带期间**时才收窄；不带期间（如「社保」）时照常全部返回
+    # （用户要的是「哪些文件有社保材料」，用户 2026-09-18 裁定：都返回、有月份的排前）。
+    period_narrowed = bool(fact_value) and fact_type in ("social_security_month", "finance_period")
+    if period_narrowed:
+        where += " AND TRIM(COALESCE(f.fact_value,'')) <> ''"
     cap = max(1, min(limit, 500))
     # ⚠️ **必须带 `d.document_id`**（2026-09-16 需求方反馈「其他两类材料不能打开文件」）：
     # 前端 `fileActions()` 缺 `document_id` 时**只渲染「复制路径」**（否则点了必然失败）——
@@ -281,7 +299,12 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
         # 必须在 `finally: con.close()` **之前**算，否则用已关闭的连接会 500（那个坑踩过一次）。
         total_available = con.execute("SELECT COUNT(*)" + _FROM + where, args).fetchone()[0]
         rows = [dict(r) for r in con.execute(
-            _SELECT + where + " ORDER BY " + SHELL_ROW_SQL + ", d.relative_path LIMIT ?",
+            # 排序：空壳行（无证据）沉底 → **有 value 的行**排前 → 文件路径。
+            # ⚠️ 社保类是特例：`SHELL_ROW_SQL` 对它**恒定=1**（913 条的 evidence 一律只有文件名），
+            # 所以单靠它等于没排 —— 必须再叠一层 `EMPTY_VALUE_SINKS_SQL` 才能把 134 条
+            # 有月份的顶到第一页（2026-09-18 实测：否则前 5 条全是空值行）。
+            _SELECT + where + " ORDER BY " + SHELL_ROW_SQL + ", " + EMPTY_VALUE_SINKS_SQL
+            + ", d.relative_path LIMIT ?",
             args + [cap])]
         truncated = len(rows) < total_available
         # ️ `content_snippet` 必须**在连接关闭前**取（要读 `parse_artifacts.text`）——
@@ -326,14 +349,23 @@ def material_facts(fact_type: str = "", fact_value: str = "", q: str = "", limit
         "truncated": truncated,
         "related_count": len(related),
         "related": related,
-        "scope_note": "本页只回答「有没有这类材料」，材料内容取自响应文件正文里的文字清单；"
-                      "下方扫描件未做 OCR。条目无期间值表示其本身不含期间，不是缺失。"
+        "scope_note": ("⚠️ **没能从你这句话里解析出材料类别或期间**，因此**没有执行任何筛选**"
+                       "（不是「查不到」，也不是「全都有」）。请改用系统认得的写法，例如："
+                       "「哪些响应文件包含2025年的社保」/「找仪器照片」/「25年的财务报告」。"
+                       if unresolved_q else
+                       "本页只回答「有没有这类材料」，材料内容取自响应文件正文里的文字清单；"
+                       "下方扫描件未做 OCR。条目无期间值表示其本身不含期间，不是缺失。")
                       + (f"⚠️ 库内共 {total_available} 条，本次显示前 {len(rows)} 条（已截断）—— "
                          "**没显示出来的不代表没有**。" if truncated else "")
                       + ("`related` 里的条目只记录了**起始期间**（如「自2021年起缴纳」），"
                          "历史材料未记终期，因此**只能说明至该时点可能仍有效**，"
                          "不能断言该月一定有材料 —— 请人工核对源文件。"
-                         if related else ""),
+                         if related else "")
+                      + ("你没指定期间，本页**全部返回**；其中**已提取到期间的排在最前**"
+                         "（未提取到期间的也如实列出，它们说明「该文件有这类材料」但正文里"
+                         "没有可读的期间记录）。"
+                         if fact_type in ("social_security_month", "finance_period")
+                         and not period_narrowed else ""),
     }
 
 

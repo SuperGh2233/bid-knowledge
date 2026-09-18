@@ -855,3 +855,85 @@ def test_validate_outline_catches_drift_and_passes_on_exact():
                P.validate_generation(no_title, payload, "", _OUTLINE))
     # 不传 outline → 校验器行为不变（不报结构类问题）
     assert not any("标题结构" in p for p in P.validate_generation(bad, payload, ""))
+
+
+# ============================================================================
+# 2026-09-18 需求方第二轮：**从 query 推输出结构**（大标题 + 小标题，不要多余内容）
+# ============================================================================
+
+def test_plan_sections_for_the_actual_request():
+    """需求方原话必须拆成「大标题 售后服务方案 + 小标题 服务周期、应急预案」。
+
+    ⚠️ 两个坑都是实测踩到的：
+      · `售后服务方案` 里**没有**子串 `售后方案`（是「售后+服务+方案」）→ 必须按**关键词**定位，
+        否则这句压根找不到大标题；
+      · 「服务周期」在模块词表里**一个字都不命中** → 归属模块是**系统推的**（标记 `module_inferred`），
+        不能因此把它丢掉（需求方要的就是这个小标题）。
+    """
+    p = P.plan_sections("售后服务方案，必须包含服务周期和应急预案")
+    assert p["title"] == "售后服务方案" and p["title_module"] == "售后方案"
+    assert [s["name"] for s in p["sections"]] == ["服务周期", "应急预案"]
+    by = {s["name"]: s for s in p["sections"]}
+    assert by["服务周期"]["module"] == "售后方案" and by["服务周期"]["module_inferred"] is True
+    assert by["应急预案"]["module"] == "应急预案"
+    # 小标题的判定词元必须**带上归属模块的关键词**（否则「服务周期」在历史章节里几乎召不到）
+    assert "服务周期" in by["服务周期"]["terms"]
+    assert any(k in by["服务周期"]["terms"] for k in P.MODULE_KEYWORDS["售后方案"])
+
+
+def test_plan_sections_title_is_earliest_not_dict_order():
+    """大标题取**句子里最早出现**的模块，不是词表顺序。
+
+    反例（实测踩到）：`培训方案，必须包含讲师安排，保密方案` —— `保密方案` 在词表里更靠前，
+    按词表顺序会把句尾的它当大标题，而用户显然说的是句首的「培训方案」。
+    另：`售后服务方案和应急预案，…` 的大标题到「和」为止，不得吃成整串。
+    """
+    assert P.plan_sections("培训方案，必须包含讲师安排，保密方案")["title"] == "培训方案"
+    assert P.plan_sections("售后服务方案和应急预案，必须包含服务周期")["title"] == "售后服务方案"
+    # 句尾点名的模块仍要成为一个小节（不能因为它是模块名就被丢掉）
+    p = P.plan_sections("质量控制方案，必须包含质控要求，保密方案")
+    assert p["title"] == "质量控制方案"
+    assert [s["name"] for s in p["sections"]] == ["质控要求", "保密方案"]
+
+
+def test_plan_sections_reports_dropped_at_clause_granularity():
+    """**点名但没纳入**的项要如实报出 —— 且粒度是**切分后的小标题**。
+
+    ⚠️ 这是原 `unrecognized_requirements` 的缺陷（2026-09-18 实测）：
+    它拿 `_REQ_CLAUSE` 抓到的**整片段**（`服务周期和应急预案`）去判，
+    片段里任一模块命中就算「已认出」→ 片段里的「服务周期」被**连带跳过、一条告警都没有**。
+    """
+    from app.proposal import _split_req_clause
+    q = "售后服务方案，必须包含服务周期和应急预案"
+    assert _split_req_clause(q) == ["服务周期", "应急预案"]      # 切分符含「和」
+    assert P.plan_sections(q)["dropped"] == []                    # 两项都被纳入 → 无告警
+    # 挂不上任何模块、又没有大标题可依 → 不猜，如实报「未纳入」
+    p = P.plan_sections("必须包含完全没听过的要求")
+    assert p == {} or p.get("dropped") == ["完全没听过的要求"]
+
+
+def test_plan_sections_returns_empty_when_nothing_recognized():
+    """认不出 → 空 dict（调用方据此**不施加约束**，不猜）。"""
+    assert P.plan_sections("帮我写个投标函") == {}
+    assert P.plan_sections("") == {}
+
+
+def test_custom_section_name_does_not_keyerror_in_evidence_packs(monkeypatch):
+    """**用户自造小节名**（不在模块词表里）不得 KeyError。
+
+    ⚠️ 实测踩到：`build_evidence_packs` 里若写成
+    `section_map.get(mod, (mod, (mod,) + MODULE_KEYWORDS[mod]))`，
+    **默认值是立即求值**的 → `MODULE_KEYWORDS['服务周期']` 直接 KeyError。
+    """
+    from app.api import readonly_db
+    from app.proposal import build_evidence_packs
+    # ⚠️ 必须用 `readonly_db()`（它设了 `row_factory=sqlite3.Row`）；
+    # 裸 `sqlite3.connect` 的 `dict(row)` 在 tuple 上会 ValueError（踩过一次）。
+    with readonly_db() as con:
+        try:
+            packs = build_evidence_packs(
+                con, ["服务周期"], section_map={"服务周期": ("售后方案", ("服务周期", "售后"))})
+        except Exception as exc:                   # noqa: BLE001
+            raise AssertionError(f"自造小节名触发了异常：{type(exc).__name__}: {exc}")
+    assert len(packs) == 1
+    assert packs[0].module == "售后方案" and packs[0].display == "服务周期"

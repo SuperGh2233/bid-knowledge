@@ -108,30 +108,55 @@ def proposal_generate(request: GenerateRequest):
                               unrecognized_requirements,
                               build_evidence_packs, build_module_kb,
                               extract_required_sections, generate_proposal, packs_to_payload,
-                              parse_outline)
+                              parse_outline, plan_sections)
 
     if request.mode != "llm":
         raise HTTPException(400, MODE_DEPRECATED_MSG)
-    mods = [m.strip() for m in request.modules.split(",") if m.strip()] or \
-        extract_required_sections(request.query)
-    unknown = [m for m in mods if m not in MODULE_KEYWORDS]
+    # —— 结构规划（2026-09-18 需求方：「要做意图识别…大标题/小标题…不要输出多余的内容」）——
+    # 优先级：显式 `modules` > 从 `query` 推的结构 > 老路径 `extract_required_sections`。
+    # `plan_sections` 是**零外发**的本地解析。
+    explicit = [m.strip() for m in request.modules.split(",") if m.strip()]
+    plan = {} if explicit else plan_sections(request.query)
+    section_map: dict[str, tuple[str, tuple[str, ...]]] = {}
+    if explicit:
+        mods = explicit
+    elif plan.get("sections"):
+        # 小节名用**用户措辞**（`服务周期`），归属模块另存 —— 召回按归属模块走。
+        mods = [x["name"] for x in plan["sections"]]
+        section_map = {x["name"]: (x["module"], tuple(x["terms"])) for x in plan["sections"]}
+    else:
+        mods = extract_required_sections(request.query)
+    unknown = [m for m in mods if m not in MODULE_KEYWORDS and m not in section_map]
     if unknown:
         raise HTTPException(400, f"未知方案小节：{unknown}；可选：{list(MODULE_KEYWORDS)}")
     if not mods:
+        if request.query.strip():
+            raise HTTPException(400, "没能从这句话里认出任何方案小节，因此**没有执行生成**"
+                                     "（不是生成失败）。请改用系统认得的写法，例如："
+                                     "「售后服务方案，必须包含服务周期和应急预案」。")
         raise HTTPException(400, "请指定方案小节，例如："
                                  "{\"query\": \"售后服务方案，必须包含服务周期\"}")
     with readonly_db() as con:
-        packs = build_evidence_packs(con, mods)
+        packs = build_evidence_packs(con, mods, section_map=section_map or None)
         # 「模块化经验」（历史跨项目归纳）—— **零外发**的本地整理，随提示词发给模型。
         # ES 不可达时降级为 None（生成仍可跑，只是少了结构与口径那一段），**不因此 500**。
-        kb = build_module_kb(con, mods)
+        # ⚠️ 按**归属模块**取经验（`服务周期` 这类用户措辞在模块表里查不到）。
+        kb = build_module_kb(con, list(dict.fromkeys(
+            [section_map[m][0] if m in section_map else m for m in mods])))
     payload = packs_to_payload(packs)
     # 产品线：显式传入优先；否则从 `query`/`modules` 自动识别（**与检索侧同一套别名口径**）。
     # 识别不出 → 空串 → 提示词不加裁剪规则（不猜、不误裁）。
     from app.api import detect_product
     product = request.product.strip() or detect_product(f"{request.query} {request.modules}")
-    # 标题结构：规整不出任何标题 → 空 dict → **不施加约束**（不猜、不误裁结构）。
-    outline = parse_outline(request.outline)
+    # 标题结构：`request.outline`（用户手填）> **从 query 推的**（需求方 2026-09-18 要求）。
+    # 都拿不到 → 空 dict → **不施加约束**（不猜、不误裁结构）。
+    user_outline = parse_outline(request.outline)
+    auto_outline = ({} if user_outline else
+                    {"title": plan.get("title", ""),
+                     "sections": [x["name"] for x in plan.get("sections", [])]})
+    outline = user_outline or auto_outline
+    if not (outline.get("title") or outline.get("sections")):
+        outline = {}
     try:
         result = generate_proposal(payload, request.constraints, kb,
                                    product=product, outline=outline)
@@ -143,9 +168,25 @@ def proposal_generate(request: GenerateRequest):
     result["coverage"] = payload["coverage"]
     result["kb_used"] = bool(kb)
     result["outline_used"] = outline or None
-    # ⚠️ 用户**点名要求**、但没被识别成小节的 → 如实告警，不静默丢（项目红线）。
-    # 实测：`售后服务方案，必须包含质控要求` 只认出「售后方案」，「质控要求」被丢掉且无任何提示。
-    _missed = unrecognized_requirements(request.query or request.modules or "", mods)
+    # **结构来源如实回显**（2026-09-18）：用户要能看到「大标题/小标题是谁定的」——
+    # `user` = 手填的文本框；`query` = 系统从他那句话里推出来的（含逐条归属与推断标记）；
+    # 无 == 没施加结构约束（按模块自由成节）。
+    result["outline_source"] = ("user" if user_outline else
+                                "query" if auto_outline else "none")
+    if plan:
+        # ⚠️ **归属模块是系统推的**（`module_inferred`）时必须让用户看得见 ——
+        # 「服务周期」在模块词表里一个字都不命中，它被归到「售后方案」是系统推的，不是用户指定的。
+        result["sections_planned"] = [
+            {"name": x["name"], "module": x["module"],
+             **({"module_inferred": True} if x.get("module_inferred") else {})}
+            for x in plan.get("sections", [])]
+        result["title_planned"] = plan.get("title", "")
+    # ⚠️ 用户**点名要求**、但没被纳入结构的 → 如实告警，不静默丢（项目红线）。
+    # ⚠️ 走 `plan["dropped"]`（**按切分后的小标题**逐个核对）而不是 `unrecognized_requirements`：
+    # 后者拿 `_REQ_CLAUSE` 抓到的**整片段**（`服务周期和应急预案`）去判，片段里任一模块命中
+    # 就算「已认出」→ 片段里的「服务周期」被**连带跳过、一条告警都没有**（2026-09-18 实测）。
+    _missed = plan.get("dropped", []) if plan else \
+        unrecognized_requirements(request.query or request.modules or "", mods)
     if _missed:
         result.setdefault("warnings", []).append({
             "module": "（未识别的小节）", "slot": "要求未生效",

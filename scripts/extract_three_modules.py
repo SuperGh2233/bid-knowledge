@@ -187,108 +187,115 @@ def purchase_contracts_in(text: str) -> list[tuple[str, str]]:
     return out
 
 
-con = db_mod.connect()
-# —— 候选：**路径命中 OR 正文命中**（2026-09-13 修订，见文件头「缺口 1」）——
-PATH_KWS = ["完税", "社保", "纳税", "财务", "审计", "资信", "仪器", "设备", "发票",
-            "采购", "照片", "实拍", "凭证", "应收账款", "付款", "收款"]
-TEXT_KWS = ["社会保障", "社会保险", "社保", "完税", "纳税", "财务报告", "审计报告",
-            "资产负债表", "利润表", "资信证明", "仪器", "设备清单", "发票",
-            "采购合同", "仪器照片", "设备照片", "实拍", "付款凭证", "收款凭证"]
-path_clause = " OR ".join(["d.relative_path LIKE ?"] * len(PATH_KWS))
-text_clause = " OR ".join(["a.text LIKE ?"] * len(TEXT_KWS))
-rows = [dict(r) for r in con.execute(
-    f"""SELECT d.document_id, d.relative_path, d.document_role, a.text
- FROM documents d JOIN parse_artifacts a ON a.canonical_document_id=d.canonical_document_id
- WHERE length(a.text) > 0 AND (({path_clause}) OR ({text_clause}))""",
-    [f"%{k}%" for k in PATH_KWS] + [f"%{k}%" for k in TEXT_KWS])]
-print(f"候选材料文档: {len(rows)} 份（路径命中 OR 正文命中）")
+# ⚠️ **执行守卫**（2026-09-18 加）：本文件原先**模块级直接跑主流程**，`import` 一下就会写库。
+# 起因：为读一个纯函数而 importlib 执行了本文件 → 重跑了一遍抽取（幂等无损坏，但形状危险）。
+# 本脚本**只能作为脚本跑**（`python scripts/xxx.py`）；要复用其中的函数请先加守卫。
+def _main() -> int:
+    con = db_mod.connect()
+    # —— 候选：**路径命中 OR 正文命中**（2026-09-13 修订，见文件头「缺口 1」）——
+    PATH_KWS = ["完税", "社保", "纳税", "财务", "审计", "资信", "仪器", "设备", "发票",
+                "采购", "照片", "实拍", "凭证", "应收账款", "付款", "收款"]
+    TEXT_KWS = ["社会保障", "社会保险", "社保", "完税", "纳税", "财务报告", "审计报告",
+                "资产负债表", "利润表", "资信证明", "仪器", "设备清单", "发票",
+                "采购合同", "仪器照片", "设备照片", "实拍", "付款凭证", "收款凭证"]
+    path_clause = " OR ".join(["d.relative_path LIKE ?"] * len(PATH_KWS))
+    text_clause = " OR ".join(["a.text LIKE ?"] * len(TEXT_KWS))
+    rows = [dict(r) for r in con.execute(
+        f"""SELECT d.document_id, d.relative_path, d.document_role, a.text
+     FROM documents d JOIN parse_artifacts a ON a.canonical_document_id=d.canonical_document_id
+     WHERE length(a.text) > 0 AND (({path_clause}) OR ({text_clause}))""",
+        [f"%{k}%" for k in PATH_KWS] + [f"%{k}%" for k in TEXT_KWS])]
+    print(f"候选材料文档: {len(rows)} 份（路径命中 OR 正文命中）")
 
-stats: dict[str, int] = {}
-written = 0
-instr_rows = 0
-# ⚠️ 幂等清理**只能删本脚本自己产出的类别**。
-# 原实现是 `DELETE ... WHERE document_id=?`（无类别条件），会把**不由本脚本产生**的
-# `qualification`（87 条，来自 r4_sync_classified_facts.py / LLM 分类补写）一并抹掉 ——
-# 实测已发生一次（485 → 2136 条的同时 qualification 整类消失）。只删自己的，别动别人的。
-OWN_TYPES = ("social_security_month", "finance_period", "instrument", "instrument_name",
-             "purchase_contract", "instrument_purchase_contract", "invoice", "instrument_photo")
-_OWN_PH = ",".join("?" * len(OWN_TYPES))
-with con:
-    # 幂等：先清掉本次范围内的旧记录（**仅本脚本产出的类别**）
-    for r in rows:
-        con.execute(f"DELETE FROM material_facts WHERE document_id=? AND fact_type IN ({_OWN_PH})",
-                    (r["document_id"], *OWN_TYPES))
-    for r in rows:
-        name = r["relative_path"].rsplit("/", 1)[-1]
-        text = r["text"] or ""
-        kind = kind_of(name, text)
-        role = r["document_role"]
+    stats: dict[str, int] = {}
+    written = 0
+    instr_rows = 0
+    # ⚠️ 幂等清理**只能删本脚本自己产出的类别**。
+    # 原实现是 `DELETE ... WHERE document_id=?`（无类别条件），会把**不由本脚本产生**的
+    # `qualification`（87 条，来自 r4_sync_classified_facts.py / LLM 分类补写）一并抹掉 ——
+    # 实测已发生一次（485 → 2136 条的同时 qualification 整类消失）。只删自己的，别动别人的。
+    OWN_TYPES = ("social_security_month", "finance_period", "instrument", "instrument_name",
+                 "purchase_contract", "instrument_purchase_contract", "invoice", "instrument_photo")
+    _OWN_PH = ",".join("?" * len(OWN_TYPES))
+    with con:
+        # 幂等：先清掉本次范围内的旧记录（**仅本脚本产出的类别**）
+        for r in rows:
+            con.execute(f"DELETE FROM material_facts WHERE document_id=? AND fact_type IN ({_OWN_PH})",
+                        (r["document_id"], *OWN_TYPES))
+        for r in rows:
+            name = r["relative_path"].rsplit("/", 1)[-1]
+            text = r["text"] or ""
+            kind = kind_of(name, text)
+            role = r["document_role"]
 
-        # —— 仪器名：无论文档级类别判成什么，只要有 `N台<名字>` 句式就抽 ——
-        if kind in ("instrument", "instrument_photo"):
-            for iname, iev in instrument_names_in(text):
+            # —— 仪器名：无论文档级类别判成什么，只要有 `N台<名字>` 句式就抽 ——
+            if kind in ("instrument", "instrument_photo"):
+                for iname, iev in instrument_names_in(text):
+                    con.execute(
+                        "INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
+                        "VALUES (?,?,?,?)",
+                        (r["document_id"], "instrument_name", iname, f"[{role}] {iev}"))
+                    written += 1
+                    instr_rows += 1
+                    stats["instrument_name"] = stats.get("instrument_name", 0) + 1
+                for pname, pev in purchase_contracts_in(text):
+                    con.execute(
+                        "INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
+                        "VALUES (?,?,?,?)",
+                        (r["document_id"], "instrument_purchase_contract", pname, f"[{role}] {pev}"))
+                    written += 1
+                    stats["instrument_purchase_contract"] = \
+                        stats.get("instrument_purchase_contract", 0) + 1
+
+            if not kind:
+                continue
+            # 期间抽取：**只在材料标记附近取**（响应件里夹着营业执照/合同/证书/招标要求/身份证，
+            # 全文扫描会把「营业执照登记日期」「签署日期」甚至**招标文件自己的投标截止时间**
+            # 当成社保月份 —— 2026-09-15/16 需求方两轮实测）。
+            # 两级标记：强标记（材料段落标题）优先，取不到再用宽标记。
+            # ⚠️ **不再回退到全文扫描**：实测那一路正是伪造值来源（851 份含社保事实的文档里
+            #    501 份靠它给值，其中就有把「2026 年 6 月」（招标截止）当社保月份的）。
+            #    找不到材料记录段 → **如实「期间未知」，不猜**（与"提不到就不写"同一原则）。
+            # ⚠️ **分档**（2026-09-16 需求方第三轮反馈「不能只改个例」）：
+            #   强标记（`社会保险费缴费记录`/`社会保障记录`）→ **窗口**：那是**记录表**，
+            #     OCR 把表格列打散，期间与关键词常不同行；
+            #   宽标记（`社会保险`/`社保` 泛词）→ **同一行**：那多是**声明句**
+            #     （`现附上自2025年2月1日至…我方缴纳的社会保险凭据`）。统一用 ±150 窗口会把
+            #     同段的「签署时间/日期」也收进来 —— 实测窗口内约 650 条是签署日期。
+            if kind == "social_security_month":
+                per = (E.scan_periods_near(text, E.SS_MARKERS_STRONG, month_only=True)
+                       or E.scan_periods_near(text, E.SS_MARKERS, same_line=True))
+            elif kind == "finance_period":
+                per = (E.scan_periods_near(text, E.FIN_MARKERS_STRONG)
+                       or E.scan_periods_near(text, E.FIN_MARKERS, same_line=True))
+            else:
+                per = []
+            # 独立信号校验：**材料期间不得晚于项目日期**（目录名自带 `YYYYMMDD`）——
+            # 证书/身份证**有效期**（`2027-12`/`2028-04`）紧邻社保段落时会被收进来（实测 2026-09-16）。
+            per = E.filter_periods_by_project_date(per, r["relative_path"].split("/")[0])
+            if not per:
+                # 无期间：仍记一条（事实是"有这类材料"，期间未知）
+                per = [None]
+            for p in per:
                 con.execute(
                     "INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
                     "VALUES (?,?,?,?)",
-                    (r["document_id"], "instrument_name", iname, f"[{role}] {iev}"))
+                    (r["document_id"], kind, p, f"[{role}] {name[:120]}"))
                 written += 1
-                instr_rows += 1
-                stats["instrument_name"] = stats.get("instrument_name", 0) + 1
-            for pname, pev in purchase_contracts_in(text):
-                con.execute(
-                    "INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
-                    "VALUES (?,?,?,?)",
-                    (r["document_id"], "instrument_purchase_contract", pname, f"[{role}] {pev}"))
-                written += 1
-                stats["instrument_purchase_contract"] = \
-                    stats.get("instrument_purchase_contract", 0) + 1
+                stats[kind] = stats.get(kind, 0) + 1
+    con.close()
 
-        if not kind:
-            continue
-        # 期间抽取：**只在材料标记附近取**（响应件里夹着营业执照/合同/证书/招标要求/身份证，
-        # 全文扫描会把「营业执照登记日期」「签署日期」甚至**招标文件自己的投标截止时间**
-        # 当成社保月份 —— 2026-09-15/16 需求方两轮实测）。
-        # 两级标记：强标记（材料段落标题）优先，取不到再用宽标记。
-        # ⚠️ **不再回退到全文扫描**：实测那一路正是伪造值来源（851 份含社保事实的文档里
-        #    501 份靠它给值，其中就有把「2026 年 6 月」（招标截止）当社保月份的）。
-        #    找不到材料记录段 → **如实「期间未知」，不猜**（与"提不到就不写"同一原则）。
-        # ⚠️ **分档**（2026-09-16 需求方第三轮反馈「不能只改个例」）：
-        #   强标记（`社会保险费缴费记录`/`社会保障记录`）→ **窗口**：那是**记录表**，
-        #     OCR 把表格列打散，期间与关键词常不同行；
-        #   宽标记（`社会保险`/`社保` 泛词）→ **同一行**：那多是**声明句**
-        #     （`现附上自2025年2月1日至…我方缴纳的社会保险凭据`）。统一用 ±150 窗口会把
-        #     同段的「签署时间/日期」也收进来 —— 实测窗口内约 650 条是签署日期。
-        if kind == "social_security_month":
-            per = (E.scan_periods_near(text, E.SS_MARKERS_STRONG, month_only=True)
-                   or E.scan_periods_near(text, E.SS_MARKERS, same_line=True))
-        elif kind == "finance_period":
-            per = (E.scan_periods_near(text, E.FIN_MARKERS_STRONG)
-                   or E.scan_periods_near(text, E.FIN_MARKERS, same_line=True))
-        else:
-            per = []
-        # 独立信号校验：**材料期间不得晚于项目日期**（目录名自带 `YYYYMMDD`）——
-        # 证书/身份证**有效期**（`2027-12`/`2028-04`）紧邻社保段落时会被收进来（实测 2026-09-16）。
-        per = E.filter_periods_by_project_date(per, r["relative_path"].split("/")[0])
-        if not per:
-            # 无期间：仍记一条（事实是"有这类材料"，期间未知）
-            per = [None]
-        for p in per:
-            con.execute(
-                "INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
-                "VALUES (?,?,?,?)",
-                (r["document_id"], kind, p, f"[{role}] {name[:120]}"))
-            written += 1
-            stats[kind] = stats.get(kind, 0) + 1
-con.close()
+    print(f"\n写入 material_facts: {written} 条（其中仪器名 {instr_rows} 条）")
+    print("按类别：")
+    for k, v in sorted(stats.items(), key=lambda x: -x[1]):
+        print(f"  {k:<30} {v}")
+    print()
+    print("=== 索引后的总覆盖（全部来源）===")
+    con = db_mod.connect()
+    for r in con.execute("SELECT fact_type, COUNT(*) n, COUNT(DISTINCT document_id) docs "
+                         "FROM material_facts GROUP BY 1 ORDER BY n DESC"):
+        print(f"  {r['fact_type']:<30} {r['n']:>5} 条 / {r['docs']:>3} 份文档")
+    con.close()
 
-print(f"\n写入 material_facts: {written} 条（其中仪器名 {instr_rows} 条）")
-print("按类别：")
-for k, v in sorted(stats.items(), key=lambda x: -x[1]):
-    print(f"  {k:<30} {v}")
-print()
-print("=== 索引后的总覆盖（全部来源）===")
-con = db_mod.connect()
-for r in con.execute("SELECT fact_type, COUNT(*) n, COUNT(DISTINCT document_id) docs "
-                     "FROM material_facts GROUP BY 1 ORDER BY n DESC"):
-    print(f"  {r['fact_type']:<30} {r['n']:>5} 条 / {r['docs']:>3} 份文档")
-con.close()
+if __name__ == "__main__":
+    raise SystemExit(_main())

@@ -73,6 +73,12 @@ class EvidencePack:
     """一个小节的证据包。`status`：ok | sparse | insufficient。"""
     module: str
     status: str
+    # `display`：**上屏用的小节名**（2026-09-18）。用户点名了一个系统不认识的小标题时
+    # （如「服务周期」），`module` 记它**归属的模块**（决定召回与角色口径），
+    # `display` 记用户**自己的措辞**（决定输出标题与页面标签）。默认与 module 相同。
+    display: str = ""
+    # `terms`：归因/判定用的词元（小节名 + 所属模块关键词），空则按 module 推导。
+    terms: tuple[str, ...] = ()
     evidence: list[dict] = field(default_factory=list)   # 去重后的证据（≤ max_packs）
     pool_size: int = 0            # 召回池大小（角色过滤前）
     role_rejected: int = 0        # 因角色不符（竞品/招标/未知）被拒的条数
@@ -351,16 +357,17 @@ def doc_purpose_of(relative_path: str, document_role: str) -> str:
     return f"{role}（{stem}）"
 
 
-def _recall(module: str, pool_size: int) -> list[dict]:
+def _recall(terms: tuple[str, ...], pool_size: int) -> list[dict]:
     """**按小节**召回候选池（R7-03：「每个小节先召回 20–30 候选池」）。
 
     必须逐小节召回，不能所有小节共用一个池 —— 实测共用池时高分章节全是「长而泛」的
     正文（如「6 样品流转」），各小节拿到的证据高度重合，等于没有分小节。
+
+    `terms` 由调用方给：模块名 + 该模块关键词，或（用户自造小标题时）小节名 + 所属模块关键词。
     """
     from elasticsearch import Elasticsearch
 
     es = Elasticsearch(config.ES_URL, request_timeout=30)
-    terms = (module,) + MODULE_KEYWORDS[module]
     should: list[dict] = []
     for t in terms:
         should.append({"match": {"heading": {"query": t, "boost": 6}}})
@@ -380,13 +387,15 @@ def _recall(module: str, pool_size: int) -> list[dict]:
             for h in es.search(index=config.ES_INDEX_SCHEME, **body)["hits"]["hits"]]
 
 
-def _match_basis(module: str, heading: str, text: str) -> str | None:
+def _match_basis(terms: tuple[str, ...], heading: str, text: str) -> str | None:
     """该章节属本小节的依据：`heading`（标题命中，高精度）> `text`（正文命中，噪声大）。
 
     **标题优先是刻意的**：正文里顺带提到某个词的章节（如长正文里出现一次「培训」）
     不是该小节的方案 —— 只按正文子串匹配会让每个小节都收到同一批泛化章节。
+
+    `terms` 由调用方给（不是模块名）：2026-09-18 起支持**用户自造的小标题**
+    （如「服务周期」不在模块词表里），此时 terms = 该小节名 + 其所属模块的关键词。
     """
-    terms = (module,) + MODULE_KEYWORDS[module]
     h = heading or ""
     if any(t in h for t in terms):
         return "heading"
@@ -402,7 +411,9 @@ def _match_basis(module: str, heading: str, text: str) -> str | None:
 def build_evidence_packs(con, modules: list[str], *, pool_size: int = 25,
                          max_packs: int = 5, min_packs: int = 3,
                          max_per_project: int = 2,
-                         roots: dict[str, Path] | None = None) -> list[EvidencePack]:
+                         roots: dict[str, Path] | None = None,
+                         section_map: dict[str, tuple[str, tuple[str, ...]]] | None = None,
+                         ) -> list[EvidencePack]:
     """按小节组装 Evidence Pack。**只读**：ES 召回 + SQLite 回查角色/真实路径。
 
     `con` 必须是调用方传入的连接（理由同 `search_scheme_sections`：
@@ -421,8 +432,21 @@ def build_evidence_packs(con, modules: list[str], *, pool_size: int = 25,
 
     out: list[EvidencePack] = []
     for mod in modules:
-        pack = EvidencePack(module=mod, status="insufficient")
-        cands = _recall(mod, pool_size)
+        # `section_map`：**用户自造的小标题** → (归属模块, 判定词元)。
+        # 未在表里的按模块名走原路径（不改变既有行为）。
+        # ⚠️ 归属模块**必须是 MODULE_KEYWORDS 里的**（调用方保证）——
+        # 否则 `MODULE_KEYWORDS[mod]` 会 KeyError，且角色/门槛口径无从谈起。
+        # ⚠️ **不能用 `dict.get(mod, 默认值)`** —— 默认值是**立即求值**的，
+        # 而用户自造小节名（`服务周期`）不在 `MODULE_KEYWORDS` 里 → `MODULE_KEYWORDS[mod]`
+        # 会直接 KeyError（实测踩到）。必须先判断再取值。
+        hit = (section_map or {}).get(mod)
+        if hit:
+            owner, terms = hit
+        else:
+            owner, terms = mod, (mod,) + MODULE_KEYWORDS[mod]
+        pack = EvidencePack(module=owner, display=mod, terms=tuple(terms),
+                            status="insufficient")
+        cands = _recall(pack.terms, pool_size)
         pack.pool_size = len(cands)
         head: list[dict] = []
         text_only: list[dict] = []
@@ -442,7 +466,7 @@ def build_evidence_packs(con, modules: list[str], *, pool_size: int = 25,
                 continue
             if _is_score_section(c.get("heading"), c.get("text")):
                 continue          # 评分要求章节不得进入正式证据（整章粒度，见 _is_score_section）
-            basis = _match_basis(mod, c.get("heading"), c.get("text"))
+            basis = _match_basis(pack.terms, c.get("heading"), c.get("text"))
             if basis is None:
                 continue
             item = dict(c, match_basis=basis, file_name=d["relative_path"].rsplit("/", 1)[-1],
@@ -572,7 +596,8 @@ def packs_to_payload(packs: list[EvidencePack], *, excerpt: int = 1200,
                 "text_full_len": len(text),
                 "score": e.get("score"),
             })
-        out.append({"module": p.module, "status": p.status, "evidence": evs,
+        out.append({"module": p.module, "display": p.display or p.module,
+                    "status": p.status, "evidence": evs,
                     "pool_size": p.pool_size, "role_rejected": p.role_rejected,
                     "deduped": p.deduped, "heading_hits": p.heading_hits,
                     "dropped_duplicates": p.dropped_duplicates, "notes": p.notes})
@@ -648,6 +673,159 @@ def _gen_client():
                   timeout=config.PROPOSAL_GEN_TIMEOUT, max_retries=2), model
 
 
+def plan_sections(query: str, modules: list[str] | None = None,
+                  max_sections: int = 6) -> dict:
+    """把用户那句话拆成「**输出结构**」—— 大标题 + 小标题清单。
+
+    需求方 2026-09-18 原话：「检索条件是：售后服务方案，必须包含服务周期和应急预案
+    要做意图识别，这时候我需要的就是 大标题：售后服务方案 小标题（1）服务周期（2）应急预案
+    **不需要输出多余的内容** 只需要把这两个小标题相关的内容放进去即可」。
+
+    返回 `{"title": str, "sections": [{"name": str, "module": str, "terms": tuple}], ...}`
+    （**空 dict** = 什么都没拆出来，调用方据此**不施加约束**，不猜）。
+
+    **三条规则**（都来自实测，不是设计偏好）：
+      1. **大标题 = 原句里第一个模块名，按用户措辞的长形**（用户裁定「原话优先」）——
+         `售后服务方案` 里含模块名 `售后方案`，就取**用户那个长形**做标题，
+         而不是替他把「服务」两个字抹掉。取不到模块名 → **不设标题**（宁可不要，不要猜）。
+      2. **小标题 = 「必须包含X」子句切开后的每一项**（`_split_req_clause`），加上
+         **原句里出现但不在该子句里的模块名**（如「…必须包含质控要求，保密方案」里
+         句外的 `保密方案` —— 那是用户也要的小节，实测原先靠 `extract_required_sections` 拾到）。
+      3. **每一项必须能挂到一个模块上**：
+         · 它本身是模块名 / 命中某个模块的关键词 → `module` = 那个模块（**且名字不重复收录**，
+           因为模块名本身已经是大标题或其它小节）；
+         · 否则看它**含不含**某个模块名或关键词（`服务周期` 含「服务」→「售后方案」）→ 归到该模块；
+         · 都挂不上 → **不单立小节**（宁缺毋滥），由调用方如实报「该项未被纳入」。
+       唯一例外：**整个小标题清单为空**时，允许把挂不上的项保留为「用户自造小节」，
+       因为那时用户没给系统任何能用的结构，丢掉等于什么都没做。
+
+    输出小节名**保留用户措辞**（需求方要逐字），归属模块由 `module` 单独承载 ——
+    这样「服务周期」能在**售后方案的证据池**里召回（而不是去查一个叫「服务周期」的模块，
+    那个模块不存在）。
+    """
+    text = (query or "").strip()
+    if not text:
+        return {}
+    mods = [m for m in (modules or list(MODULE_KEYWORDS)) if m in MODULE_KEYWORDS]
+
+    def owner_of(name: str) -> str:
+        """该项目挂到哪个模块：先精确（等于模块名/命中关键词），再包含（含模块名或关键词）。"""
+        for mod in mods:
+            if name == mod or name in MODULE_KEYWORDS[mod]:
+                return mod
+        for mod in mods:
+            if mod in name or any(k in name for k in MODULE_KEYWORDS[mod]):
+                return mod
+        return ""
+
+    # 大标题：原句里**最早出现**的那个模块，取**用户措辞的长形**（`售后服务方案` > `售后方案`）。
+    # ⚠️ 两个坑（实测踩到，都已修）：
+    #   ① **模块名不一定原样出现**：`售后服务方案` 里并没有子串 `售后方案`（它是「售后+服务+方案」），
+    #      所以必须**按模块关键词**去定位（`售后服务` 是「售后方案」的关键词）——
+    #      否则 `售后服务方案…` 这句压根找不到大标题。
+    #   ② **不能按 `mods` 顺序取第一个命中**：`培训方案，必须包含讲师安排，保密方案` 里
+    #      `保密方案` 在词表里更靠前，会把句尾的它当成大标题，而用户显然说的是句首的「培训方案」。
+    #      必须按**在句子里的位置**取最早的那个。
+    title, title_mod, best_pos = "", "", None
+    for mod in mods:
+        for term in (mod,) + tuple(MODULE_KEYWORDS[mod]):
+            i = text.find(term)
+            if i < 0:
+                continue
+            if best_pos is None or i < best_pos:
+                # 往右吃掉紧邻的中文/字母（`售后服务` → `售后服务方案`；到标点/空白即停）
+                j = i + len(term)
+                while j < len(text) and (text[j].isalnum() or text[j] in "（）()·")                         and text[j] not in _TITLE_STOP:
+                    j += 1
+                title, title_mod, best_pos = text[i:j].strip(), mod, i
+            break                       # 同一模块只看它最早命中的那个词
+
+    sections: list[dict] = []
+    seen: set[str] = set()
+
+    def add(name: str) -> None:
+        name = (name or "").strip(" 　:：,，、。；;")
+        if len(name) < 2 or name in seen:
+            return
+        mod = owner_of(name)
+        inferred = False
+        if not mod:
+            # ⚠️ **挂不上模块 ≠ 丢掉**：需求方 2026-09-18 的原话就是「小标题（1）服务周期」——
+            # 那是**用户自己写的小标题**，不是系统编的。丢掉等于没满足需求（实测：
+            # 「服务周期」在模块词表里一个字都不命中，早先版本因此把它整条丢掉）。
+            # 归属给**大标题那个模块**（句首语义最强），并**如实标记 `module_inferred`**，
+            # 让上屏与提示词都能说明「这个归属是系统推的，不是用户指定的」。
+            if not title_mod:
+                return                  # 连大标题都没有 → 真没有依据，不猜（宁缺毋滥）
+            mod, inferred = title_mod, True
+        if name == title:
+            return                      # 与大标题同字 → 不重复（它就是大标题本身）
+        seen.add(name)
+        # ⚠️ 判定词元 = 用户措辞 + **归属模块的关键词** —— 后者是必要的：
+        # 光用「服务周期」在历史章节里几乎召不到（ES 标题短语实测仅 1 条），
+        # 而它本来就在售后方案这个模块里（服务承诺/响应时间/质保…都是该模块的关键词）。
+        terms = (name,) + tuple(k for k in MODULE_KEYWORDS[mod] if k not in name)
+        sec = {"name": name, "module": mod, "terms": terms}
+        if inferred:
+            sec["module_inferred"] = True    # 归属是系统推的 → 上屏要说明
+        sections.append(sec)
+
+    seps = _split_req_clause(text)      # 「必须包含」清单里的项（`add` 需要它来区分同名情形）
+
+    for frag in seps:
+        add(frag)
+    # 句外的模块名（如「…，保密方案」）—— 去掉大标题已占的那个
+    for mod in mods:
+        if mod in text and mod != title_mod:
+            add(mod)
+
+    sections = sections[:max(0, max_sections)]
+    if not title and not sections:
+        return {}
+    return {"title": title, "title_module": title_mod, "sections": sections,
+            "dropped": _dropped_requirements(text, sections, title)}
+
+
+# 大标题右扩的停止符：并列词与标点都算边界（`售后服务方案和应急预案` 里的大标题到「和」为止）
+_TITLE_STOP = frozenset("和与及、，。；;：:和 ")
+
+# 「必须包含X和Y」—— `_REQ_CLAUSE` 抓的是**整段**（`服务周期和应急预案`），必须再切。
+# ⚠️ 切分符要**含「和/与/及」**：需求方那句就是「服务周期和应急预案」（实测 `_REQ_CLAUSE`
+# 原样吐出这一整串，不切的话「服务周期」会被连带跳过一次都不产出 —— 见 `_dropped_requirements`）。
+_CLAUSE_SPLIT = re.compile(r"[、,，;；/]|和|与|及")
+
+
+def _split_req_clause(text: str) -> list[str]:
+    """把「必须包含…」子句切成**逐个小标题**（保序、去重、剥要求动词）。"""
+    out: list[str] = []
+    for m in _REQ_CLAUSE.finditer(text or ""):
+        for part in _CLAUSE_SPLIT.split(m.group(1)):
+            s = _REQ_VERB.sub("", (part or "").strip()).strip(" 　:：,，、。；;")
+            if len(s) >= 2 and s not in out:
+                out.append(s)
+    return out
+
+
+def _dropped_requirements(text: str, sections: list[dict], title: str) -> list[str]:
+    """**用户点名、但没被纳入结构**的小标题 —— 如实报出，**不静默丢**（项目红线）。
+
+    ⚠️ 这是原 `unrecognized_requirements` 的**句子粒度修法**：原实现拿
+    `_REQ_CLAUSE` 抓到的**整片段**（`服务周期和应急预案`）去问
+    `extract_required_sections`，只要片段里**任一**模块命中，整片段就被判为「已认出」→
+    **片段里的「服务周期」被连带跳过，一条告警都没有**（2026-09-18 实测：
+    「售后服务方案，必须包含服务周期和应急预案」的告警是**空**）。
+    现在按**切分后的小标题**逐个核对，粒度对了才不会连带。
+    """
+    got = {s["name"] for s in sections} | {title}
+    out: list[str] = []
+    for name in _split_req_clause(text):
+        if name in got or any(name in g or g in name for g in got if g):
+            continue
+        if name not in out:
+            out.append(name)
+    return out
+
+
 def parse_outline(raw) -> dict:
     """把用户给的 outline（dict 或 Markdown 文本）规整成 `{"title": str, "sections": [...]}`。
 
@@ -717,7 +895,7 @@ def build_gen_prompt(payload: dict, constraints: str = "", kb: list[dict] | None
         lines.append(kb_to_prompt_block(kb) + "\n")
     lines.append("【历史证据】（只能引用下列编号）")
     for m in payload.get("modules", []):
-        lines.append(f"\n### 小节：{m['module']}（证据状态：{m['status']}）")
+        lines.append(f"\n### 小节：{m.get('display') or m['module']}（证据状态：{m['status']}）")
         if not m.get("evidence"):
             lines.append("（无证据）")
         for e in m["evidence"]:
@@ -994,9 +1172,10 @@ def validate_generation(markdown: str, payload: dict, constraints: str = "",
         # 且用户未列进结构的小节，其证据不被引用是**合规**的，不该报「缺少小节」。
         if outline and (outline.get("title") or outline.get("sections")):
             continue
-        labels = {m["module"], *MODULE_KEYWORDS.get(m["module"], ())} | c_tokens
+        labels = {m["module"], m.get("display") or m["module"],
+                  *MODULE_KEYWORDS.get(m["module"], ())} | c_tokens
         if not any(lbl in (markdown or "") for lbl in labels):
-            problems.append(f"缺少必要小节：{m['module']}")
+            problems.append(f"缺少必要小节：{m.get('display') or m['module']}")
 
     # 关键数字溯源：正文里的数字必须能在证据原文里找到。
     # ⚠️ **必须先剥掉引用标记再抽数字**：`[E23]` 里的 `23` 会被 `_NUM` 当成正文数字抠出来，
