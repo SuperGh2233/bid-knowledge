@@ -298,10 +298,8 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 
 ## 9. Next Actions
 
-0. **2026-09-21 晚的工作仍在工作区（未提交、未打 tag）**：文案中性化 + `extract.py` 表头判据放宽 +
-   数据重跑（408→494）。**下一步先提交**（用户点头后）：含 `app/extract.py`/`app/search.py`/
-   `app/routes_search.py`/`static/app.js`/`tests/test_ledger_guards.py`/`scripts/cleanup_ledger_quote_residue.py`/
-   `docs/plans/active/PLAN-20260921-widen-ledger-header.md`/交接/CHANGELOG。是否打 tag 随用户。
+0. ~~2026-09-21 晚工作（文案 + 判据放宽 + 重跑）~~ ✅ **已提交（`9b5597e`）并打 tag `v1.5`、推双远程**
+   （2026-09-21 晚，用户点头）。
 1. ~~打 tag `v1.4`~~ ✅ **已打并推送双远程**（2026-09-21，打在 `bb94715`；用户当日点头）。
 2. **请需求方实机复核第三轮（两批共六项）** —— 服务**已起**（PID 26912，§7），
    **本机已按接口逐项实测通过**（证据见 §3「六项接口实测」），剩下的是**人眼确认**：
@@ -350,14 +348,16 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 - **分支** `main`；**HEAD = 本文件最后一次提交**（⚠️ 不写死 hash：写下去的瞬间它就变了，
   这条本身也把 HEAD 往前推一格）。**用 `git log --oneline -1` 现场核对**，并用
   `git ls-remote origin main` / `git ls-remote github main` 确认双远程与本地一致。
-  **2026-09-21 核对结果**：本地 = `origin/main` = `github/main` = `f0c87b7`（三处一致）。
+  **2026-09-21 核对结果**：本地 = `origin/main` = `github/main` = `9b5597e`（三处一致，v1.5 已推）。
   第三轮关键提交：`a5a519e` 四条修复 + 脚本守卫 · `fc7d81f` 三模块有值行排前 ·
   `b01dcfb` 标题结构自动填入（新端点） · `95fada2` 引用写法优化三处 · `f0c87b7` 提示词交叉引用 ·
   `7241ae6` 文档同步。第二轮关键提交：`faeebc8` 实现 · `0e4daf4` 展示修复 · `5944d0a` 两端点标注统一。
+  2026-09-21 晚：`9b5597e` 业绩去限定化（文案 + 判据放宽 + 重跑 + 清理脚本）。
 - **工作区**：干净（除禁提交项）。
 - **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / `v1.3`（打在 `fdab772`）/
-  **`v1.4`（2026-09-21，打在 `bb94715`）** / `minimal-rebuild-r1-20260907`。
-  **两远程 `v1.4` 均已推送**（`v1.4` 是**轻量 tag**，与 `v1.3` 同形）。
+  `v1.4`（2026-09-21，打在 `bb94715`）/ **`v1.5`（2026-09-21 晚，打在 `9b5597e`）** /
+  `minimal-rebuild-r1-20260907`。
+  **两远程 `v1.3`/`v1.4`/`v1.5` 均已推送**（轻量 tag）。
   ⚠️ `bb94715` 是本文件在 `v1.4` 后**再次更正服务状态**之前的那一版；其后的更正提交
   **不含在 `v1.4` 里**（产品代码未变，无需移 tag）。
 - **禁提交**：`.env`、`*.db`（含 `*.bak-*.db` 备份）、`outputs/`（真实投标正文）、`tmp/`、`*.log`。
@@ -369,13 +369,11 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 
 ## 13. Recovery Command
 
-> **当前状态**：需求方**第三轮实测反馈的两批共六项已全部实现、验收、提交并推送**
-> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `bb94715`；`pytest` **323 passed** 实跑复核）；
+> **当前状态**：需求方**第三轮实测反馈的两批共六项 + 2026-09-21 晚「业绩去限定化」均已实现、验收、提交并推送**
+> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `9b5597e`；`pytest` **327 passed** 实跑复核）；
 > **服务在跑：PID 26912**；
-> **tag `v1.3` / `v1.4` 均已打并推送双远程**（`v1.4` 打在 `bb94715`）。
-> **2026-09-21 晚追加工作（文案中性化 + 业绩判据放宽 + 重跑 408→494）仍在工作区未提交**（Next Actions 0；
-> `pytest 327 passed`）。
-> 剩余动作：**① 提交晚追加工作（待用户点头）② 请需求方实机复核**（§9 第 2 条）。
+> **tag `v1.3` / `v1.4` / `v1.5` 均已打并推送双远程**（`v1.5` 打在 `9b5597e`）。
+> 剩余动作：**请需求方实机复核**（§9 第 2 条）。
 > 第二阶段（表格结构化 / 金额汇总 / 固定模板）与 Xenium 深挖用户均未要求，**勿主动开工**。
 
-`Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 0.`
+`Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
