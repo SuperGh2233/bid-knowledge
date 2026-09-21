@@ -17,7 +17,7 @@
 
 | 文档 | 状态 | 何时读 |
 |---|---|---|
-| `plans/active/PLAN-20260917-round2-feedback.md` | **active（已实施并验收）** | **第二次需求对接**：可复制正文段落（痛点主项）/ 仪器空壳行治理 / 纳税社保总金额（新 fact_type `finance_amount`）/ 生成 outline 严格标题约束；§2 实测诊断 D1–D5、§3 四项口径、§5 五步实施、**§8 验收总表（含实测数字）**、§9 第二阶段防蔓延 |
+| `plans/active/PLAN-20260917-round2-feedback.md` | **active（已实施并验收）** | **第二次需求对接**：可复制正文段落（痛点主项）/ 仪器空壳行治理 / 纳税社保总金额（新 fact_type `finance_amount`）/ 生成 outline 严格标题约束；§2 实测诊断 D1–D5、§3 四项口径、§5 五步实施、**§8 验收总表（含实测数字）**、§9 第二阶段防蔓延。⚠️ **§8 的 305 passed 是当期数字**，此后需求方第三轮实测反馈的两批修复**不在本计划范围内**（见 `CHANGELOG.md` v1.4 与 `agent-handoff.md` §1/§3，期末 323 passed）|
 | `plans/active/PLAN-20260917-contract-product-mention.md` | **active（行为已上线）** | 「正文提及」合同组（明细没有、正文写着的产品）：12 条决策 + 四条硬约束（永不进 hits / 不参与金额筛选 / 排除按合同级 / 带依据上屏）+ 验收 Recall 37/37；零外发 |
 | `plans/active/PLAN-20260915-demo-feedback-issues.md` | **active** | 需求方试用反馈 5 条问题的**权威记录**：§6 需求 / §8 已定口径 / §9 实现与遗留 / §11 验证证据 / §12 状态 |
 | `plans/completed/PLAN-20260916-track-record-search.md` | **completed** | **业绩清单**（响应文件内的历史合同声明）进入检索：**29→408 条 / 4→51 份 / 带金额 50→388 条（95%）**；与合同原件同一列表 + 小标记、独立闸、**金额参与筛选**（口径改判）。§5.2–5.6 记六轮金额修订与**八类根因**、§11 验收终态、§12 三项候选**已结案**（勿重做）|
@@ -31,7 +31,7 @@
 
 | 文档 | 状态 | 何时读 |
 |---|---|---|
-| `specs/api.md` | active | HTTP 契约（端点、字段、错误语义、踩坑）。2026-09-16 已同步 `recognition` / `files` / `file_count` 与 §8 `tender-check` |
+| `specs/api.md` | active | HTTP 契约（端点、字段、错误语义、踩坑）。2026-09-16 已同步 `recognition` / `files` / `file_count` 与 §8 `tender-check`；**2026-09-18 同步第三轮（§4 值说法 / §5 `outline_source` 与引用编号口径）；2026-09-21 补写 §4D `GET /api/plan-outline`** |
 
 ## Authorizations（外发授权，范围不可自行扩大）
 

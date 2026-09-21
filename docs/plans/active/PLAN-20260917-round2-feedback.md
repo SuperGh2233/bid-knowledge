@@ -109,7 +109,8 @@
 - `GET /api/material-facts`、`GET /api/three-modules`：每行新增 `content_snippet` / `snippet_source`（可空）；
 - `GET /api/material-facts`：`fact_type` 新增合法值 `finance_amount`；
 - `POST /api/proposal-generate`：请求新增可选 `outline`；响应 `validation` 新增 outline 类问题；
-- 端点数不变（12 个），全部仍只读（数据变更只走离线脚本）。
+- 端点数不变（~~12 个~~ **更正（2026-09-21 核对）：本计划实施期为 11 个**；此后第三轮新增
+  `GET /api/plan-outline` → 现 12 个），全部仍只读（数据变更只走离线脚本）。
 
 ## 7. 风险与红线核对
 
@@ -153,3 +154,9 @@
   ② R3-4 的校验器在给 outline 时**跳过「模块名是否出现」那一项** ——
      用户标题与模块名本就不同名（「售后解决方案」vs「售后方案」），继续按模块名判必然误报；
      结构正确性由 `_validate_outline` 逐字校验承担。
+- 2026-09-18：§8 的验收数字（305 passed）**此后会被后续轮次超越** —— 需求方第三轮实测反馈的
+  两批修复（上午四条 + 下午两条：引用编号全角口径 / 标题结构自动填入 + 新端点 `plan-outline`）
+  **不在本计划范围内**，其权威记录在 **`CHANGELOG.md` v1.4** 与 **`docs/agent-handoff.md` §1/§3**；
+  同期末 `pytest` **323 passed**。读 §8 时请以那两处为准，勿把 305 当现状。
+  另：§6 写的「端点数不变（12 个）」当时就与代码对不上账（加 `plan-outline` 前是 11 个，
+  加后才是 12 个）—— 现场核对命令：`grep -rn "@router\.\(get\|post\)" app/routes_*.py`。

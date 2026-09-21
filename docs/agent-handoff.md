@@ -1,6 +1,9 @@
 # Agent Handoff — bid-ai-clean
 
-> 更新 **2026-09-18（需求方第三轮实测反馈：三个 bug + 输出结构从查询推）**
+> 更新 **2026-09-18（需求方第三轮实测反馈收尾：引用写法优化 + 标题结构自动填入）**
+> ⚠️ **2026-09-21 恢复时更正**：本文件此前停在 09-18 12:20（`91a18c5`），漏记了 13:57–14:46 的
+> 三个提交（第四批：标题结构自动填入 / 引用写法优化 / 提示词规则 7 交叉引用）。
+> 本次已按现场核对补齐 §1/§3/§4/§6/§7/§9/§12/§13 —— 遗漏原因即下述「Next Actions 当天过时」的常态。
 > （按本技能 §1–§13；旧版见 `git show HEAD~1:docs/agent-handoff.md`）。
 > 权威：仓库根 `AGENTS.md`、`docs/index.md`、§2 列出的文档。**冲突时以仓库与实测为准**。
 
@@ -8,13 +11,26 @@
 
 交付两个能力（**只这两个**）：**需求一** 历史材料定位；**需求二** 模块级方案生成。
 
-**当前任务**：**需求方第三轮实测反馈已全部修复并验收**（2026-09-18）：
+**当前任务**：**需求方第三轮实测反馈已全部修复并验收**（2026-09-18）。分两批：
+
+**第一批（上午，`a5a519e`/`fc7d81f`）**：
 ① 「25年的社保」期间条件被静默丢弃（正则只认 4 位年份）→ 现 913 条 → **35 条**；
 ② 解析不出条件时**落回全表**（`Xenium` 返回 2015 条）→ 现恒空 + 明确说明；
 ③ 「期间未提取到」用在**没有期间概念的五类**上（556 行）→ 现按类别给说法；
-④ **输出结构从 query 推**（需求方新要求）：大标题 + 小标题从他那句话里拆，
-   模型逐字照此输出、不写结构外的内容。
-代码已提交 `a5a519e`/`fc7d81f`/`e56e378`/`9da3ecf` 并推送两个远程；`pytest` **313 passed**。
+④ **输出结构从 query 推**：大标题 + 小标题从用户那句话里拆，模型逐字照此输出。
+
+**第二批（下午，`b01dcfb`/`95fada2`/`f0c87b7`，本文件此前漏记）**：
+⑤ **「根据【E3】」写法优化**：需求方实测「现在的输出会显示根据{E3} 这个需要优化」——
+   全角【E3】原先**工具链三处都不认**（校验器报「没有任何引用编号」+「无法回溯的数字」、
+   前端原样留在正文里）→ 提示词 + 后端 `_CITE` + 前端正则**三处同修**，
+   `validation` 新增**行文风格提示**（只报不改写）；
+⑥ **标题结构自动填入**：需求方「现在还需要用户自动填入」→ **新端点 `GET /api/plan-outline`**
+   （零外发、不生成，走 `plan_sections` 同一份实现）；前端输入防抖 400ms 自动拆填，
+   **手改优先不覆盖**、**拆不出就说拆不出**（`planned=false`）；
+⑦ 提示词规则 7 的交叉引用补齐到 8–11（`f0c87b7`，收尾）。
+
+代码已提交 `a5a519e`/`fc7d81f`/`e56e378`/`9da3ecf`/`b01dcfb`/`95fada2`/`7241ae6`/`f0c87b7`
+并推送两个远程；`pytest` **323 passed**（2026-09-21 本机实跑复核）。
 
 **⚠️ 我自己造成的事故（已处置，留档）**：为读 `extract_three_modules.py` 里的纯函数而
 `importlib` 执行了整个文件 —— 该脚本**没有 `__main__` 守卫**，模块级直接 connect + 写库，
@@ -24,7 +40,9 @@
 
 退出门槛（需求一累计）：Recall **37/37 = 100%**（明细 + 提及两组）／真实路径 100%／
 金额条件 100%／覆盖率 8/8；本轮新增验收全部达标（见 §3 与计划 §8 验收总表）。
-**tag `v1.3` 已打并推送两个远程**（打在 `fdab772`）。**`v1.4` 待打**（CHANGELOG 条目已写好）。
+**tag `v1.3` 已打并推送两个远程**（打在 `fdab772`）。
+**`v1.4` 待打**：CHANGELOG v1.4 条目已写好（**覆盖上述两批全部条目**），
+本地与双远程均**尚无 `v1.4` 标签**（2026-09-21 核对）—— 按惯例**待用户点头**。
 
 ## 2. Linked Authoritative Documents
 
@@ -37,11 +55,11 @@
 | `docs/plans/active/PLAN-20260915-demo-feedback-issues.md` | 需求方**首次**试用 5 条反馈的权威记录 |
 | `docs/evals/EVAL-20260917-gold-recall-regression.md` | Recall 复测报告；§7 记新基线 37/37=100% 与 G05 金标准瑕疵证据 |
 | `docs/authorizations/llm-contract-mention-authorization.md` | 第 6 份授权，**暂缓启用**（本地规则已达同等召回） |
-| `docs/specs/api.md` | HTTP 契约 —— ✅ 已同步本轮：§4（`content_snippet`/沉底排序/`finance_amount`）、§4A、§5（`outline`）|
+| `docs/specs/api.md` | HTTP 契约 —— ✅ 本轮已同步：§4（`content_snippet`/沉底排序/`finance_amount`/按类型的值说法）、§4A、**§4D（`plan-outline`，2026-09-21 补写）**、§5（`outline`/`outline_source`/引用编号口径）|
 
 ## 3. Current Progress
 
-**第三轮修复（2026-09-18 实测）**
+**第三轮修复·第一批（2026-09-18 上午实测）**
 - **「25年的社保」**：`parse_fact_query` 的正则只认 4 位年份 → 「25年」的期间条件**被静默丢弃**，
   退化成搜「社保」（913 条）。现认两位数（`25`→`2025`，`(?<!\d)` 挡 `125年`）；
   实测 **913 → 35 条**，与「2025年的社保」逐字段一致。查询自带期间时同步收窄
@@ -60,6 +78,28 @@
   `outline_source` / `title_planned` / `sections_planned`。
   ⚠️ 修一处**静默丢小节**：原告警按整片段判「已认出」→ 片段里的「服务周期」被连带跳过、无提示。
 - **脚本执行守卫**（事故根因）：4 个脚本原先 `import` 即写库，现全部 `_main()` + `__main__`。
+
+**第三轮修复·第二批（2026-09-18 下午实测，`b01dcfb`/`95fada2`/`f0c87b7`）**
+- **「根据【E3】」写法优化**：需求方实测「现在的输出 会显示根据{E3} 这个需要优化」。
+  根因是**括号形态只在提示词里约定、工具链三处都只认半角**：模型输出 `根据【E3】，…` →
+  ① 校验器 `_CITE` 认不出 → 误报「正文没有任何引用编号」；② 编号里的数字被当正文数字 →
+  误报「无法回溯的数字：['3']」；③ 前端也只认半角 → 【E3】**原样留在正文里**。三处同修：
+  - **提示词**（`GEN_SYSTEM` 规则 10/11）：编号**放句末**（给正例反例，明写「不要写成
+    『根据【E3】，…』」）、同句不重复引用、规范用半角；且**不输出结构外内容**；
+  - **后端 `_CITE`**：认 `[E3]`/【E3】/［E3］/「E3」/（E3），**不认裸 `E3`**（挡 `SE3`/`ACE3`）；
+  - **前端 3 处正则** + 引用清单行判据同步（与后端同口径，有**跨语言护栏测试**）；
+  - **新增 `_style_problems()`**：逐条「根据 Ex」开头（≥3 处）与同句重复引用**如实提示**，
+    **只报不改写**（行文风格不是事实错误，拦下来用户就拿不到草稿）。
+- **标题结构自动填入**（需求方：「现在还需要用户自动填入」）：原先要用户手敲大/小标题。
+  **新端点 `GET /api/plan-outline`**（**零外发、不生成**）—— `?q=` 走 `plan_sections`（与生成时
+  **同一份实现**，不另写一套），`?title=&sections=` 手选路径；返回
+  `{planned, title, sections[], section_modules[], inferred[], dropped[], scope_note}`。
+  前端 `#proposal-query` 输入**防抖 400ms** 自动拆填 + 状态行说明，**如实标注**系统推定的归属
+  与点名但未纳入的项。两条诚实性护栏：**手改优先**（`_outlineDirty`，不再自动覆盖，有行为级测试）、
+  **拆不出就说拆不出**（`planned=false`，明说「没能拆出结构、生成时会按模块名分节」，不假装填上）。
+  拆结构失败**不阻断生成**（生成时服务端会再拆一次）。
+- **提示词规则 7 交叉引用补齐到 8–11**（`f0c87b7`）：规则 7 原写「仍必须遵守规则 1–6、8、9」，
+  漏了新增的 10、11 —— 只改提示词文本，无行为面变化。
 
 **第二轮交付（2026-09-17 实测，计划 §8 验收总表为权威）**
 - **可复制正文段**（痛点主项）：`material-facts` / `three-modules` 每条材料行新增
@@ -99,7 +139,23 @@
 **Rejected（勿重开）**：LLM 外发复核；位置规则（前 1/3）；「邻近词过滤无效」结论（口径算错）；
 three-modules 业绩段加提及组（用户裁定暂不决定）。
 
-## 4. Changes Made（本轮，已提交 `faeebc8` + `0e4daf4`）
+## 4. Changes Made
+
+### 第三轮（2026-09-18，两批；`a5a519e`/`fc7d81f`/`b01dcfb`/`95fada2`/`f0c87b7`）
+
+| 文件 | 改了什么 |
+|---|---|
+| `app/api.py` | `parse_fact_query` 期间正则**认两位数年份**（`25`→`2025`；`(?<!\d)` 挡 `125年`）|
+| `app/routes_search.py` | 解析不出条件 → **`AND 1=0` 恒空 + `scope_note`**（不再落回全表）；查询自带期间时才收窄（`period_narrowed`，只对 `social_security_month`/`finance_period`）；**无期间问法时有值行排前**；`fc7d81f` 把同一「有值行排前」口径补到 `three-modules` 的财务社保/仪器清单 |
+| `app/proposal.py` | `plan_sections()`（结构从 query 推：大标题取原句最早出现的模块 + 用户措辞长形；小标题来自「必须包含X」子句切分 + 句外点名；挂不上的保留并标 `module_inferred`）+ `_split_req_clause`/`_dropped_requirements`（告警改按小标题粒度）；`build_evidence_packs` 接 `section_map`；`_CITE` 认全角/中文括号（**不认裸 `E3`**）；**新增 `_style_problems()`**（行文风格提示，只报不改写）；`GEN_SYSTEM` 规则 7/10/11 改写（编号放句末、不输出结构外内容、交叉引用补齐 8–11） |
+| `app/routes_proposal.py` | 响应加 `outline_source`/`title_planned`/`sections_planned`；**新增端点 `GET /api/plan-outline`**（标题结构预览／自动填入，零外发，契约见 api.md §4D） |
+| `static/app.js` | **`VALUE_KIND`**（按类别给「值说法」：五类存在性材料不再说「期间未提取到」）+ CSV 表头「期间」→「**期间/型号**」；前端 3 处引用正则与后端同口径；`#proposal-query` 防抖 400ms 自动拆结构填入 + 状态行；`_outlineDirty` 手改优先 |
+| `static/index.html` | 标题结构框改版（供自动填入 + 手改，`b01dcfb`） |
+| `scripts/{extract_three_modules,merge_classified_facts,r4_sync_classified_facts,r4_sync_material_facts}.py` | **事故根因修复**：加 `_main()` + `__main__` 守卫（原先 `import` 即写库） |
+| `tests/test_proposal.py` | +13 条：结构从 query 推、自造小节不 KeyError、全角引用形态识别、合法全角不误报/编造仍报、前端同口径、风格提示两条、提示词要求、`plan-outline` 两路径 + 「拆不出就说拆不出」+ 手改不被覆盖的护栏 |
+| `docs/specs/api.md` / `CHANGELOG.md` | §4/§5 契约同步；**§4D 为 2026-09-21 恢复时补写**（原 `7241ae6` 的 api.md 同步只改了 §5，漏了这个新端点的独立章节） |
+
+### 第二轮（2026-09-17，已提交 `faeebc8` + `0e4daf4` + `5944d0a`）
 
 | 文件 | 改了什么 |
 |---|---|
@@ -127,11 +183,19 @@ three-modules 业绩段加提及组（用户裁定暂不决定）。
    （「售后解决方案」vs「售后方案」），继续按模块名判必然误报；结构正确性由逐字校验承担。
 
 **文档债**：**无**（api.md / CHANGELOG / 计划 / index / 交接均已同步）。
+⚠️ 2026-09-21 恢复时发现并已补：`7241ae6` 声称「api.md §5 已同步」，但**新端点
+`GET /api/plan-outline` 在 api.md 里没有独立章节**（只在 CHANGELOG 提了一句）——
+本次补写了 **api.md §4D**，并修正 §6 里「端点 12 个不变」的错误说法（见 §6）。
 
 ## 6. Contracts and Constraints
 
-- **端点 12 个不变**（本轮只在既有响应/请求里加字段：`content_snippet` / `snippet_source` /
-  `snippet_missing` / `outline` / `outline_used`）→ **只读契约未变**。
+- **端点现为 12 个**（2026-09-21 现场核对 `@router` 装饰器）：新增
+  **`GET /api/plan-outline`**（标题结构预览／自动填入，**零外发、不生成、不写库**，契约见
+  `docs/specs/api.md` §4D）。⚠️ 此前文档里「端点 12 个**不变**」的说法是**错的** ——
+  加 `plan-outline` 之前是 11 个（第二轮的计划 §6 写 12 时就已经对不上账）。
+  其余端点本轮只在既有响应/请求里加字段（`content_snippet` / `snippet_source` /
+  `snippet_missing` / `outline` / `outline_used` / `outline_source` / `title_planned` /
+  `sections_planned`）→ **全部仍只读**。
 - **`fact_type` 新合法值 `finance_amount`**（`fact_value` = 金额字符串，元）。
 - **数据变更只走离线脚本**：`scripts/backfill_finance_amounts.py`（只写 `bid_ai_clean_reg.db`、
   改前自动备份、幂等、正式库一律拒绝）。服务仍**纯只读**。
@@ -145,13 +209,17 @@ three-modules 业绩段加提及组（用户裁定暂不决定）。
 ```bash
 CONDA="C:\Users\hao.guo\AppData\Local\miniconda3\envs\langchain-dev\python.exe"
 export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
-"$CONDA" -m pytest tests -q            # 313 passed（本轮实测）
+"$CONDA" -m pytest tests -q            # 323 passed（2026-09-21 恢复时实跑复核；第三轮收尾数字）
 "$CONDA" -m app.api                    # → http://127.0.0.1:8000
 "$CONDA" scripts/backfill_finance_amounts.py --dry-run   # 金额回填预览（零写库）
 node --check static/app.js             # 前端语法（有护栏测试，但手改后先自查更快）
+# 结构预览端点（零外发）：
+python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务方案，必须包含服务周期和应急预案'},encoding='utf-8'))"
 ```
-- **服务**：PID **46612** 在跑（含本轮全部新代码；旧进程已按 §7 教训逐个 kill）。
-  `GET /api/status` → `合同 136 / 可查 136 / 业绩行 408`。
+- **服务**：⚠️ **2026-09-21 核对时 :8000 无监听**（`netstat -ano | grep :8000` 为空）——
+  先前记录的 PID（46612 / 18052 / 56616）均已随会话结束。**实机复核前需重新起服务**
+  （`"$CONDA" -m app.api`），起完按 AGENTS.md 教训核对 PID 与启动时间再让需求方看。
+  `GET /api/status` 基线 → `合同 136 / 可查 136 / 业绩行 408`。
 - **实测口径（本轮）**：仪器清单 645 条中，有内容行 176 条全排在空壳行之前、636 条带正文段
   （空壳 469 条里 467 条已补上正文段）；
   「纳税社保总金额」返回 29 条；概览卡 136/1283/645 与点进去的 `total_available` 同源。
@@ -176,15 +244,20 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 9. Next Actions
 
-1. **打 tag `v1.4`**（CHANGELOG 条目已写好；按上一轮惯例，用户点头后打）：
-   `git tag v1.4 && git push origin v1.4 && git push github v1.4`
-2. **请需求方实机复核第三轮四项**（尤其新的输出结构是否符合他的预期）：
+1. **打 tag `v1.4`**（CHANGELOG 条目已写好，**覆盖第三轮两批全部条目**；按上一轮惯例，
+   用户点头后打）：`git tag v1.4 && git push origin v1.4 && git push github v1.4`
+   —— 2026-09-21 核对：本地与双远程**均无 `v1.4`**。
+2. **起服务 + 请需求方实机复核第三轮（两批共六项）**：
    · 「25年的社保」应返回 35 条、首页不再有「期间未提取到」；
    · 查仪器时不再显示「期间未提取到」，改显示型号或「本类只表示有仪器材料」；
    · `Xenium` 不再返回 2015 条全表，而是明确说「没解析出条件」；
    · 生成「售后服务方案，必须包含服务周期和应急预案」→ 大标题「售后服务方案」+
-     两个小标题，且不写结构外内容。
-   实机前提醒：**Ctrl+F5 一次**。
+     两个小标题，且不写结构外内容；
+   · **引用写法**：输出里不再逐条「根据【E3】，…」开头，编号在**句末**、`validation` 无
+     全角相关误报；
+   · **标题结构自动填入**：在生成输入框敲那句话 → 结构框**自动**列出大标题与小标题
+     （手改后不被覆盖）；敲一句拆不出结构的（如「帮我写个投标函」）→ 状态行**明说没拆出**。
+   实机前提醒：**先起服务 + 用户 Ctrl+F5 一次**（§7）。
 3. **遗留（用户未要求，勿主动开工）**：
    · **Xenium 仪器查不到**（第三轮报告里需求方提的「仪器定位有问题」的深挖项）——
      根因链已诊断清楚（四个断点：路由档位 / 抽取门 `kind_of` 单标签把社保放首位 /
@@ -218,10 +291,14 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 - **分支** `main`；**HEAD = 本文件最后一次提交**（⚠️ 不写死 hash：写下去的瞬间它就变了，
   这条本身也把 HEAD 往前推一格）。**用 `git log --oneline -1` 现场核对**，并用
   `git ls-remote origin main` / `git ls-remote github main` 确认双远程与本地一致。
-  本轮关键提交：`faeebc8` 实现 · `0e4daf4` 展示修复 · `5944d0a` 两端点标注统一 + 文档若干。
+  **2026-09-21 核对结果**：本地 = `origin/main` = `github/main` = `f0c87b7`（三处一致）。
+  第三轮关键提交：`a5a519e` 四条修复 + 脚本守卫 · `fc7d81f` 三模块有值行排前 ·
+  `b01dcfb` 标题结构自动填入（新端点） · `95fada2` 引用写法优化三处 · `f0c87b7` 提示词交叉引用 ·
+  `7241ae6` 文档同步。第二轮关键提交：`faeebc8` 实现 · `0e4daf4` 展示修复 · `5944d0a` 两端点标注统一。
 - **工作区**：干净（除禁提交项）。
-- **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / **`v1.3`（本轮，打在 `fdab772`）** /
-  `minimal-rebuild-r1-20260907`。**两远程各 10 个 tag，`v1.3` 均已推送。**
+- **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / `v1.3`（打在 `fdab772`）/
+  `minimal-rebuild-r1-20260907`。**两远程各 10 个 refs，`v1.3` 均已推送；`v1.4` 本地与双远程都没有**
+  （2026-09-21 核对，待 Next Actions 1）。
 - **禁提交**：`.env`、`*.db`（含 `*.bak-*.db` 备份）、`outputs/`（真实投标正文）、`tmp/`、`*.log`。
   ⚠️ **备份文件命名必须命中 `.gitignore` 的 `*.bak-*.db`**：写成 `<name>.db.bak-<标签>` 会
   逃过忽略规则（本轮实测踩到并已修脚本，见 `backfill_finance_amounts.py` 注释）。
@@ -231,9 +308,10 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 
 ## 13. Recovery Command
 
-> **当前状态**：第二次需求对接的两条需求**已全部实现、验收并推送**（双远程与本地 HEAD 一致；
-> pytest 308 passed；服务 PID 64672 含新代码）；**tag `v1.3` 已打，双远程均已推送**。
-> 剩余动作：**请需求方实机验收**。
-> 第二阶段（表格结构化 / 金额汇总 / 固定模板）用户未要求，**勿主动开工**。
+> **当前状态**：需求方**第三轮实测反馈的两批共六项已全部实现、验收、提交并推送**
+> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `f0c87b7`；`pytest` **323 passed** 实跑复核；
+> **服务当前未运行**，:8000 无监听）；**tag `v1.3` 已打并推送双远程；`v1.4` 尚未打**。
+> 剩余动作：**① 打 `v1.4`（待用户点头）；② 起服务并请需求方实机复核六项**。
+> 第二阶段（表格结构化 / 金额汇总 / 固定模板）与 Xenium 深挖用户均未要求，**勿主动开工**。
 
 `Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
