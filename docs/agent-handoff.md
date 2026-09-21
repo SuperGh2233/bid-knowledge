@@ -62,6 +62,8 @@
 | `docs/plans/active/PLAN-20260917-round2-feedback.md` | **第二轮任务的权威计划**：实测诊断 D1–D5 + 四项口径 + 五步实施 + 验收总表（✅ 全部完成，§8 有实测数字）|
 | `docs/plans/active/PLAN-20260917-contract-product-mention.md` | 上一轮（正文提及组）的权威计划，**已收口冻结** |
 | `docs/plans/active/PLAN-20260921-widen-ledger-header.md` | **2026-09-21 晚新增**：业绩抽取表头判据放宽 + 重跑（含 §4.1 两次重跑/误写报价表/数据修正的完整留档）|
+| `docs/plans/active/PLAN-20260921-instrument-query-fix.md` | **2026-09-21 晚新增**：仪器型号碎片检索修复（第三路方向反转 + 词表拼写对齐），纯检索层 |
+| `docs/plans/active/PLAN-20260921-instrument-kind-gate.md` | **2026-09-21 晚新增（系统性）**：仪器名抽取与文档分类解耦（kind 门误伤 92% 文档）+ 残渣规则 + 重跑，`instrument_name` 168→1327 |
 | `docs/plans/active/PLAN-20260915-demo-feedback-issues.md` | 需求方**首次**试用 5 条反馈的权威记录 |
 | `docs/evals/EVAL-20260917-gold-recall-regression.md` | Recall 复测报告；§7 记新基线 37/37=100% 与 G05 金标准瑕疵证据 |
 | `docs/authorizations/llm-contract-mention-authorization.md` | 第 6 份授权，**暂缓启用**（本地规则已达同等召回） |
@@ -84,6 +86,35 @@
   第一次判据过宽混入 41 份报价表 90 行 → **校正判据重跑 + 新增 `scripts/cleanup_ledger_quote_residue.py` 定向清理**，
   终验：原始 51 份 0 损失、报价残留 0、行构成干净（有金额 91%、有采购人 98%）。`pytest 327 passed`。
 - **数据面**：`/api/status` → `ledger_records: 494`；服务已重启（PID 26912，含新代码）；`material-search` 实测 ledger 段正常。
+
+**2026-09-21 晚（后续追加：仪器检索修复；`PLAN-20260921-instrument-query-fix.md` 为权威）**
+- **需求方提问「仪器清单收纳不少，但检索返回很少」** → 数字诊断：
+  `instrument_name` 168 条/去重 16 种型号，`instrument` 211 条是**存在性空壳**（无型号）；名义 645 条里
+  可支撑型号检索的只有 168 条。
+- **根因 1 — 碎片检索方向写反**（`app/api.py::resolve_instrument_query` 第三路）：旧判据
+  「库内型号名 ∈ 查询词」，用户必须输完整型号才命中 → `HBH192`/`QE质谱`/`Chromium`/`10X Genomics` 实测全 0。
+  改成「**查询词碎片 ⊆ 库内型号名**」（先按原始词切分、再逐个空白归一，`\xa0` NBSP 显式并入）。
+- **根因 2 — 词表拼写错**：`instrument_aliases.json` 写 `DNBSEQ-T7`，库内/正文真实值 `DNBSEO-T7` →
+  词表对齐 + 补 `DNBSEQ`/`DNBSEQ-T7` 两个正确拼写别名。
+- **实测（服务重启 PID 39656）**：`HBH192` 0→**22**、`Chromium` 0→**14**、`QE质谱` 0→**2**、
+  `10X Genomics` 0→**14**、`DNBSEQ-T7` 0→**1**、`测序仪` 1→**2**；`质谱仪` 32 不回归；`Xenium`/`10X`(3字) 仍 0（护栏）。
+- `pytest` **329 passed**（+2 测试）。纯检索层，零库写、零重跑；未打 tag（工作区含未提交改动）。
+
+**2026-09-21 晚（后续追加：仪器名抽取系统性解耦；`PLAN-20260921-instrument-kind-gate.md` 为权威）**
+- **需求方「Xenium 查不到，肯定哪里设计有问题」** → 全库摸底证实是**系统性缺陷**：
+  正文可抽 `N台<名字>` 的 199 份文档 / 去重 **80 种**仪器名，库里只有 16 种；**92%（182/199）被 kind 门挡掉**。
+- **根因**：`scripts/extract_three_modules.py` 把 `instrument_names_in` 挂在
+  `if kind in ("instrument","instrument_photo"):` 门后 —— 而 `kind_of` 把 **social_security_month 排第 1 位**
+  + 正文全文扫描，几乎每份完整响应文件都含「社保/完税」→ 整份判成社保类 → 仪器名抽取整体跳过。
+- **修复**：**解耦**（无条件抽 `N台<名字>`，仅 `purchase_contracts_in`/photo 门保留）
+  + 新增 9 类**残渣规则**（评分条款/序列号粘连/括号未闭合/短词…，`_reject_instrument_name`）
+  + 修 **strip 剥括号 bug**（`液质联用仪器（LC-MS/MS）` 右括号被剥 → 误判未闭合拒掉）
+  + 词表补 `色谱质谱联用` 短键。
+- **实测（重跑落库 + 服务 PID 89924）**：`instrument_name` **168 → 1327 条 / 248 文档 / 68 变体**；
+  `Xenium` 0→**11**、`液质联用` 12、`流式细胞仪` 14、`Olink` 12、`MobiNova` 10、`华大C4` 10、
+  `Waters SYNAPT` 12、`QTRAP` 12、`质谱仪` 32→**182**、`测序仪` 2→**38**、`HBH192` 22→**149**；
+  噪声（`流式细胞仪的`/`≤设备数`/`预备`/`备用`/`得1分`）全 0；其他类别零回归。
+- `pytest` **336 passed**（+7 测试）。重跑只写 reg 库、正式库断言拒；未打 tag（工作区含未提交改动）。
 
 **第三轮修复·第一批（2026-09-18 上午实测）**
 - **「25年的社保」**：`parse_fact_query` 的正则只认 4 位年份 → 「25年」的期间条件**被静默丢弃**，
@@ -298,6 +329,14 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 
 ## 9. Next Actions
 
+0b. **2026-09-21 晚仪器的两批工作在未提交状态**（同一工作区、同一会假待提交）：
+   · **A 检索层修复**（`PLAN-20260921-instrument-query-fix.md`）：`resolve_instrument_query` 第三路
+     方向反转 + 词表拼写对齐/补 DNBSEQ 别名 + 2 测试；
+   · **B 系统性解耦**（`PLAN-20260921-instrument-kind-gate.md`）：`extract_three_modules.py` 解耦
+     kind 门 + 9 类残渣规则 + 括号剥除修复 + `instrument_aliases.json` 短键；重跑落库
+     `instrument_name` **168 → 1327 条 / 248 文档 / 68 变体**；`pytest 336 passed`；服务 PID 89924。
+   **下一步：一起提交**（用户点头后，含两个计划文档/交接同步/CHANGELOG；是否打 tag 随用户）。
+0a. ~~2026-09-21 晚仪器检索修复（A）~~ ✅ 与 0b 一并提交（见上）。
 0. ~~2026-09-21 晚工作（文案 + 判据放宽 + 重跑）~~ ✅ **已提交（`9b5597e`）并打 tag `v1.5`、推双远程**
    （2026-09-21 晚，用户点头）。
 1. ~~打 tag `v1.4`~~ ✅ **已打并推送双远程**（2026-09-21，打在 `bb94715`；用户当日点头）。
@@ -318,8 +357,27 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 3. **遗留（用户未要求，勿主动开工）**：
    · **Xenium 仪器查不到**（第三轮报告里需求方提的「仪器定位有问题」的深挖项）——
      根因链已诊断清楚（四个断点：路由档位 / 抽取门 `kind_of` 单标签把社保放首位 /
-     句式只认「N台<名字>」 / 数据面 0 条 Xenium 型号），修法涉及**重跑抽取**，
+     句式只认「N台<名字>」 / **型号抽取面 0 条**），修法涉及**重跑抽取**，
      需单独提计划与用户确认（尤其是「仪器名抽取要不要放开 kind 门」这个口径）。
+     ⚠️ **2026-09-21 实测更正 + 证据（需求方问「Xenium 是什么」时全库只读核查）**：
+     `instrument_name` 型号表里确实 0 条 Xenium，但**文档面大量有，不是「库里没这仪器」**——
+       · **已解析正文含 `Xenium` 的文档 75 份**（欧易响应文件多份：如北京大学第三医院
+         「10X单细胞转录组测序与 10X xenium 空间原位检测及分析服务」响应文件等）；
+       · **文件名含 Xenium 的项目/合同几十条，含具体合同金额**（`Xenium 组织原位分析5000`
+         冰冻/FFPE 样本，合同价 9.9万~27万：山东第一医科大学、上海新华医院、中国医学科学院
+         肿瘤医院、临港国家实验室、农科院上海兽医所…；`xenium 5K 空转芯片检测`天津市第一
+         中心医院；`Xenium 5k 空间原位基因表达`诺禾/复旦肿瘤医院；`拟南芥 Xenium 空间转录组`联川）；
+       · `material_facts` 15 条含 `Xenium` 的词，但**全部挂在 `social_security_month`/
+         `finance_period`/`invoice`/`instrument`（存在性空壳，evidence 只挂文件名）**，
+         **没有一条归到 `instrument_name`** —— 即：原始材料在、是**抽取层没把 Xenium 变成型号**。
+      ⇒ 修正口径：不是「数据面没有」，是「**文档面有 75 份、型号抽取面 0 条**」。
+        Xenium = 10x Genomics 的 Xenium Analyzer（**原位空间转录组**平台，探针杂交+荧光成像、
+        亚细胞分辨率；与库内 Chromium 单细胞 / CytAssist 空间制样同属 10x 家，比 Visium 更细，
+        是空间转录组最新一代）。
+        ✅ **2026-09-21 晚已修复**（用户拍板「当仪器修」→ 系统性解耦，`PLAN-20260921-instrument-kind-gate.md`）：
+        不再遗留。Xenium 现 **11 条**可检索（`Xenium` 接口 0→11）；更重要的是一并修掉了同类
+        系统性问题 —— `instrument_name` 168→**1327 条 / 68 变体**（质谱家族 182、测序 38、流式 14、
+        Olink/MobiNova/华大C4/SYNAPT/QTRAP 各 10~12）。
    · 计划 §9 第二阶段（表格结构化 / 金额汇总 / 固定模板）。
 
 ## 10. Do Not Repeat / Do Not Change
@@ -370,10 +428,11 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 ## 13. Recovery Command
 
 > **当前状态**：需求方**第三轮实测反馈的两批共六项 + 2026-09-21 晚「业绩去限定化」均已实现、验收、提交并推送**
-> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `9b5597e`；`pytest` **327 passed** 实跑复核）；
-> **服务在跑：PID 26912**；
+> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `9b5597e`；`pytest` **336 passed** 实跑复核）；
+> **服务在跑：PID 89924**（2026-09-21 晚第三次重启，含仪器检索修复 + 系统性解耦）；
 > **tag `v1.3` / `v1.4` / `v1.5` 均已打并推送双远程**（`v1.5` 打在 `9b5597e`）。
-> 剩余动作：**请需求方实机复核**（§9 第 2 条）。
-> 第二阶段（表格结构化 / 金额汇总 / 固定模板）与 Xenium 深挖用户均未要求，**勿主动开工**。
+> **2026-09-21 晚仪器的两批工作（A 检索层 + B 系统性解耦）仍在工作区未提交**（Next Actions 0b；两个计划文档）。
+> 剩余动作：**① 提交仪器两批（待用户点头）② 请需求方实机复核**（§9 第 2 条）。
+> 第二阶段（表格结构化 / 金额汇总 / 固定模板）用户均未要求，**勿主动开工**。
 
-`Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
+`Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 0b.`
