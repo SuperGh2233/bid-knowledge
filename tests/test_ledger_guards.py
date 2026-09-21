@@ -216,3 +216,55 @@ def test_cross_ref_gives_up_when_party_is_ambiguous():
             "6.2 乙项目合同（某医院，20万）\n")
     got = _cross_ref_amount(text, "丙项目（名称对不上）", "某医院")
     assert got[0] is None, got
+
+
+# —— ⑤ 表头判据放宽（2026-09-21，PLAN-20260921-widen-ledger-header）——
+# 三种真实形态：列名带空格（`序 号 | 项 目 名 称`）／无「序号」列（当事人+金额即可）／表头跨行
+# （金额列写在下一行）。放宽**只放开表头识别**；行级护栏（`_looks_like_ledger_row`、金额上限）
+# 原样保留 —— 关联方表/技术响应表这些反例的旧测试必须仍绿（见本文件 ① ② ③ 段）。
+
+SPACED_HEADER = ("近三年主要项目业绩清单\n"
+                 "序 号 | 年 份 | 项 目 名 称 | 服务内容 | 合同金额 | 签订日期\n"
+                 "1 | 2024年 | 真核有参转录组测序 | 小鼠肿瘤组织测序 | 12.6万 | 2024-03-01\n"
+                 "2 | 2025年 | 空间转录组测序 | 人组织空间转录组 | 18.9万 | 2025-01-15\n")
+
+
+def test_header_with_spaced_columns_is_recognized():
+    """列名带空格（`序 号`/`项 目 名 称`/`合同金额`）→ 表头照常命中并解析出采购人+金额。"""
+    st = extract_contract_ledger_state(SPACED_HEADER)
+    assert st["header_found"] is True, st
+    amt = {r.get("total_amount") for r in st["records"]}
+    assert 126000.0 in amt and 189000.0 in amt, st["records"]
+
+
+def test_header_without_seq_column_is_recognized():
+    """无「序号」列、只有当事人列+金额列（`项目名称|项目内容|买方名称|合同价格|…`）→ 命中。"""
+    text = ("（二）投标人业绩情况表\n"
+            "项目名称 | 项目内容 | 买方名称 | 买方联系人及电话 | 合同价格（可以隐藏价格） | 签订日期\n"
+            "科研项目检测服务 | 大鼠蛋白组学测序 | 浙江省人民医院 | 王慧子，1599005XXXX | 30.5万元 | 2024-02-01\n"
+            "转录组测序 V2.0 | 芥菜叶片转录组测序 | 中南林业科技大学 | 李四，139XXXX | 6.5万 | 2025-03-01\n")
+    st = extract_contract_ledger_state(text)
+    assert st["header_found"] is True, st
+    partys = {r.get("party_a_raw") or r.get("party") for r in st["records"]}
+    assert "浙江省人民医院" in partys and "中南林业科技大学" in partys, st["records"]
+
+
+def test_header_with_linebreak_amount_column_is_recognized():
+    """金额列写在表头**下一行**（`序号|用户\n名称|项目\n名称|合同\n金额`）→ 窗口内命中。"""
+    text = ("投标人类似项目业绩一览表\n"
+            "序号 | 年 份 | 项 目 名 称 | 项 目 内 容 | 服 务 时 间 | 合同\n"
+            "1 | 2024年 | 真核有参转录组测序 | 小鼠的肿瘤组织 | 一年 | 68.0万\n"
+            "注：\n")
+    st = extract_contract_ledger_state(text)
+    assert st["header_found"] is True, st
+    assert st["records"], st
+    assert st["records"][0]["total_amount"] == 680000.0, st["records"]
+
+
+def test_loosened_header_still_rejects_party_only_table():
+    """放宽后**不含**当事人列的表头（`序号|项目名称|报价`）仍不命中 —— 当事人列依旧是硬门槛。"""
+    text = ("某种表格\n"
+            "序号 | 项目名称 | 报价\n"
+            "1 | 某项目 | 100\n")
+    st = extract_contract_ledger_state(text)
+    assert st["header_found"] is False, st

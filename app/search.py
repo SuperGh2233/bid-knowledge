@@ -36,7 +36,7 @@ FILENAME_PRODUCT_TOTAL = "filename_product_total"
 #   · **参与金额筛选**（2026-09-16 用户改判）：用其**合同总额**过门槛；依据是实测
 #     「误返 0 份、漏召最多 2 份」（见 `locate_track_records` docstring）；
 #   · 返回时**单列 + 显式来源标签**，绝不与合同原件混排。
-TRACK_SOURCE_LABEL = "业绩清单声明（我方响应文件）"
+TRACK_SOURCE_LABEL = "历史合同/类似项目声明（来自我方响应文件）"
 TRACK_RECORD_ROLES = ("our_response", "final_signed")
 _TRACK_PROJECT = re.compile(r"项目:(.*?)(?:\s+采购人:|\s+金额:|\s*\|)")
 
@@ -554,7 +554,7 @@ def locate_track_records(con, *, party: str = "", products: tuple = (), year: st
             # ⚠️ 金额的语义标签必须与数字同屏：这是**合同总额**（清单列头），不是产品金额
             # ️ 口径改判后（2026-09-16）**不得**再写"不参与金额筛选"——金额已按门槛参与筛选。
             # 仍必须写明它是**合同总额**（非产品明细金额）—— 诚实性不随口径变。
-            "amount_note": "业绩清单所列金额（合同总额，非产品明细金额）",
+            "amount_note": "历史合同/类似项目声明所列金额（合同总额，非产品明细金额）",
             # 无金额时**说明为什么**（业务要能分辨"数据没有"与"我们没提到"）
             "amount_absent": "" if r["total_amount"] is not None else (
                 (re.search(r"金额说明:(表未设金额列|本行未取到)", ev) or [None, ""])[1]),
@@ -583,9 +583,10 @@ def locate_track_records(con, *, party: str = "", products: tuple = (), year: st
         "excluded_no_amount": no_amount[:20],
         "excluded_no_amount_count": len(no_amount),
         "source_label": TRACK_SOURCE_LABEL,
-        "scope_note": "业绩清单是**我方响应文件里的声明**（非合同原件）—— 可作为"
-                      "「做过什么、给谁做过」的线索。"
-                      + ("已按金额门槛筛选：这里的金额是**业绩表所列合同总额**（非产品明细金额）；"
+        "scope_note": "响应文件里列出的**历史合同/类似项目声明**（可能有各种叫法：业绩、"
+                      "类似项目、合作单位证明等，均按同一类收录）—— 这是**我方自己写的声明**"
+                      "（非合同原件）—— 可作为「做过什么、给谁做过」的线索。"
+                      + ("已按金额门槛筛选：这里的金额是**声明所列合同总额**（非产品明细金额）；"
                          f"另有 {len(no_amount)} 条金额未记载、未能参与金额筛选"
                          "（见 `excluded_no_amount`，可自行打开文件核对）。"
                          if min_amount else

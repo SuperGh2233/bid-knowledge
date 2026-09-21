@@ -34,6 +34,11 @@ import app.config as config
 _ORD = re.compile(r"^\d{1,3}(?:\s*\||\s)")
 # 章节标题：`十三、《…》` / `十四、类似项目业绩一览表` / `一、…`（业绩数据行不会这样开头）
 _SECTION_HEAD = re.compile(r"^[一二三四五六七八九十百]{1,3}\s*[、.．]")
+# 表头列名归一化：`序 号 | 项 目 名 称` 这类「列名被排版空格拆开」是实测常态（2026-09-21，
+# PLAN-20260921-widen-ledger-header）—— 判定表头/列名时先去所有空白，否则带空格的表头整片漏。
+_WS = re.compile(r"\s+")
+def _norm(s: str) -> str:
+    return _WS.sub("", s or "")
 # 纯日期/年份段（`2023年-2025年` / `2025年2月` / `2023.9`）—— 不能当项目名
 # 纯日期/年份段：`2023年-2025年` / `2025年2月` / **`2025年10月17日`**（含"日"——第一版漏了，
 # 实测该格被当成项目名）/ `2023.9`
@@ -438,27 +443,56 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
     search_from = anchor if anchor >= 0 else 0
     for i in range(search_from, min(search_from + 25, len(lines))):
         ln = lines[i]
-        # 横排表头：序号 + 当事人列。实测列名多样（采购人/买方/使用单位/客户…），
-        # 原判据只认「采购人」，把「使用单位」等写法整片漏掉。
-        if "序号" in ln and any(k in ln for k in _PARTY_KEYS):
-            # ️ **必须还有金额列**（2026-09-16 实测踩到）：扩展当事人词表后，
-            # 「序号 | 单位名称 | 相互关系」这类**关联方表**也被当成了业绩表 → 把电话号码
-            # 当成了金额（实测一条 4.46 亿）。业绩清单按定义就列合同金额，没有金额列的
-            # 不可能是业绩清单。表头常跨行（金额列可能写在下一行，如 合同 / 金额 / （万元）），故在 ±4 行窗口内找。
-            window = [x for x in lines[i: i + 5]]
-            window += [x for x in lines[max(0, i - 2): i]]
-            # 表头必须能证明「这是一张业绩表」——**有金额列 或 有业绩内容列**。
-            #   ① 金额列：业绩清单按定义列合同金额（挡掉「序号|单位名称|相互关系」的**关联方表**，
-            #      它曾让电话号码被当成金额，实测一条 4.46 亿）；
-            #   ② 业绩内容列：实测有的业绩表**不含金额**（如「…承担相关业绩一览表」只列
-            #      履约时间/服务内容/采购单位/履约情况）—— 若一律拒掉，那张表的行
-            #      **再也不会被重新解析**，早期写错的旧值就永远留在库里（用户实测 6 条如此）。
-            has_amount_col = any(_AMOUNT_COL.search(x) for x in window)
-            if not (has_amount_col or any(_LEDGER_CONTENT_COL.search(x) for x in window)):
+        # 横排表头：**（序号 或 当事人列）且 有金额列/内容列**。实测列名多样
+        # （采购人/买方/使用单位/用户名称/业主单位…），且存在两类此前漏掉的合法形态：
+        #   · **无序号列**（`项目名称|项目内容|买方名称|合同价格|…`，2026-09-21）；
+        #   · **无当事人列名**（`序号|年份|项目名称|项目内容|服务时间|合同`，采购人写在数据行里，
+        #     瑞金医院实测）；—— 这两类都放行，只要窗口有金额列或内容列。
+        # 列名可能带空格（`序 号 | 年 份 | 项 目 名 称`）→ 判定前先 `_norm`。
+        # ⚠️ 硬门槛仍是「金额列或内容列」：挡住「序号|单位名称|相互关系」关联方表（2026-09-16）。
+        # ⚠️ **「仅靠内容列」的放行须有业绩类标题锚点**（anchor>=0）—— 否则 `序号|项目名称|报价`
+        #    这种无当事人、无金额的表也会因「项目名称→内容列」误收（2026-09-21 自测踩到）。
+        #    `项目名称`/`项目内容` 这类词单独出现**不能**证明是业绩表；有锚点（标题是「类似项目
+        #    一览表」等）时语境已锁死，内容列才可作为依据。
+        n_ = _norm(ln)
+        has_seq = "序号" in n_
+        has_party = any(_norm(k) in n_ for k in _PARTY_KEYS)
+
+        # ⚠️ **放宽尺度由是否命中业绩类标题锚点决定**（2026-09-21 抽验抓到的分界）：
+        #   · **有锚点**（anchor>=0，标题是「类似项目/业绩/合作单位证明」类）→ 语境已锁死为业绩表，
+        #     允许「序号+内容列」「无当事人列」等真实形态（瑞金 `序号|年份|项目名称|服务时间|合同`）；
+        #   · **无锚点** → 必须是 `序号 + 当事人列 + 金额/内容列` 的**严格形态**。否则报价表
+        #     （`序号 | 名称 | 数量 | 单价 | 合价`、`开标一览表`、`比价文件`）会因「序号+总价/合价
+        #     命中金额列」被误当业绩（实测：放宽后新增 53 份里混入多份报价文件——违反
+        #     「报价表不生成历史合同正例」红线）。
+        ok_mark = has_seq and has_party
+        if not ok_mark:
+            if anchor < 0:
                 continue
-            header = i
-            _header_has_amount_col[0] = has_amount_col      # 传给记录（见下方 nonlocal 用法）
-            break
+            # 有锚点才允许的形态：有「序号」或「当事人列」其一（无当事人列名也行，靠内容/金额列证明）
+            if not has_seq and not has_party:
+                continue
+
+        # ️ **必须还有金额列**（2026-09-16 实测踩到）：扩展当事人词表后，
+        # 「序号 | 单位名称 | 相互关系」这类**关联方表**也被当成了业绩表 → 把电话号码
+        # 当成了金额（实测一条 4.46 亿）。业绩清单按定义就列合同金额，没有金额列的
+        # 不可能是业绩清单。表头常跨行（金额列可能写在下一行，如 合同 / 金额 / （万元）），故在 ±4 行窗口内找。
+        window = [x for x in lines[i: i + 5]]
+        window += [x for x in lines[max(0, i - 2): i]]
+        # 表头必须能证明「这是一张业绩表」——**有金额列 或 有业绩内容列**。
+        #   ① 金额列：业绩清单按定义列合同金额（挡掉「序号|单位名称|相互关系」的**关联方表**，
+        #      它曾让电话号码被当成金额，实测一条 4.46 亿）；
+        #   ② 业绩内容列：实测有的业绩表**不含金额**（如「…承担相关业绩一览表」只列
+        #      履约时间/服务内容/采购单位/履约情况）—— 若一律拒掉，那张表的行
+        #      **再也不会被重新解析**，早期写错的旧值就永远留在库里（用户实测 6 条如此）。
+        # ⚠️ 窗口内列名同样可能带空格（`合 同 金 额（万 元）`）→ 判定前各自 `_norm`。
+        win_norm = [_norm(x) for x in window]
+        has_amount_col = any(_AMOUNT_COL.search(x) for x in win_norm)
+        if not (has_amount_col or any(_LEDGER_CONTENT_COL.search(x) for x in win_norm)):
+            continue
+        header = i
+        _header_has_amount_col[0] = has_amount_col      # 传给记录（见下方 nonlocal 用法）
+        break
     if header < 0:
         return {"header_found": False, "records": [], "full_result": False,
                 "empty_confirmed": False, "truncated": False, "unparsed_rows": 0}
@@ -488,7 +522,8 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
     def flush():
         nonlocal buf, buf_start, unparsed
         if buf:
-            r = _parse_row(" | ".join(buf), unit, lines[header] if header < len(lines) else None)
+            r = _parse_row(" | ".join(buf), unit,
+                           _norm(lines[header]) if header < len(lines) else None)
             if r.get("party_a_raw") or r.get("total_amount") is not None:
                 # —— 行级可信性（2026-09-16）——
                 # 扩展当事人列词表后实测出现**误抽**：某文档的表标题是「投标人业绩情况表」，
@@ -522,20 +557,23 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
             flush()
             closed = True
             break
-        if "序号" in ln and any(k in ln for k in _PARTY_KEYS):
+        if ("序号" in ln or "序号" in _norm(ln)) and any(k in _norm(ln) for k in _PARTY_KEYS):
             # ⚠️ **必须先判这一条**（认得的数据表头**重复出现** → 跳过该行，继续读下面的数据行）。
             # 第一版把下面「新表头即收尾」放在前面 → 表中间的重复表头把表**提前截断**，
             # 实测业绩行 402 → 338（丢的正是重复表头之后的那些行）。
+            # 2026-09-21（PLAN-20260921-widen-ledger-header）：当事人词同样做 `_norm`，
+            # 兼容 `序 号 | 项 目 名 称 | 单位名称` 这类带空格列名。
             cur += 1
             continue
-        if "序号" in ln and "|" in ln:
-            # **认不得的表头 = 这张表结束了** → 收尾并停止。
-            # 2026-09-16 实测踩到：不认得的表头（如《技术和服务要求响应表》）会被当成数据行，
-            # 把**后面整张表的几千字**都吞进上一条业绩行的 `row_text` 里，
-            # 卡片「原文」被撑满屏，金额也因列被撑歪而丢失。
-            flush()
-            closed = True
-            break
+        if "序号" in ln or "序号" in _norm(ln):
+            if "|" in ln:
+                # **认不得的表头 = 这张表结束了** → 收尾并停止。
+                # 2026-09-16 实测踩到：不认得的表头（如《技术和服务要求响应表》）会被当成数据行，
+                # 把**后面整张表的几千字**都吞进上一条业绩行的 `row_text` 里，
+                # 卡片「原文」被撑满屏，金额也因列被撑歪而丢失。
+                flush()
+                closed = True
+                break
         if _SECTION_HEAD.match(ln) and len(ln) <= 40:
             # 章节标题（`十三、《技术和服务要求响应表》` / `十四、类似项目业绩一览表`）同样表示
             # 本表已结束 —— 业绩数据行不会以「中文序号、」开头（那是**章节**编号）。
@@ -546,6 +584,18 @@ def _scan_ledger_full(text: str, source_doc_id: str) -> dict:
             flush()
             buf_start = cur
             buf.append(ln)
+        elif header >= 0 and "序号" not in _norm(lines[header]) and "|" in ln:
+            # 无「序号」列的表（PLAN-20260921-widen-ledger-header）：数据行首格是项目名
+            # （`科研项目检测服务 | 大鼠蛋白组学测序 | 浙江省人民医院 | …`），`_ORD` 匹配不上。
+            # 用**结构判据**放行：含 `|`、且按表头列映射解析后像业绩行（有采购人或金额）。
+            # 非业绩行的说明段（如写在表附近的 `<注释>` 行）不含 `|` → 不满足此分支，走 `elif buf`。
+            r = _parse_row(ln, unit, _norm(lines[header]))
+            if (r.get("party_a_raw") or r.get("total_amount") is not None) and _looks_like_ledger_row(r):
+                flush()
+                buf_start = cur
+                buf.append(ln)
+            elif buf:
+                buf.append(ln)
         elif buf:
             buf.append(ln)
         cur += 1

@@ -256,7 +256,7 @@ request("/api/status").then(data => {
   const lg = Number(scope.ledger_records ?? 0);
   $("#footer-stats").textContent =
     `${Number(q).toLocaleString()} 份合同已完成核对、可以查询 · `
-    + (lg ? `${lg.toLocaleString()} 条业绩清单声明（来自我方响应文件）· ` : "")
+    + (lg ? `${lg.toLocaleString()} 条历史合同声明（来自我方响应文件）· ` : "")
     + `${Number(c.parse_artifacts ?? 0).toLocaleString()} 份文件已读出正文 · `
     + `${Number(c.documents ?? 0).toLocaleString()} 份文件已登记`;
   $("#footer-note").textContent =
@@ -298,18 +298,18 @@ function renderInnerRecords(row) {
  *  CTL 合同与 document 实测严格 1:1，所以这只是渲染层的事，不必改折叠分组。
  */
 /**
- * 业绩清单行 → **与合同原件同一张卡片、同一个列表**（2026-09-16 用户口径：
+ * 历史合同/类似项目声明行 → **与合同原件同一张卡片、同一个列表**（2026-09-16 用户口径：
  * 「把这些文档和 pdf 走一样的召回路径，不用这样区分」）。
  *
- * 保留的只有**每张卡片上的一个小标记**：`业绩声明` + （有金额条件时）`金额为合同总额`。
- * 为什么标记不能省：实测「单细胞」相关业绩行 61 条里 **45 条没有任何金额** ——
+ * 保留的只有**每张卡片上的一个小标记**：`历史合同声明` + （有金额条件时）`金额为合同总额`。
+ * 为什么标记不能省：实测「单细胞」相关历史合同声明行 61 条里 **45 条没有任何金额** ——
  * 若与 PDF 合同完全同形，用户会以为它们也达到了金额门槛（那正是需求方第一条反馈的形态）。
  */
 function ledgerCardOf(r, amountCondition) {
   // 无金额时**说清为什么**：这张表压根没设金额列 vs 有金额列但本行没取到
   const amt = r.amount == null
     ? `<small class='derived'>${r.amount_absent ? "金额未记载（" + esc(r.amount_absent) + "）" : "金额未记载"}</small>`
-    : `¥ ${Number(r.amount).toLocaleString("zh-CN")} <small class='derived'>（业绩清单所列合同总额）</small>`;
+    : `¥ ${Number(r.amount).toLocaleString("zh-CN")} <small class='derived'>（声明所列合同总额）</small>`;
   return `<article class="result-card ledger-card">
     <div class="card-top">
       <div class="file-head">
@@ -318,16 +318,16 @@ function ledgerCardOf(r, amountCondition) {
       </div>
       <span class="amount">${amt}</span>
     </div>
-    <span class="tag tag-ledger">业绩声明</span>
+    <span class="tag tag-ledger">历史合同声明</span>
     <span class="tag">采购人：${esc(r.party_a || "未识别")}</span>
     <span class="tag">${esc(formatLabel(r.content_format))}</span>
     ${amountCondition ? "<span class='tag'>金额为合同总额</span>" : ""}
-    ${r.also_in && r.also_in.length ? `<div class="boundary-note">同一份业绩声明另存于 ${r.also_in.length} 处`
+    ${r.also_in && r.also_in.length ? `<div class="boundary-note">同一份历史合同声明另存于 ${r.also_in.length} 处`
       + `（共 ${r.copy_count} 份副本，多为同一标的不同批次/项目文件夹各存一份）—— `
       + `只展示一次，不重复计入结果。</div>` : ""}
     <dl class="metadata">
       <dt>项目</dt><dd>${esc(r.project || "（项目名未识别）")}</dd>
-      <dt>来源</dt><dd>我方响应文件里的业绩清单 —— <b>不是合同原件</b>；金额是<b>业绩表所列合同总额</b>
+      <dt>来源</dt><dd>我方响应文件里的<b>历史合同/类似项目声明</b>（业绩、合作单位证明等叫法均收录）—— <b>不是合同原件</b>；金额是<b>声明所列合同总额</b>
         （非产品明细金额）${amountCondition ? "，已按你给的金额门槛筛选" : ""}</dd>
       <dt>原文</dt><dd class="ledger-evidence">${esc(clip(r.evidence_text, 160))}</dd>
       <dt>打开文件</dt><dd>${fileActions(r)}</dd>
@@ -380,7 +380,7 @@ function mentionBlock(data) {
   </section>`;
 }
 
-/** 业绩行卡片组（同一列表用；不再单独成段） */
+/** 历史合同/类似项目声明卡片组（同一列表用；不再单独成段） */
 function ledgerCards(data) {
   const l = data && (data.ledger || (data.ledger_records
     ? { records: data.ledger_records, count: data.ledger_count, amount_condition: false }
@@ -393,8 +393,8 @@ function ledgerCards(data) {
   const below = Number(l.excluded_below_amount || 0);
   const naCount = Number(l.excluded_no_amount_count || 0);
   const notes = [];
-  if (below) notes.push(`另有 ${below} 条业绩声明的合同总额未达你给的门槛，已排除`);
-  if (naCount) notes.push(`另有 ${naCount} 条金额未记载（业绩表未列金额），无法参与金额筛选 —— 见下方折叠，可打开文件自行核对`);
+  if (below) notes.push(`另有 ${below} 条历史合同/类似项目声明的合同总额未达你给的门槛，已排除`);
+  if (naCount) notes.push(`另有 ${naCount} 条金额未记载（声明未列金额），无法参与金额筛选 —— 见下方折叠，可打开文件自行核对`);
   const noteHtml = notes.length ? `<div class="boundary-note">${notes.join("；")}。</div>` : "";
   const naList = (l.excluded_no_amount || []).slice(0, 10).map(r =>
     `<li>${esc(r.party_a || "（采购人未识别）")} · ${esc((r.relative_path || "").split("/").pop())}
@@ -472,8 +472,8 @@ function renderContractAnswer(data, target) {
   const hitLine = data.hits.length
     ? `找到 ${data.hits.length} 份符合条件的文件`
       + (data.hit_records > data.hits.length ? `（共 ${data.hit_records} 条业务记录）` : "")
-      + (ledgerN ? ` ＋ ${ledgerN} 份含此类合同（业绩）的响应文件（见带「业绩声明」标记的卡片）` : "")
-    : (ledgerN ? `没有符合金额条件的合同原件 ＋ ${ledgerN} 份含此类合同（业绩）的响应文件`
+      + (ledgerN ? ` ＋ ${ledgerN} 份含此类合同声明的响应文件（见带「历史合同声明」标记的卡片）` : "")
+    : (ledgerN ? `没有符合金额条件的合同原件 ＋ ${ledgerN} 份含此类合同声明的响应文件`
                : "没有同时满足「产品对得上」和「金额达标」的文件");
   // 「系统理解成了什么」用**可点标签**呈现（替换原先那行纯文本）：
   // 业务评审要的是"查看系统理解了哪些条件"，且每个条件允许用户改了重查。

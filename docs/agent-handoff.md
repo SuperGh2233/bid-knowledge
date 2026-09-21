@@ -1,6 +1,9 @@
 # Agent Handoff — bid-ai-clean
 
 > 更新 **2026-09-18（需求方第三轮实测反馈收尾：引用写法优化 + 标题结构自动填入）**
+> ⚠️ **2026-09-21（晚）追加一轮工作**：需求方提问「业绩叫法会不会太局限」→ 前端文案中性化
+> （历史合同/类似项目声明）+ **放宽业绩抽取表头判据并重跑**（408→494 行 / 63 来源，+12 份真表）。
+> 详见本头部下方 §3 新增「2026-09-21 晚」与 `docs/plans/active/PLAN-20260921-widen-ledger-header.md`。
 > ⚠️ **2026-09-21 恢复时更正**：本文件此前停在 09-18 12:20（`91a18c5`），漏记了 13:57–14:46 的
 > 三个提交（第四批：标题结构自动填入 / 引用写法优化 / 提示词规则 7 交叉引用）。
 > 本次已按现场核对补齐 §1/§3/§4/§6/§7/§9/§12/§13 —— 遗漏原因即下述「Next Actions 当天过时」的常态。
@@ -44,20 +47,43 @@
 **`v1.4` 待打**：CHANGELOG v1.4 条目已写好（**覆盖上述两批全部条目**），
 本地与双远程均**尚无 `v1.4` 标签**（2026-09-21 核对）—— 按惯例**待用户点头**。
 
+**2026-09-21 晚追加（需求方提问驱动，未打 tag）**：需求方问页面「带有业绩会不会太局限」→
+① 前端文案全部中性化（「业绩」→「历史合同/类似项目声明」，标注各叫法均收录）；
+② 排查发现业绩抽取**表头判据过严漏真表**（列名带空格/无序号/无当事人列）→ 放宽判据并重跑：
+   408 → **494 行 / 63 来源**（+12 份真业绩表，无报价表混入，零外发）。详见 §3 与
+   `PLAN-20260921-widen-ledger-header.md`。
+
 ## 2. Linked Authoritative Documents
 
 | 文档 | 控制什么 |
 |---|---|
 | `AGENTS.md` | 环境、命令、红线（**服务端硬开关默认全 false**、外发授权 6 份、NAS 只读、正式库禁写） |
 | `docs/index.md` | 文档地图 + 状态列 |
-| `docs/plans/active/PLAN-20260917-round2-feedback.md` | **本轮任务的权威计划**：实测诊断 D1–D5 + 四项口径 + 五步实施 + 验收总表（✅ 全部完成，§8 有实测数字）|
+| `docs/plans/active/PLAN-20260917-round2-feedback.md` | **第二轮任务的权威计划**：实测诊断 D1–D5 + 四项口径 + 五步实施 + 验收总表（✅ 全部完成，§8 有实测数字）|
 | `docs/plans/active/PLAN-20260917-contract-product-mention.md` | 上一轮（正文提及组）的权威计划，**已收口冻结** |
+| `docs/plans/active/PLAN-20260921-widen-ledger-header.md` | **2026-09-21 晚新增**：业绩抽取表头判据放宽 + 重跑（含 §4.1 两次重跑/误写报价表/数据修正的完整留档）|
 | `docs/plans/active/PLAN-20260915-demo-feedback-issues.md` | 需求方**首次**试用 5 条反馈的权威记录 |
 | `docs/evals/EVAL-20260917-gold-recall-regression.md` | Recall 复测报告；§7 记新基线 37/37=100% 与 G05 金标准瑕疵证据 |
 | `docs/authorizations/llm-contract-mention-authorization.md` | 第 6 份授权，**暂缓启用**（本地规则已达同等召回） |
 | `docs/specs/api.md` | HTTP 契约 —— ✅ 本轮已同步：§4（`content_snippet`/沉底排序/`finance_amount`/按类型的值说法）、§4A、**§4D（`plan-outline`，2026-09-21 补写）**、§5（`outline`/`outline_source`/引用编号口径）|
 
 ## 3. Current Progress
+
+**2026-09-21 晚（需求方提问驱动；`PLAN-20260921-widen-ledger-header.md` 为权威）**
+- **文案中性化**（前端 + 后端下发字段）：需求方问「带有业绩会不会太局限」——
+  `app.js` 卡片标记「业绩声明」→「**历史合同声明**」、摘要行「含此类合同（业绩）」→
+  「含此类合同声明」；`search.py` `TRACK_SOURCE_LABEL` / `amount_note` / `scope_note` → 统一
+  「历史合同/类似项目声明（业绩、合作单位证明等叫法均收录）」。**收录层本就兼容多种叫法**
+  （标题词表 `(业绩|类似项目|合同).{0,10}(清单|一览|汇总|情况表|列表)`+合作单位证明），改的是观感。
+- **覆盖排查**（全量 1033 请已解析响应文件）：122 份带该类标题，只有 51 份进 `LEDGER-*`；漏的 70 份里
+  **41 份是真业绩表**（列名带空格 `序 号`/无序号列/无当事人列，表头判据过严），其余是标题误报/空表/坏解析。
+- **判据放宽**（`app/extract.py::_scan_ledger_full`，三处）：表头识别改为 `(序号 or 当事人列) and 窗口(金额列 or 内容列)`，
+  循环内「重复表头跳过/未知表头收尾」与 `_parse_row` 传参同步 `_norm` 归一化；
+  ⚠️ **无锚点必须 `序号 AND 当事人列`**（防报价表混入）；内容列仅在有业绩标题锚点时单独作证。
+- **重跑**：`backfill_track_records.py` → 终态 **494 行 / 63 来源**（408→494，+12 份真表 / +86 行）；
+  第一次判据过宽混入 41 份报价表 90 行 → **校正判据重跑 + 新增 `scripts/cleanup_ledger_quote_residue.py` 定向清理**，
+  终验：原始 51 份 0 损失、报价残留 0、行构成干净（有金额 91%、有采购人 98%）。`pytest 327 passed`。
+- **数据面**：`/api/status` → `ledger_records: 494`；服务已重启（PID 26912，含新代码）；`material-search` 实测 ledger 段正常。
 
 **第三轮修复·第一批（2026-09-18 上午实测）**
 - **「25年的社保」**：`parse_fact_query` 的正则只认 4 位年份 → 「25年」的期间条件**被静默丢弃**，
@@ -108,7 +134,7 @@
 | `Xenium` / `型号` / `完全不相干的词xyz` | **各 0 条** + `scope_note`「没能从你这句话里解析出材料类别或期间…没有执行任何筛选」（改前 2015 条全表） |
 | `GET /api/plan-outline?q=售后服务方案，必须包含服务周期和应急预案` | `planned=true`、`title=售后服务方案`、`sections=[服务周期, 应急预案]`、`inferred=[服务周期]`、`dropped=[]` |
 | `GET /api/plan-outline?q=帮我写个投标函` | `planned=false`、`sections=[]`（**如实说拆不出**，不假装填上） |
-| `/api/status` | `总合同 136 / 可查 136 / 已核 136 / 业绩行 408`（与既有基线一致，未被污染） |
+| `/api/status` | `总合同 136 / 可查 136 / 已核 136 / 业绩行 494`（2026-09-21 晚放宽判据重跑后；原 408） |
 | `/static/app.js`（**服务下发的那份**） | 含 `VALUE_KIND` / `/api/plan-outline` / `_outlineDirty` / 「期间/型号」表头；`Cache-Control: no-cache, must-revalidate` |
 
 **第二轮交付（2026-09-17 实测，计划 §8 验收总表为权威）**
@@ -165,6 +191,18 @@ three-modules 业绩段加提及组（用户裁定暂不决定）。
 | `tests/test_proposal.py` | +13 条：结构从 query 推、自造小节不 KeyError、全角引用形态识别、合法全角不误报/编造仍报、前端同口径、风格提示两条、提示词要求、`plan-outline` 两路径 + 「拆不出就说拆不出」+ 手改不被覆盖的护栏 |
 | `docs/specs/api.md` / `CHANGELOG.md` | §4/§5 契约同步；**§4D 为 2026-09-21 恢复时补写**（原 `7241ae6` 的 api.md 同步只改了 §5，漏了这个新端点的独立章节） |
 
+### 2026-09-21 晚（未打 tag；`PLAN-20260921-widen-ledger-header.md` 为权威；工作区含未提交改动）
+
+| 文件 | 改了什么 |
+|---|---|
+| `app/extract.py` | **表头判据放宽**（`_scan_ledger_full` 三处 + `_parse_row` 传参 `_norm` 归一化）：`(序号 or 当事人列) and 窗口(金额列 or 内容列)`；**无锚点须 `序号 AND 当事人列`**（防报价表）；`_norm()` 去列名空格 |
+| `app/search.py` | `TRACK_SOURCE_LABEL`/`amount_note`/`scope_note` → 「历史合同/类似项目声明（业绩、合作单位证明等叫法均收录）」 |
+| `app/routes_search.py` | 三模块 `scope_note` 一句改「历史合同/类似项目声明」 |
+| `static/app.js` | 卡片 tag/摘要/来源/过滤说明文案中性化（「业绩声明」→「历史合同声明」等，用户可见全部） |
+| `tests/test_ledger_guards.py` | +4 条：带空格列名、无序号列、表头跨行可命中；无当事人列（`序号|项目名称|报价`）仍拒 |
+| `scripts/cleanup_ledger_quote_residue.py` | **新增**：删「当前判据 `header_found=False` 却有 LEDGER 行」的文档记录（只写 reg 库、删前备份、正式库断言拒）—— 补救第一次宽判据误写的报价表 |
+| `docs/plans/active/PLAN-20260921-widen-ledger-header.md` | **新增计划**（含 §4.1 两次重跑/误写/修正完整留档） |
+
 ### 第二轮（2026-09-17，已提交 `faeebc8` + `0e4daf4` + `5944d0a`）
 
 | 文件 | 改了什么 |
@@ -219,23 +257,23 @@ three-modules 业绩段加提及组（用户裁定暂不决定）。
 ```bash
 CONDA="C:\Users\hao.guo\AppData\Local\miniconda3\envs\langchain-dev\python.exe"
 export BID_AI_CLEAN_DB="$PWD/bid_ai_clean_reg.db"
-"$CONDA" -m pytest tests -q            # 323 passed（2026-09-21 恢复时实跑复核；第三轮收尾数字）
+"$CONDA" -m pytest tests -q            # 327 passed（2026-09-21 晚实跑复核；323 基线 + 4 条判据放宽测试）
 "$CONDA" -m app.api                    # → http://127.0.0.1:8000
 "$CONDA" scripts/backfill_finance_amounts.py --dry-run   # 金额回填预览（零写库）
 node --check static/app.js             # 前端语法（有护栏测试，但手改后先自查更快）
 # 结构预览端点（零外发）：
 python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务方案，必须包含服务周期和应急预案'},encoding='utf-8'))"
 ```
-- **服务（2026-09-21 实况）**：**PID 39704 在跑**（启动 **2026-09-21 09:25:23**，含第三轮全部代码；
-  `readonly=true`）。`GET /api/status` → `scope`：**`total_contracts 136 / queryable_contracts 136 /
-  ledger_records 408`**（与既有基线一致）；`/static/app.js` 下发文件已含 `VALUE_KIND` /
-  `/api/plan-outline` / `_outlineDirty`，且带 `Cache-Control: no-cache, must-revalidate`。
+- **服务（2026-09-21 实况）**：**PID 26912 在跑**（2026-09-21 晚重启，含本轮全部代码 + 放宽判据后的
+  数据面；`readonly=true`）。`GET /api/status` → `scope`：**`total_contracts 136 / queryable_contracts 136 /
+  ledger_records 494`**（放宽判据重跑后，原 408）；`/static/app.js` 下发文件已含 `VALUE_KIND` /
+  `/api/plan-outline` / `_outlineDirty` / 新的「历史合同声明」文案，且带 `Cache-Control: no-cache, must-revalidate`。
   ⚠️ **本次恢复时我自己踩的坑（写下来防再犯）**：核对端口时用了
   `netstat -ano | grep -E "LISTENING.*:8000"` —— **模式写反了**：端口在 `LISTENING` **之前**
   （形如 `TCP 127.0.0.1:8000 0.0.0.0:0 LISTENING 18052`）→ 误得「无监听」，并据此在交接里写下
   「服务已停」（已更正）。**照 AGENTS.md 写的 `netstat -ano | grep :8000` 就对了**，PID 与启动时间一起看。
   实测那次的服务（**PID 18052，启动 09-18 14:41:45**）**一直活着**，但它**早于 `f0c87b7`（14:46）**
-  —— 即提示词那条修复**不在它加载的代码里**，必须重启才生效（已 kill 18052 → 起 39704）。
+  —— 即提示词那条修复**不在它加载的代码里**，必须重启才生效（已 kill 18052 → 起 39704 → 晚再起 26912）。
 - **实测口径（本轮）**：仪器清单 645 条中，有内容行 176 条全排在空壳行之前、636 条带正文段
   （空壳 469 条里 467 条已补上正文段）；
   「纳税社保总金额」返回 29 条；概览卡 136/1283/645 与点进去的 `total_available` 同源。
@@ -260,8 +298,12 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 
 ## 9. Next Actions
 
+0. **2026-09-21 晚的工作仍在工作区（未提交、未打 tag）**：文案中性化 + `extract.py` 表头判据放宽 +
+   数据重跑（408→494）。**下一步先提交**（用户点头后）：含 `app/extract.py`/`app/search.py`/
+   `app/routes_search.py`/`static/app.js`/`tests/test_ledger_guards.py`/`scripts/cleanup_ledger_quote_residue.py`/
+   `docs/plans/active/PLAN-20260921-widen-ledger-header.md`/交接/CHANGELOG。是否打 tag 随用户。
 1. ~~打 tag `v1.4`~~ ✅ **已打并推送双远程**（2026-09-21，打在 `bb94715`；用户当日点头）。
-2. **请需求方实机复核第三轮（两批共六项）** —— 服务**已起**（PID 39704，§7），
+2. **请需求方实机复核第三轮（两批共六项）** —— 服务**已起**（PID 26912，§7），
    **本机已按接口逐项实测通过**（证据见 §3「六项接口实测」），剩下的是**人眼确认**：
    · 「25年的社保」应返回 35 条、首页不再有「期间未提取到」；
    · 查仪器时不再显示「期间未提取到」，改显示型号或「本类只表示有仪器材料」；
@@ -271,7 +313,9 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
    · **引用写法**：输出里不再逐条「根据【E3】，…」开头，编号在**句末**、`validation` 无
      全角相关误报；
    · **标题结构自动填入**：在生成输入框敲那句话 → 结构框**自动**列出大标题与小标题
-     （手改后不被覆盖）；敲一句拆不出结构的（如「帮我写个投标函」）→ 状态行**明说没拆出**。
+     （手改后不被覆盖）；敲一句拆不出结构的（如「帮我写个投标函」）→ 状态行**明说没拆出**；
+   · **业绩/历史合同声明文案**（2026-09-21 晚新增）：卡片标记改「历史合同声明」、摘要行
+     「含此类合同声明的响应文件」、`ledger_records` 408→494（放宽判据新增 12 份真表）。
    实机前提醒：**用户 Ctrl+F5 一次**（§7 已确认服务下发文件是新的，但浏览器手里那份要硬刷丢掉）。
 3. **遗留（用户未要求，勿主动开工）**：
    · **Xenium 仪器查不到**（第三轮报告里需求方提的「仪器定位有问题」的深挖项）——
@@ -326,10 +370,12 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 ## 13. Recovery Command
 
 > **当前状态**：需求方**第三轮实测反馈的两批共六项已全部实现、验收、提交并推送**
-> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `bb94715`；`pytest` **323 passed** 实跑复核；
-> **服务在跑：PID 39704，启动 2026-09-21 09:25:23**，六项已按接口逐项实测通过）；
+> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `bb94715`；`pytest` **323 passed** 实跑复核）；
+> **服务在跑：PID 26912**；
 > **tag `v1.3` / `v1.4` 均已打并推送双远程**（`v1.4` 打在 `bb94715`）。
-> 剩余动作：**请需求方实机复核六项**（§9 第 2 条）。
+> **2026-09-21 晚追加工作（文案中性化 + 业绩判据放宽 + 重跑 408→494）仍在工作区未提交**（Next Actions 0；
+> `pytest 327 passed`）。
+> 剩余动作：**① 提交晚追加工作（待用户点头）② 请需求方实机复核**（§9 第 2 条）。
 > 第二阶段（表格结构化 / 金额汇总 / 固定模板）与 Xenium 深挖用户均未要求，**勿主动开工**。
 
-`Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
+`Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 0.`

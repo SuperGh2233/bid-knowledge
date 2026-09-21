@@ -548,7 +548,7 @@ def three_modules(module: str = "", q: str = "", limit: int = 100):
                                   "故**不等于已到账**，需人工看图或 OCR 才能断言）。"
                                   f"本次台账覆盖 {len(pay)} 个合同号；"
                                   f"回单文件通道另覆盖 {n_receipt} 份合同（见每条 `receipt_files`）。"
-                                  f"另有 **{ledger['count']} 条业绩清单声明**单列在 `ledger_records`"
+                                  f"另有 **{ledger['count']} 条历史合同/类似项目声明**单列在 `ledger_records`"
                                   "（来自我方响应文件、**不是合同原件**，其金额为合同总额、"
                                   "已按金额门槛筛选；未达门槛只报数、金额未记载单列）。"}
 
