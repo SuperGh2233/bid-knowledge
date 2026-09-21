@@ -101,6 +101,16 @@
 - **提示词规则 7 交叉引用补齐到 8–11**（`f0c87b7`）：规则 7 原写「仍必须遵守规则 1–6、8、9」，
   漏了新增的 10、11 —— 只改提示词文本，无行为面变化。
 
+**六项接口实测（2026-09-21，服务 PID 39704；恢复时实跑，不采信文档里的旧数字）**
+| 项 | 实测结果 |
+|---|---|
+| `25年的社保` vs `2025年的社保` | **各 35 条**，两者一致（改前 913 条） |
+| `Xenium` / `型号` / `完全不相干的词xyz` | **各 0 条** + `scope_note`「没能从你这句话里解析出材料类别或期间…没有执行任何筛选」（改前 2015 条全表） |
+| `GET /api/plan-outline?q=售后服务方案，必须包含服务周期和应急预案` | `planned=true`、`title=售后服务方案`、`sections=[服务周期, 应急预案]`、`inferred=[服务周期]`、`dropped=[]` |
+| `GET /api/plan-outline?q=帮我写个投标函` | `planned=false`、`sections=[]`（**如实说拆不出**，不假装填上） |
+| `/api/status` | `总合同 136 / 可查 136 / 已核 136 / 业绩行 408`（与既有基线一致，未被污染） |
+| `/static/app.js`（**服务下发的那份**） | 含 `VALUE_KIND` / `/api/plan-outline` / `_outlineDirty` / 「期间/型号」表头；`Cache-Control: no-cache, must-revalidate` |
+
 **第二轮交付（2026-09-17 实测，计划 §8 验收总表为权威）**
 - **可复制正文段**（痛点主项）：`material-facts` / `three-modules` 每条材料行新增
   `content_snippet` + `snippet_source` + `snippet_missing` —— 按**材料自身标题**从响应文件正文
@@ -216,10 +226,16 @@ node --check static/app.js             # 前端语法（有护栏测试，但手
 # 结构预览端点（零外发）：
 python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务方案，必须包含服务周期和应急预案'},encoding='utf-8'))"
 ```
-- **服务**：⚠️ **2026-09-21 核对时 :8000 无监听**（`netstat -ano | grep :8000` 为空）——
-  先前记录的 PID（46612 / 18052 / 56616）均已随会话结束。**实机复核前需重新起服务**
-  （`"$CONDA" -m app.api`），起完按 AGENTS.md 教训核对 PID 与启动时间再让需求方看。
-  `GET /api/status` 基线 → `合同 136 / 可查 136 / 业绩行 408`。
+- **服务（2026-09-21 实况）**：**PID 39704 在跑**（启动 **2026-09-21 09:25:23**，含第三轮全部代码；
+  `readonly=true`）。`GET /api/status` → `scope`：**`total_contracts 136 / queryable_contracts 136 /
+  ledger_records 408`**（与既有基线一致）；`/static/app.js` 下发文件已含 `VALUE_KIND` /
+  `/api/plan-outline` / `_outlineDirty`，且带 `Cache-Control: no-cache, must-revalidate`。
+  ⚠️ **本次恢复时我自己踩的坑（写下来防再犯）**：核对端口时用了
+  `netstat -ano | grep -E "LISTENING.*:8000"` —— **模式写反了**：端口在 `LISTENING` **之前**
+  （形如 `TCP 127.0.0.1:8000 0.0.0.0:0 LISTENING 18052`）→ 误得「无监听」，并据此在交接里写下
+  「服务已停」（已更正）。**照 AGENTS.md 写的 `netstat -ano | grep :8000` 就对了**，PID 与启动时间一起看。
+  实测那次的服务（**PID 18052，启动 09-18 14:41:45**）**一直活着**，但它**早于 `f0c87b7`（14:46）**
+  —— 即提示词那条修复**不在它加载的代码里**，必须重启才生效（已 kill 18052 → 起 39704）。
 - **实测口径（本轮）**：仪器清单 645 条中，有内容行 176 条全排在空壳行之前、636 条带正文段
   （空壳 469 条里 467 条已补上正文段）；
   「纳税社保总金额」返回 29 条；概览卡 136/1283/645 与点进去的 `total_available` 同源。
@@ -244,10 +260,9 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 
 ## 9. Next Actions
 
-1. **打 tag `v1.4`**（CHANGELOG 条目已写好，**覆盖第三轮两批全部条目**；按上一轮惯例，
-   用户点头后打）：`git tag v1.4 && git push origin v1.4 && git push github v1.4`
-   —— 2026-09-21 核对：本地与双远程**均无 `v1.4`**。
-2. **起服务 + 请需求方实机复核第三轮（两批共六项）**：
+1. ~~打 tag `v1.4`~~ ✅ **已打并推送双远程**（2026-09-21，打在 `bb94715`；用户当日点头）。
+2. **请需求方实机复核第三轮（两批共六项）** —— 服务**已起**（PID 39704，§7），
+   **本机已按接口逐项实测通过**（证据见 §3「六项接口实测」），剩下的是**人眼确认**：
    · 「25年的社保」应返回 35 条、首页不再有「期间未提取到」；
    · 查仪器时不再显示「期间未提取到」，改显示型号或「本类只表示有仪器材料」；
    · `Xenium` 不再返回 2015 条全表，而是明确说「没解析出条件」；
@@ -257,7 +272,7 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
      全角相关误报；
    · **标题结构自动填入**：在生成输入框敲那句话 → 结构框**自动**列出大标题与小标题
      （手改后不被覆盖）；敲一句拆不出结构的（如「帮我写个投标函」）→ 状态行**明说没拆出**。
-   实机前提醒：**先起服务 + 用户 Ctrl+F5 一次**（§7）。
+   实机前提醒：**用户 Ctrl+F5 一次**（§7 已确认服务下发文件是新的，但浏览器手里那份要硬刷丢掉）。
 3. **遗留（用户未要求，勿主动开工）**：
    · **Xenium 仪器查不到**（第三轮报告里需求方提的「仪器定位有问题」的深挖项）——
      根因链已诊断清楚（四个断点：路由档位 / 抽取门 `kind_of` 单标签把社保放首位 /
@@ -297,8 +312,10 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
   `7241ae6` 文档同步。第二轮关键提交：`faeebc8` 实现 · `0e4daf4` 展示修复 · `5944d0a` 两端点标注统一。
 - **工作区**：干净（除禁提交项）。
 - **tag**：`v1.0.0` / `v1.1` / `v1.1.1` / `v1.1.2` / `v1.2` / `v1.3`（打在 `fdab772`）/
-  `minimal-rebuild-r1-20260907`。**两远程各 10 个 refs，`v1.3` 均已推送；`v1.4` 本地与双远程都没有**
-  （2026-09-21 核对，待 Next Actions 1）。
+  **`v1.4`（2026-09-21，打在 `bb94715`）** / `minimal-rebuild-r1-20260907`。
+  **两远程 `v1.4` 均已推送**（`v1.4` 是**轻量 tag**，与 `v1.3` 同形）。
+  ⚠️ `bb94715` 是本文件在 `v1.4` 后**再次更正服务状态**之前的那一版；其后的更正提交
+  **不含在 `v1.4` 里**（产品代码未变，无需移 tag）。
 - **禁提交**：`.env`、`*.db`（含 `*.bak-*.db` 备份）、`outputs/`（真实投标正文）、`tmp/`、`*.log`。
   ⚠️ **备份文件命名必须命中 `.gitignore` 的 `*.bak-*.db`**：写成 `<name>.db.bak-<标签>` 会
   逃过忽略规则（本轮实测踩到并已修脚本，见 `backfill_finance_amounts.py` 注释）。
@@ -309,9 +326,10 @@ python -c "import urllib.parse;print(urllib.parse.urlencode({'q':'售后服务�
 ## 13. Recovery Command
 
 > **当前状态**：需求方**第三轮实测反馈的两批共六项已全部实现、验收、提交并推送**
-> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `f0c87b7`；`pytest` **323 passed** 实跑复核；
-> **服务当前未运行**，:8000 无监听）；**tag `v1.3` 已打并推送双远程；`v1.4` 尚未打**。
-> 剩余动作：**① 打 `v1.4`（待用户点头）；② 起服务并请需求方实机复核六项**。
+> （2026-09-21 核对：本地 = `origin/main` = `github/main` = `bb94715`；`pytest` **323 passed** 实跑复核；
+> **服务在跑：PID 39704，启动 2026-09-21 09:25:23**，六项已按接口逐项实测通过）；
+> **tag `v1.3` / `v1.4` 均已打并推送双远程**（`v1.4` 打在 `bb94715`）。
+> 剩余动作：**请需求方实机复核六项**（§9 第 2 条）。
 > 第二阶段（表格结构化 / 金额汇总 / 固定模板）与 Xenium 深挖用户均未要求，**勿主动开工**。
 
 `Invoke $resume-work in this repository, verify AGENTS.md, docs/index.md, linked authoritative documents, Git state, and docs/agent-handoff.md, then continue from Next Actions item 1.`
