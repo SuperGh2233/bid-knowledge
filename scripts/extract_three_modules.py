@@ -61,6 +61,47 @@ NAME_BAD_WORDS = ("序号", "清单", "合同", "备注", "合计", "名称", "�
 # 纯数字堆（如 `203204205合同第9 台209210` 里的编号串）→ 不是仪器名
 NAME_MANY_DIGITS = re.compile(r"\d{6,}")
 
+# —— 2026-09-21 新增「残渣规则」（PLAN-20260921-instrument-kind-gate）——
+# 解耦 kind 门后，全库 dry-run 出现 9 类噪声（评分条款 / 序列号粘连 / 括号未闭合 / 短非设备词…
+# 见计划 §3）。这些是**通用残渣特征**，用规则集判定（可测），不为它们补白名单（防词表漂移）。
+_RE_CMP = re.compile(r"[≤＜≥＞<>]")                        # 比较符：`5台≤设备数＜10台的`
+_RE_SEQ = re.compile(r"序列号")                              # 设备序列号粘连：`Bruker timsTOF HT设备序列号为`
+_RE_UNCLOSED = re.compile(r"[（(].*")                       # 左括号存在 → 须配右括号（未闭合=截断残渣）
+_RE_SCORE = re.compile(r"得\s*\d+\s*分|套得|以下得|得\s*[123]\s*分")  # 招标评分条款
+_RE_CNUM = re.compile(r"[①②③④⑤⑥⑦⑧⑨⑩]")              # 圈序号残渣
+_RE_WORDS = re.compile(r"^预备$|^备用$|^计\d+$")            # 短非设备词
+_RE_WORDS_PAREN = re.compile(r"^[（(]*(?:预备|备用)[）)]*$")  # 带收尾括号的短词（`备用）`，2026-09-21 实测残留）
+_RE_NUMLEAD = re.compile(r"^1\s*分析|^1\s*织|^1\s*13%")     # 台数后跟行序号粘连
+_RE_JUNK = re.compile(r"完成文库的测序|空载待命|UPS不间断电源|驻外办事处")  # 长残渣句
+
+
+def _reject_instrument_name(name: str) -> bool:
+    """2026-09-21：解耦后候选里的**通用残渣**判定。返回 True = 应拒（不是仪器名）。
+
+    dry-run 实测（全库 87 种候选）：这些规则把评分条款/设备序列号/括号截断/短词等 27 种噪声全拒，
+    60 种真信号无一误伤。
+    """
+    if _RE_CMP.search(name):
+        return True
+    if _RE_SEQ.search(name):
+        return True
+    if _RE_UNCLOSED.search(name) and not re.search(r"[）)]", name):
+        return True
+    if _RE_SCORE.search(name):
+        return True
+    if _RE_CNUM.search(name):
+        return True
+    if name.endswith("的"):
+        # 评分条款状语残渣（`拟投入不少于2台流式细胞仪的，得3分`）—— 真型号不以「的」结尾
+        return True
+    if _RE_WORDS.match(name) or _RE_WORDS_PAREN.match(name):
+        return True
+    if _RE_NUMLEAD.match(name):
+        return True
+    if _RE_JUNK.search(name):
+        return True
+    return False
+
 # —— ③ 仪器设备：真「仪器采购合同」句式 ——
 # 复核发现原 `purchase_contract` 候选源（文件名含「采购合同」）产出的 10 条**全是假阳性**
 # （多为「我方销售合同」被买方写成「采购合同」、或政府采购承诺样板句）。
@@ -121,7 +162,10 @@ def instrument_names_in(text: str) -> list[tuple[str, str]]:
     text = _unwrap(text)
     found: list[tuple[str, str]] = []
     for m in NUM_UNIT.finditer(text):
-        name = m.group(2).strip(" ：:（(）)")
+        # ⚠️ **只剥空白与次要标点，不剥括号**（2026-09-21 修）：`液质联用仪器（LC-MS/MS）` 的
+        # 右括号是型号一部分 —— 原 `strip(" ：:（(）)")` 把末尾 `）` 剥掉 → 名字变「未闭合」→
+        # 被 `_reject_instrument_name` 误当截断残渣拒掉（实测该型号 0 条）。
+        name = m.group(2).strip(" ：:\t\n")
         if len(name) < 2 or len(name) > 30 or NAME_NOISE.match(name):
             continue
         if name.startswith(NAME_STOP_PREFIX):
@@ -129,6 +173,9 @@ def instrument_names_in(text: str) -> list[tuple[str, str]]:
         if any(w in name for w in NAME_BAD_WORDS):
             continue
         if NAME_MANY_DIGITS.search(name):
+            continue
+        # 2026-09-21：解耦 kind 门后的通用残渣（评分条款/序列号/括号截断/短词…）—— 见 _reject_instrument_name
+        if _reject_instrument_name(name):
             continue
         if not re.search(r"[A-Za-z一-鿿]", name):
             continue
@@ -228,16 +275,23 @@ def _main() -> int:
             kind = kind_of(name, text)
             role = r["document_role"]
 
-            # —— 仪器名：无论文档级类别判成什么，只要有 `N台<名字>` 句式就抽 ——
+            # —— 仪器名：**无条件抽取**（2026-09-21 解耦，PLAN-20260921-instrument-kind-gate）——
+            # 原实现挂在 `if kind in ("instrument", "instrument_photo"):` 门后 —— 而 kind_of 把
+            # social_security_month 排第 1 位且正文全文扫描，几乎每份完整响应文件都含「社保/完税」
+            # 等词 → 整份文档被判成社保类 → instrument_names_in 整体跳过。
+            # 全库摸底：正文可抽 80 种/199 份文档，库里只有 16 种/168 条；**92%（182/199）被此门挡掉**。
+            # `instrument_names_in` 是独立纯函数（自带 NAME_BAD_WORDS/前缀残渣/去重护栏），
+            # 判别不依赖文档类别 —— 解耦后「有 N台<名字> 句式且过护栏」即抽。
+            # ⚠️ 仅解耦 instrument_name；`purchase_contracts_in`、photo 门保持现状（不在本计划范围）。
+            for iname, iev in instrument_names_in(text):
+                con.execute(
+                    "INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
+                    "VALUES (?,?,?,?)",
+                    (r["document_id"], "instrument_name", iname, f"[{role}] {iev}"))
+                written += 1
+                instr_rows += 1
+                stats["instrument_name"] = stats.get("instrument_name", 0) + 1
             if kind in ("instrument", "instrument_photo"):
-                for iname, iev in instrument_names_in(text):
-                    con.execute(
-                        "INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "
-                        "VALUES (?,?,?,?)",
-                        (r["document_id"], "instrument_name", iname, f"[{role}] {iev}"))
-                    written += 1
-                    instr_rows += 1
-                    stats["instrument_name"] = stats.get("instrument_name", 0) + 1
                 for pname, pev in purchase_contracts_in(text):
                     con.execute(
                         "INSERT INTO material_facts (document_id, fact_type, fact_value, evidence_text) "

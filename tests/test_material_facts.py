@@ -228,6 +228,39 @@ def test_generic_instrument_query_keeps_legacy_mapping():
     assert parse_fact_query("找仪器")[0] == "instrument"
 
 
+def test_instrument_fragment_matches_library_model():
+    """2026-09-21 修方向：**型号碎片** ⊆ 库内型号名 即可命中（旧实现方向反 → 全 0）。
+
+    需求方实测「HBH192/QE质谱/Chromium 查不到」—— 库里有 `192通道HBH192`/`QE质谱仪`/
+    `10X单细胞Genomics Chromium仪器`，但旧第三路判「型号名 ∈ 查询词」，用户必须输完整名。
+    """
+    from app.api import resolve_instrument_query
+    # ⚠️ 断言用「任一元素含核心型号词」而非精确表单相等 —— 库内同一型号有多个空格/全角变体
+    # （`192通道HBH192` / `192 通道 HBH192` / `96通道Auto-Pure 96`…），碎片命中的语义是
+    # 「能搜到该家族」，不是「返回精确某一串」。旧 `== / in` 精确断言会随数据扩充而脆。
+    got = resolve_instrument_query("HBH192")
+    assert any("HBH192" in n for n in got), got
+    got = resolve_instrument_query("QE质谱")
+    assert any("QE质谱" in n for n in got), got
+    # Chromium 出现多个空格/变体（`10X 单细胞Genomics Chromium 仪器`、`Chromium iX`），
+    got = resolve_instrument_query("Chromium")
+    assert any("Chromium" in n for n in got), got
+    # 先切分后归一：`10X Genomics` 拆出 `10X`(<4 过滤) 与 `Genomics`(命中 Chromium 型号)
+    got = resolve_instrument_query("10X Genomics")
+    assert any("Chromium" in n for n in got), got
+    # 空碎片不误命中：`10X` 单独 <4 字符 → 空（避免把通用前缀当型号）
+    assert resolve_instrument_query("10X") == ()
+
+
+def test_instrument_spelled_aliases_match_library_value():
+    """词表拼写对齐（2026-09-21）：库内是 `DNBSEO-T7`（正文原样），词表补 `DNBSEQ`/`DNBSEQ-T7`
+    两个正确拼写别名 → 三者都命中库内值（旧：词表写 `DNBSEQ-T7` → LIKE 匹配不到 SEO）。"""
+    from app.api import resolve_instrument_query
+    for q in ("DNBSEQ", "DNBSEQ-T7", "DNBSEO-T7"):
+        got = resolve_instrument_query(q)
+        assert any("DNBSEO" in n for n in got), (q, got)  # 解耦后新增 `DNBSEO-T7 测序仪` 等变体 → 用包含
+
+
 # —— 社保月份不得来自「招标要求句 / 未来日期」（2026-09-16 需求方第二轮反馈）——
 
 def test_periods_must_not_be_after_project_date():

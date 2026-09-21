@@ -591,7 +591,10 @@ def resolve_instrument_query(text: str) -> tuple[str, ...]:
     三路命中，顺序固定（窄→宽）：
       1. 通称映射（`质谱仪` → `Bruker/timsTOF/Orbitrap/…`）；
       2. 型号**直接命中**（用户直接写了 `Bruker timsTOF HT` 这类专业名）；
-      3. `instrument_name` 里已出现过的型号名（用库内真实值兜底，避免词表漏收）。
+      3. 库内型号名兜底（2026-09-21 修方向）：**查询词里的碎片 ⊆ 库内型号名** 则命中
+         —— 用户常用**型号碎片**查（`HBH192` ⊆ `192通道HBH192`、`Chromium` ⊆
+         `10X单细胞Genomics Chromium仪器`）。旧实现方向写反（判「型号名 ∈ 查询词」，
+         用户必须输入完整型号才命中 → `HBH192`/`QE质谱`/`10X Genomics` 实测全 0）。
     """
     t = (text or "").strip()
     if not t:
@@ -610,9 +613,26 @@ def resolve_instrument_query(text: str) -> tuple[str, ...]:
             con.close()
     except Exception:  # noqa: BLE001 —— 库不可达时不阻断（返回空 = 不筛选）
         return ()
-    hit = [n for n in names if n and (n in t or any(
-        w in t for w in re.split(r"[\s\-_]+", n) if len(w) >= 4))]
+    # ⚠️ **先按原始词切分，再逐个做空白归一**：若先 `_strip_all_ws` 再 split，`10X Genomics`
+    # 会先被合成 `10XGenomics`、拆不出独立词（`10X`/`Genomics`），碎片匹配失效（自测踩到）。
+    # 拆出的 token 长度 ≥4 才参与（`10X` 只有 3 字符会被过滤 —— 但 `Genomics` 8 字符可命中）。
+    toks = {_strip_all_ws(tok) for tok in re.split(r"[\s \-_]+", t) if len(tok) >= 4}
+    hit = []
+    for n in names:
+        if not n:
+            continue
+        n_norm = _strip_all_ws(n)
+        if any(tok in n_norm for tok in toks):
+            hit.append(n)
     return tuple(sorted(set(hit)))
+
+
+_WS_ALL = re.compile(r"\s+| ")
+
+
+def _strip_all_ws(s: str) -> str:
+    """去全部空白（含 NBSP `\xa0`）：`Agilent\xa07890B` → `Agilent7890B`。"""
+    return _WS_ALL.sub("", s or "")
 
 
 def period_covers(query_value: str, fact_value: str) -> bool:
